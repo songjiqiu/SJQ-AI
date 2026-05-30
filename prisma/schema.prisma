@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum DeckProjectStatus {
+  GENERATING
+  READY
+  FAILED
+}
+
+enum DeckAssetKind {
+  IMAGE_LAYER
+  PPTX
+}
+
+enum AiModelKind {
+  LLM
+  IMAGE
+  EMBEDDING
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique @db.VarChar(191)
+  displayName  String?      @db.VarChar(80)
+  avatarUrl    String?      @db.VarChar(2048)
+  passwordHash String       @db.VarChar(255)
+  role         UserRole     @default(USER)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  sessions     Session[]
+  providers    AiProvider[]
+  aiModels     AiModelConfig[]
+  deckProjects DeckProject[]
+  outlineDrafts DeckOutlineDraft[]
+
+  @@index([role, isActive])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique @db.VarChar(64)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AiProvider {
+  id              String     @id @default(cuid())
+  userId          String
+  name            String     @db.VarChar(80)
+  slug            String     @db.VarChar(64)
+  baseUrl         String     @db.VarChar(2048)
+  encryptedApiKey String?    @db.Text
+  isEnabled       Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  models          AiModelConfig[]
+
+  @@unique([userId, slug])
+  @@index([userId])
+}
+
+model AiModelConfig {
+  id          String     @id @default(cuid())
+  userId      String
+  providerId  String
+  kind        AiModelKind
+  displayName String     @db.VarChar(120)
+  modelId     String     @db.VarChar(160)
+  temperature Float      @default(0.7)
+  isEnabled   Boolean    @default(true)
+  isDefault   Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider    AiProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind, providerId, modelId])
+  @@index([userId])
+  @@index([providerId])
+  @@index([userId, kind, isDefault])
+}
+
+model DeckProject {
+  id                    String            @id @default(cuid())
+  userId                String
+  mode                  String            @db.VarChar(24)
+  status                DeckProjectStatus @default(GENERATING)
+  title                 String            @db.VarChar(120)
+  summary               String            @db.VarChar(500)
+  input                 Json
+  unifiedVisualSpec     Json
+  contentReview         Json
+  consistencyReport     Json
+  pptxAssetId           String?           @db.VarChar(191)
+  generationError       String?           @db.VarChar(1000)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slides                DeckSlide[]
+  assets                DeckAsset[]
+
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
+model DeckOutlineDraft {
+  id                String   @id @default(cuid())
+  userId            String
+  mode              String   @db.VarChar(24)
+  title             String   @db.VarChar(120)
+  summary           String   @db.VarChar(500)
+  input             Json
+  fileSummaries     Json
+  unifiedVisualSpec Json
+  slides            Json
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, updatedAt])
+  @@index([userId, createdAt])
+}
+
+model DeckSlide {
+  id                    String       @id @default(cuid())
+  projectId             String
+  slideId               String       @db.VarChar(80)
+  index                 Int
+  content               Json
+  elements              Json
+  imageLayerRequests    Json
+  generatedImageLayers  Json
+  motionPlan            Json
+  canvas                Json
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  project               DeckProject  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assets                DeckAsset[]
+
+  @@unique([projectId, index])
+  @@index([projectId])
+}
+
+model DeckAsset {
+  id              String        @id @default(cuid())
+  projectId       String
+  slideId         String?
+  elementId       String?       @db.VarChar(80)
+  requestId       String?       @db.VarChar(100)
+  kind            DeckAssetKind
+  provider        String        @db.VarChar(80)
+  mimeType        String        @db.VarChar(120)
+  filename        String        @db.VarChar(255)
+  relativePath    String        @db.VarChar(500)
+  publicUrl       String        @db.VarChar(2048)
+  sizeBytes       Int
+  metadata        Json
+  createdAt       DateTime      @default(now())
+  project         DeckProject   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  slide           DeckSlide?    @relation(fields: [slideId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, kind])
+  @@index([slideId])
+}

@@ -1,0 +1,647 @@
+{
+  "metadata": {
+    "title": "PPT Creator Master",
+    "description": "An AI-powered platform for creating polished presentations."
+  },
+  "toolbar": {
+    "appName": "PPT Creator Master",
+    "author": "Mumihe",
+    "settings": "Experience Settings",
+    "avatar": "Current avatar",
+    "adminHome": "Admin Console",
+    "adminUsers": "User Management",
+    "logout": "Log out",
+    "logoutDone": "Logged out"
+  },
+  "locale": {
+    "aria": "Language switcher",
+    "zh": "中文",
+    "en": "EN"
+  },
+  "theme": {
+    "aria": "Appearance mode",
+    "light": {
+      "label": "Light mode"
+    },
+    "dark": {
+      "label": "Dark mode"
+    },
+    "system": {
+      "label": "Use system setting"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Log in to Workbench",
+      "subtitle": "Enter your PPT creation workspace"
+    },
+    "register": {
+      "title": "Create Account",
+      "subtitle": "Default AI provider templates will be created after signup"
+    },
+    "fields": {
+      "email": "Email",
+      "emailPlaceholder": "name@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "At least 8 characters"
+    },
+    "actions": {
+      "login": "Log in",
+      "register": "Register",
+      "submitting": "Working"
+    },
+    "switch": {
+      "toRegisterText": "No account yet?",
+      "toRegister": "Register now",
+      "toLoginText": "Already have an account?",
+      "toLogin": "Log in"
+    },
+    "errors": {
+      "emailExists": "This email is already registered. Please log in.",
+      "invalidCredentials": "The email or password is incorrect.",
+      "accountDisabled": "This account has been disabled by an administrator.",
+      "validation": "Enter a valid email and a password with at least 8 characters.",
+      "generic": "Authentication failed. Please try again later."
+    },
+    "toast": {
+      "loggedIn": "Logged in",
+      "registered": "Registered"
+    }
+  },
+  "adminHome": {
+    "title": "Admin Console",
+    "subtitle": "Manage platform accounts and operations entry points. When you need to create PPTs, enter the creation workbench from here.",
+    "entryAria": "Admin console entries",
+    "open": "Open",
+    "entries": {
+      "users": {
+        "title": "User Management",
+        "body": "Review accounts, roles, active status, and account-scoped data, then adjust user access when needed."
+      },
+      "workbench": {
+        "title": "Creation Workbench",
+        "body": "Enter the regular creation flow for PPT slide splitting, visual specs, and page element planning."
+      }
+    }
+  },
+  "settings": {
+    "title": "Experience Settings",
+    "tabs": {
+      "aria": "Experience settings categories",
+      "general": "General",
+      "account": "Account",
+      "appearance": "Appearance",
+      "providers": "AI Providers",
+      "models": "LLM Models",
+      "embeddings": "Embedding Models",
+      "about": "About",
+      "imageModels": "Image Models"
+    },
+    "general": {
+      "eyebrow": "General",
+      "title": "General Settings",
+      "summary": "Manage core experience controls, including interface language and the current account session.",
+      "language": {
+        "title": "Language",
+        "body": "Switch the interface language. Chinese is the default, and English is available."
+      },
+      "logout": {
+        "title": "Log out",
+        "body": "Sign out of the current account and return to the login page.",
+        "action": "Log out"
+      },
+      "logoutDone": "Logged out"
+    },
+    "account": {
+      "eyebrow": "Account",
+      "title": "Account Settings",
+      "summary": "Manage the current account profile, avatar, and login password.",
+      "fields": {
+        "email": "Account (Email)",
+        "displayName": "Name",
+        "avatarUrl": "Avatar URL",
+        "avatarUrlPlaceholder": "https://example.com/avatar.png",
+        "avatarFile": "Avatar file",
+        "avatarSelected": "Selected: {file}",
+        "currentPassword": "Current Password",
+        "newPassword": "New Password"
+      },
+      "actions": {
+        "changeAvatar": "Change Avatar",
+        "uploadAvatar": "Upload Avatar",
+        "changePassword": "Change Password",
+        "saveProfile": "Save Profile",
+        "savePassword": "Save Password"
+      },
+      "password": {
+        "title": "Change Password",
+        "body": "Update your login password. Your current password is required before saving."
+      },
+      "toast": {
+        "profileSaved": "Account profile saved",
+        "passwordSaved": "Password updated"
+      },
+      "errors": {
+        "avatarCompress": "Avatar compression failed. Try another image.",
+        "avatarTooLarge": "The avatar is still larger than 1 MB after compression. Try a smaller image.",
+        "avatarType": "Avatar images must be PNG, JPEG, or WebP.",
+        "invalidPassword": "The current password is incorrect.",
+        "validation": "The account profile or password format is invalid.",
+        "generic": "Failed to save account settings. Please try again later."
+      }
+    },
+    "appearance": {
+      "eyebrow": "Appearance",
+      "title": "Appearance Settings",
+      "summary": "Adjust the app appearance mode to match your current environment.",
+      "mode": {
+        "title": "Appearance Mode",
+        "body": "Switch between light, dark, or system mode."
+      },
+      "palette": {
+        "title": "Color Preset",
+        "body": "Choose the accent colors and visual tone used across the app.",
+        "aria": "Color preset"
+      }
+    },
+    "actions": {
+      "close": "Close",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save Configuration"
+    },
+    "common": {
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "loading": "Loading configuration"
+    },
+    "toast": {
+      "loadFailed": "Failed to load configuration. Please try again later.",
+      "saveFailed": "Failed to save configuration. Please check and try again.",
+      "saved": "Configuration saved",
+      "deleteFailed": "Delete failed. Please try again later.",
+      "deleted": "Configuration deleted"
+    },
+    "errors": {
+      "databaseMigrationRequired": "Database migrations are not complete. Run pnpm db:migrate and try again.",
+      "duplicate": "The name, slug, or model ID already exists. Use another value.",
+      "validation": "The form is invalid. Check required fields and URLs.",
+      "unauthorized": "Your session has expired. Please log in again.",
+      "notFound": "The configuration does not exist or has been deleted."
+    },
+    "providers": {
+      "eyebrow": "OpenAI-Compatible",
+      "title": "AI Provider Management",
+      "summary": "Manage OpenAI-compatible model providers for the current account. API keys can only be replaced or cleared, and plaintext keys are never shown.",
+      "empty": "No AI providers yet",
+      "modelCount": "{count} linked models",
+      "actions": {
+        "new": "New Provider"
+      },
+      "badges": {
+        "keyReady": "Key Configured",
+        "keyEmpty": "No Key"
+      },
+      "confirmDelete": "Deleting this provider will also delete linked models. Continue?",
+      "form": {
+        "createTitle": "New Provider",
+        "editTitle": "Edit Provider",
+        "name": "Name",
+        "slug": "Slug",
+        "baseUrl": "Base URL",
+        "apiKey": "API Key",
+        "apiKeyPlaceholder": "Leave blank to keep the saved key",
+        "clearApiKey": "Clear saved key"
+      }
+    },
+    "models": {
+      "eyebrow": "Chat Model",
+      "title": "LLM Model Management",
+      "summary": "The default LLM powers this account's home chat responses. Only one enabled model from an available provider can be the default at a time.",
+      "empty": "No LLM models yet",
+      "temperature": "Temperature {value}",
+      "actions": {
+        "new": "New LLM Model",
+        "fetch": "Fetch Models",
+        "makeDefault": "Set as Default"
+      },
+      "badges": {
+        "default": "Default"
+      },
+      "toast": {
+        "defaultSaved": "Default model updated",
+        "emptyFetched": "The provider did not return any available models. Enter the model ID manually.",
+        "fetchFailed": "Failed to fetch models. Check the provider Base URL and API Key.",
+        "fetched": "Fetched {count} available models",
+        "providerRequired": "Select a provider first."
+      },
+      "confirmDelete": "Delete this LLM model?",
+      "form": {
+        "createTitle": "New LLM Model",
+        "editTitle": "Edit LLM Model",
+        "provider": "Provider",
+        "displayName": "Display Name",
+        "modelId": "Model ID",
+        "modelIdPlaceholder": "Enter manually, or choose from provider models",
+        "fetchedModels": "Available Models",
+        "fetchedModelsPlaceholder": "Choose a model returned by the provider",
+        "temperature": "Default Temperature",
+        "isDefault": "Set as default"
+      }
+    },
+    "placeholders": {
+      "general": {
+        "title": "General Settings",
+        "body": "This version focuses on AI provider and LLM model configuration first."
+      },
+      "account": {
+        "title": "Account Settings",
+        "body": "Email/password accounts are now used to isolate your AI configuration."
+      },
+      "appearance": {
+        "title": "Appearance Settings",
+        "body": "Light, dark, and system modes can be switched from appearance settings."
+      },
+      "embeddings": {
+        "title": "Embedding Models",
+        "body": "Embedding models will be added after knowledge-base and retrieval features land."
+      },
+      "about": {
+        "title": "About PPT Creator Master",
+        "body": "PPT Creator Master is created by SJQ (Mumihe) and designed Chinese-first."
+      }
+    },
+    "embeddings": {
+      "eyebrow": "Embedding Model",
+      "title": "Embedding Model Management",
+      "summary": "Manage embedding models for future knowledge-base and retrieval features. Provider, key, and Base URL come from AI provider settings.",
+      "empty": "No embedding models yet",
+      "actions": {
+        "new": "New Embedding Model",
+        "makeDefault": "Set as Default"
+      },
+      "badges": {
+        "default": "Default"
+      },
+      "toast": {
+        "defaultSaved": "Default embedding model updated"
+      },
+      "confirmDelete": "Delete this embedding model?",
+      "form": {
+        "createTitle": "New Embedding Model",
+        "editTitle": "Edit Embedding Model",
+        "isDefault": "Set as default embedding model"
+      }
+    },
+    "imageModels": {
+      "eyebrow": "Image Generation",
+      "title": "Image Model Management",
+      "summary": "Manage models used for PPT image layers. Provider, key, and Base URL come from AI provider settings.",
+      "empty": "No image models yet",
+      "actions": {
+        "new": "New Image Model",
+        "makeDefault": "Set as Default"
+      },
+      "badges": {
+        "default": "Default"
+      },
+      "toast": {
+        "defaultSaved": "Default image model updated"
+      },
+      "confirmDelete": "Delete this image model configuration?",
+      "form": {
+        "createTitle": "New Image Model",
+        "editTitle": "Edit Image Model",
+        "isDefault": "Set as default image model"
+      }
+    }
+  },
+  "adminUsers": {
+    "title": "User Management",
+    "subtitle": "Review account status, administrator access, and account-scoped data. Disable accounts when needed and clear sessions immediately.",
+    "listAria": "User management list",
+    "loading": "Loading users",
+    "empty": "No users yet",
+    "roles": {
+      "ADMIN": "Administrator",
+      "USER": "User"
+    },
+    "status": {
+      "active": "Active",
+      "disabled": "Disabled",
+      "self": "Current account"
+    },
+    "fields": {
+      "createdAt": "Created",
+      "sessions": "Sessions",
+      "providers": "Providers",
+      "models": "Models"
+    },
+    "actions": {
+      "back": "Back to Admin Console",
+      "refresh": "Refresh",
+      "setAdmin": "Make Admin",
+      "setUser": "Make User",
+      "enable": "Enable",
+      "disable": "Disable",
+      "selfDisabled": "You cannot change your own admin access or active status"
+    },
+    "confirm": {
+      "disable": "Disabling this account will immediately clear all of its login sessions. Continue?"
+    },
+    "toast": {
+      "saved": "User status updated"
+    },
+    "errors": {
+      "unauthorized": "Your session has expired. Please log in again.",
+      "forbidden": "Only administrators can manage users.",
+      "accountDisabled": "This account has been disabled.",
+      "lastAdmin": "At least one active administrator must remain.",
+      "selfBlocked": "You cannot change your own admin access or active status.",
+      "validation": "The user update is invalid.",
+      "notFound": "The user does not exist or has been deleted.",
+      "generic": "User management failed. Please try again later."
+    }
+  },
+  "options": {
+    "deckTypes": {
+      "brand-marketing": "Brand Marketing",
+      "business-report": "Business Report",
+      "community-sharing": "Community Sharing",
+      "data-analysis": "Data Analysis",
+      "event-promotion": "Event Promotion",
+      "fundraising-pitch": "Fundraising Pitch",
+      "growth-experiment": "Growth Experiment",
+      "industry-insight": "Industry Insight",
+      "knowledge-sharing": "Knowledge Sharing",
+      "operation-plan": "Operation Plan",
+      "personal-review": "Personal Review",
+      "portfolio": "Portfolio",
+      "product-launch": "Product Launch",
+      "project-plan": "Project Plan",
+      "proposal": "Proposal",
+      "research-report": "Research Report",
+      "retrospective-summary": "Retrospective Summary",
+      "sales-proposal": "Sales Proposal",
+      "teaching-deck": "Teaching Deck",
+      "training-course": "Training Course"
+    },
+    "typeGroups": {
+      "business": "Business",
+      "salesMarketing": "Sales & Marketing",
+      "education": "Education",
+      "research": "Research",
+      "operations": "Operations",
+      "personal": "Personal"
+    },
+    "styles": {
+      "data": "Data Argument",
+      "minimal": "Minimal Business",
+      "problem-solution": "Problem Solution",
+      "strategic": "Strategic Story",
+      "product": "Product Launch",
+      "retrospective": "Retrospective Summary",
+      "story": "Story Narrative",
+      "teaching": "Teaching Flow",
+      "visual-proposal": "Visual Proposal"
+    },
+    "palettes": {
+      "star-map": "Star Map",
+      "matrix": "Matrix",
+      "deep-space": "Deep Space",
+      "morning-mist": "Morning Mist"
+    }
+  },
+  "workbench": {
+    "title": "Creation Workbench",
+    "subtitle": "Generate a complete presentation with preview, download, and saved history.",
+    "form": {
+      "aria": "PPT creation form"
+    },
+    "fields": {
+      "idea": {
+        "label": "Source Text / Idea",
+        "placeholder": "Paste long-form source text, or enter a complete idea. Example: Prepare an investor pitch for a clean energy startup covering market opportunity, product advantage, and partnership path."
+      },
+      "textFiles": {
+        "label": "Text Files",
+        "action": "Add txt / md / csv / json / docx files",
+        "limit": "Each file up to 10 MB",
+        "tooLarge": "Files larger than 10 MB were ignored"
+      },
+      "audience": {
+        "label": "Audience",
+        "placeholder": "Example: investors, customers, internal teams"
+      },
+      "goal": {
+        "label": "Goal",
+        "placeholder": "Example: secure pilot partnership interest"
+      },
+      "pageCount": {
+        "label": "Slides"
+      },
+      "deckType": {
+        "label": "PPT Type"
+      },
+      "style": {
+        "label": "Narrative Style"
+      },
+      "palette": {
+        "label": "Color Palette"
+      }
+    },
+    "validation": {
+      "idea": "Enter source text or an idea with at least 10 characters.",
+      "audience": "Add the target audience.",
+      "goal": "Add the communication goal.",
+      "pageCount": "Slides must be an integer from 3 to 12."
+    },
+    "actions": {
+      "reset": "Reset",
+      "generate": "Generate PPT",
+      "generating": "Generating",
+      "generateOutline": "Generate Outline",
+      "generatingOutline": "Generating Outline",
+      "saveOutline": "Save Outline",
+      "savingOutline": "Saving",
+      "download": "Download PPTX",
+      "playMotion": "Play Motion",
+      "pauseMotion": "Pause Motion",
+      "backToInput": "Back to Input"
+    },
+    "toast": {
+      "generated": "The PPT has been generated and saved to history",
+      "outlineGenerated": "Outline draft generated",
+      "outlineSaved": "Outline draft saved",
+      "outlineLoadFailed": "Failed to load the outline draft. Please try again later.",
+      "outlineSaveFailed": "Failed to save the outline draft. Check the content and try again.",
+      "failed": "AI generation failed. Please try again later.",
+      "loadFailed": "Failed to load the historical PPT. Please try again later."
+    },
+    "preview": {
+      "aria": "PPT page structure preview",
+      "title": "All PPT Preview",
+      "mode": "Local Mock",
+      "modes": {
+        "ai-json": "AI JSON",
+        "mock": "Local Mock"
+      },
+      "generatedMeta": "{mode} · {count} slides",
+      "outlineMeta": "Outline draft · {mode} · {count} slides",
+      "statuses": {
+        "GENERATING": "Generating",
+        "READY": "Ready",
+        "FAILED": "Failed"
+      },
+      "thumbnails": "Slide Thumbnails",
+      "slideLabel": "Slide {index}",
+      "elementsCount": "elements",
+      "emptyTitle": "Waiting",
+      "emptyBody": "After submission, all PPT pages, image layers, Web motion, review notes, consistency score, and PPTX download will appear here."
+    },
+    "history": {
+      "aria": "PPT generation history",
+      "title": "Generation History",
+      "loading": "Loading",
+      "empty": "No historical PPT yet. New generations are saved here automatically.",
+      "meta": "{count} slides · review {review} · consistency {consistency}"
+    },
+    "drafts": {
+      "aria": "PPT outline drafts",
+      "title": "Outline Drafts",
+      "loading": "Loading",
+      "empty": "No outline drafts yet. Step-one generations will be saved here.",
+      "meta": "{mode} · {count} slides"
+    },
+    "review": {
+      "title": "Content Review"
+    },
+    "consistency": {
+      "title": "Consistency"
+    },
+    "visualSpec": {
+      "title": "Unified Visual Spec"
+    },
+    "loading": {
+      "outlineTitle": "Generating outline draft",
+      "outlineDescription": "AI is organizing the idea, text, and files into slide copy and a unified visual spec.",
+      "outlineFailed": "Outline generation failed",
+      "generateTitle": "Generating full PPT",
+      "generateDescription": "AI is composing page layers, image requests, review notes, consistency checks, and the PPTX from the confirmed outline.",
+      "generateFailed": "Full PPT generation failed",
+      "missingOutlinePayload": "No outline input was found. Return to the input page and submit again.",
+      "missingGeneratePayload": "No draft information was found. Return to the input page and choose an outline again.",
+      "backToInput": "Back to Input",
+      "outlineProgress": "Analyzing input, splitting slides, and generating the unified visual spec.",
+      "generateProgress": "Composing layers, generating images, reviewing content, and building the PPTX."
+    },
+    "outline": {
+      "title": "Outline Draft",
+      "reviewTitle": "Review and Edit Outline",
+      "reviewSubtitle": "Step two will strictly use the saved outline, unified visual spec, and slide copy here to generate the full PPT.",
+      "slideCount": "{count} slides",
+      "slides": "Slide Outline",
+      "slideEditor": "Slide Copy Editor",
+      "fields": {
+        "deckTitle": "Deck Title",
+        "deckSummary": "Deck Summary",
+        "themeName": "Theme Name",
+        "visualStyle": "Visual Style",
+        "colorPalette": "Palette (one color per line)",
+        "typography": "Typography",
+        "imageStyle": "Image Style",
+        "layoutRules": "Layout Rules (one per line)",
+        "consistencyRules": "Consistency Rules (one per line)",
+        "forbiddenRules": "Forbidden Rules (one per line)",
+        "slideTitle": "Slide Title",
+        "subtitle": "Subtitle",
+        "bodyPoints": "Body Points (one per line)",
+        "speakerGoal": "Speaker Goal",
+        "visualIntent": "Visual Intent"
+      },
+      "footerMeta": "{count} cards · {title}",
+      "cover": "Cover",
+      "content": "Content",
+      "directory": "Directory",
+      "selectSlide": "Select"
+    },
+    "elements": {
+      "title": "Page Element Plan",
+      "bounds": "Position x:{x}% y:{y}%, size {width}% × {height}%, layer {zIndex}"
+    },
+    "imageLayers": {
+      "title": "Image Layer Requests",
+      "empty": "This slide does not need generated image layers yet."
+    },
+    "elementTypes": {
+      "text": "Text",
+      "generatedImage": "Generated Image",
+      "shape": "Shape",
+      "icon": "Icon",
+      "chartPlaceholder": "Chart Placeholder"
+    },
+    "mock": {
+      "titlePattern": "{idea} | {deckType} | {style}",
+      "summaryPattern": "A {count}-slide {deckType} deck for {audience}, organized around \"{goal}\" with a {style} structure and {palette} visual direction.",
+      "slideTemplates": [
+        {
+          "title": "Opening Frame",
+          "body": "Set the boundary of the topic with one clear judgment: {idea}."
+        },
+        {
+          "title": "Audience Problem",
+          "body": "Place the key friction, opportunity, and decision criteria for {audience} on one slide."
+        },
+        {
+          "title": "Core Point",
+          "body": "Shape one memorable argument around \"{goal}\"."
+        },
+        {
+          "title": "Solution Path",
+          "body": "Use a three-part structure to move from current state to target outcome."
+        },
+        {
+          "title": "Evidence and Highlights",
+          "body": "Select the data, cases, or product capabilities that best support the argument."
+        },
+        {
+          "title": "Visual Expression",
+          "body": "Turn complex relationships into a chart, flow, or comparison matrix."
+        },
+        {
+          "title": "Risks and Responses",
+          "body": "Address likely concerns from {audience} before they surface."
+        },
+        {
+          "title": "Execution Rhythm",
+          "body": "Break the work into near-term actions, milestones, and roles."
+        },
+        {
+          "title": "Resource Plan",
+          "body": "Show the resources, capabilities, and boundaries needed to achieve \"{goal}\"."
+        },
+        {
+          "title": "Value Return",
+          "body": "Connect investment, return, efficiency, and impact in one logic line."
+        },
+        {
+          "title": "Next Step",
+          "body": "Offer one concrete, low-friction, confirmable action."
+        },
+        {
+          "title": "Appendix",
+          "body": "Keep definitions, data notes, and supporting material available."
+        }
+      ]
+    },
+    "hero": {
+      "title": "What are we making?"
+    },
+    "steps": {
+      "aria": "PPT generation steps",
+      "input": "Input",
+      "outline": "Outline",
+      "preview": "Preview"
+    }
+  }
+}

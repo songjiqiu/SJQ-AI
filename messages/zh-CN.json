@@ -1,0 +1,647 @@
+{
+  "metadata": {
+    "title": "PPT创造大师",
+    "description": "AI驱动的智能演示创作平台。"
+  },
+  "toolbar": {
+    "appName": "PPT创造大师",
+    "author": "木米禾",
+    "settings": "体验设置",
+    "avatar": "当前头像",
+    "adminHome": "管理端",
+    "adminUsers": "用户管理",
+    "logout": "退出登录",
+    "logoutDone": "已退出登录"
+  },
+  "locale": {
+    "aria": "语言切换",
+    "zh": "中文",
+    "en": "EN"
+  },
+  "theme": {
+    "aria": "外观模式",
+    "light": {
+      "label": "浅色模式"
+    },
+    "dark": {
+      "label": "深色模式"
+    },
+    "system": {
+      "label": "跟随系统"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "登录工作台",
+      "subtitle": "进入你的 PPT 创作空间"
+    },
+    "register": {
+      "title": "创建账号",
+      "subtitle": "注册后自动创建默认 AI 供应商模板"
+    },
+    "fields": {
+      "email": "邮箱",
+      "emailPlaceholder": "name@example.com",
+      "password": "密码",
+      "passwordPlaceholder": "至少 8 位字符"
+    },
+    "actions": {
+      "login": "登录",
+      "register": "注册",
+      "submitting": "处理中"
+    },
+    "switch": {
+      "toRegisterText": "还没有账号？",
+      "toRegister": "立即注册",
+      "toLoginText": "已有账号？",
+      "toLogin": "去登录"
+    },
+    "errors": {
+      "emailExists": "该邮箱已注册，请直接登录。",
+      "invalidCredentials": "邮箱或密码不正确。",
+      "accountDisabled": "该账号已被管理员禁用。",
+      "validation": "请填写有效邮箱，并确保密码至少 8 位。",
+      "generic": "认证失败，请稍后重试。"
+    },
+    "toast": {
+      "loggedIn": "登录成功",
+      "registered": "注册成功"
+    }
+  },
+  "adminHome": {
+    "title": "管理端",
+    "subtitle": "集中管理平台账号和运营入口。需要创作 PPT 时，可从这里进入创作工作台。",
+    "entryAria": "管理端入口",
+    "open": "进入",
+    "entries": {
+      "users": {
+        "title": "用户管理",
+        "body": "查看账号、角色、启用状态和账号隔离数据，并在需要时调整用户权限。"
+      },
+      "workbench": {
+        "title": "创作工作台",
+        "body": "进入面向普通创作流程的 PPT 拆页、视觉说明和页面元素编排界面。"
+      }
+    }
+  },
+  "settings": {
+    "title": "体验设置",
+    "tabs": {
+      "aria": "体验设置分类",
+      "general": "通用",
+      "account": "账号",
+      "appearance": "外观",
+      "providers": "AI 供应商",
+      "models": "LLM 模型",
+      "embeddings": "向量模型",
+      "about": "关于",
+      "imageModels": "图片模型"
+    },
+    "general": {
+      "eyebrow": "General",
+      "title": "通用设置",
+      "summary": "管理基础体验入口，包括界面语言和当前账号会话。",
+      "language": {
+        "title": "语言",
+        "body": "切换界面语言，默认中文，可切换英文。"
+      },
+      "logout": {
+        "title": "退出登录",
+        "body": "退出当前账号并返回登录页。",
+        "action": "退出登录"
+      },
+      "logoutDone": "已退出登录"
+    },
+    "account": {
+      "eyebrow": "Account",
+      "title": "账号设置",
+      "summary": "管理当前账号的基础资料、头像和登录密码。",
+      "fields": {
+        "email": "账号（邮箱）",
+        "displayName": "名称",
+        "avatarUrl": "头像 URL",
+        "avatarUrlPlaceholder": "https://example.com/avatar.png",
+        "avatarFile": "头像文件",
+        "avatarSelected": "已选择：{file}",
+        "currentPassword": "当前密码",
+        "newPassword": "新密码"
+      },
+      "actions": {
+        "changeAvatar": "修改头像",
+        "uploadAvatar": "上传头像",
+        "changePassword": "修改密码",
+        "saveProfile": "保存资料",
+        "savePassword": "保存密码"
+      },
+      "password": {
+        "title": "修改密码",
+        "body": "更新登录密码，保存前需要输入当前密码。"
+      },
+      "toast": {
+        "profileSaved": "账号资料已保存",
+        "passwordSaved": "密码已更新"
+      },
+      "errors": {
+        "avatarCompress": "头像压缩失败，请换一张图片重试。",
+        "avatarTooLarge": "头像压缩后仍超过 1MB，请换一张更小的图片。",
+        "avatarType": "头像仅支持 PNG、JPEG 或 WebP 图片。",
+        "invalidPassword": "当前密码不正确。",
+        "validation": "账号资料或密码格式不符合要求。",
+        "generic": "账号设置保存失败，请稍后重试。"
+      }
+    },
+    "appearance": {
+      "eyebrow": "Appearance",
+      "title": "外观设置",
+      "summary": "调整应用的外观模式，让界面更贴合当前使用环境。",
+      "mode": {
+        "title": "外观模式",
+        "body": "切换浅色、深色或跟随系统。"
+      },
+      "palette": {
+        "title": "配色预设",
+        "body": "选择全应用使用的强调色与视觉基调。",
+        "aria": "配色预设"
+      }
+    },
+    "actions": {
+      "close": "关闭",
+      "edit": "编辑",
+      "delete": "删除",
+      "save": "保存配置"
+    },
+    "common": {
+      "enabled": "启用",
+      "disabled": "停用",
+      "loading": "正在加载配置"
+    },
+    "toast": {
+      "loadFailed": "配置加载失败，请稍后重试。",
+      "saveFailed": "配置保存失败，请检查后重试。",
+      "saved": "配置已保存",
+      "deleteFailed": "删除失败，请稍后重试。",
+      "deleted": "配置已删除"
+    },
+    "errors": {
+      "databaseMigrationRequired": "数据库迁移未完成，请先运行 pnpm db:migrate 后重试。",
+      "duplicate": "名称、标识或模型 ID 已存在，请换一个。",
+      "validation": "表单内容不符合要求，请检查必填项和 URL。",
+      "unauthorized": "登录已失效，请重新登录。",
+      "notFound": "配置不存在或已被删除。"
+    },
+    "providers": {
+      "eyebrow": "OpenAI-Compatible",
+      "title": "AI 供应商管理",
+      "summary": "维护当前账号可兼容 OpenAI API 的模型供应商，API Key 只允许重填或清空，界面不显示明文。",
+      "empty": "暂无 AI 供应商",
+      "modelCount": "关联模型 {count} 个",
+      "actions": {
+        "new": "新增供应商"
+      },
+      "badges": {
+        "keyReady": "密钥已配置",
+        "keyEmpty": "密钥未配置"
+      },
+      "confirmDelete": "删除供应商会同时删除关联模型，确定继续吗？",
+      "form": {
+        "createTitle": "新增供应商",
+        "editTitle": "编辑供应商",
+        "name": "名称",
+        "slug": "标识",
+        "baseUrl": "Base URL",
+        "apiKey": "API Key",
+        "apiKeyPlaceholder": "留空则不修改已有密钥",
+        "clearApiKey": "清空已保存密钥"
+      }
+    },
+    "models": {
+      "eyebrow": "Chat Model",
+      "title": "LLM 模型管理",
+      "summary": "默认 LLM 会接管当前账号的首页聊天回复；同一时间只保留一个启用且供应商可用的默认模型。",
+      "empty": "暂无 LLM 模型",
+      "temperature": "温度 {value}",
+      "actions": {
+        "new": "新增 LLM 模型",
+        "fetch": "拉取模型",
+        "makeDefault": "设为默认"
+      },
+      "badges": {
+        "default": "默认"
+      },
+      "toast": {
+        "defaultSaved": "默认模型已更新",
+        "emptyFetched": "供应商没有返回可用模型，请手动填写模型 ID。",
+        "fetchFailed": "模型列表拉取失败，请检查供应商 Base URL 和 API Key。",
+        "fetched": "已拉取 {count} 个可用模型",
+        "providerRequired": "请先选择供应商。"
+      },
+      "confirmDelete": "确定删除该 LLM 模型吗？",
+      "form": {
+        "createTitle": "新增 LLM 模型",
+        "editTitle": "编辑 LLM 模型",
+        "provider": "供应商",
+        "displayName": "显示名称",
+        "modelId": "模型 ID",
+        "modelIdPlaceholder": "可手动输入，或从供应商模型列表选择",
+        "fetchedModels": "可用模型",
+        "fetchedModelsPlaceholder": "选择供应商返回的模型",
+        "temperature": "默认温度",
+        "isDefault": "设为默认"
+      }
+    },
+    "placeholders": {
+      "general": {
+        "title": "通用设置",
+        "body": "当前版本先聚焦 AI 供应商与 LLM 模型配置。"
+      },
+      "account": {
+        "title": "账号设置",
+        "body": "邮箱密码账号已用于隔离你的 AI 配置。"
+      },
+      "appearance": {
+        "title": "外观设置",
+        "body": "浅色、深色和系统模式可在外观设置中切换。"
+      },
+      "embeddings": {
+        "title": "向量模型",
+        "body": "向量模型将在知识库和检索能力落地后接入。"
+      },
+      "about": {
+        "title": "关于 PPT创造大师",
+        "body": "PPT创造大师由 SJQ（木米禾）发起，面向中文用户优先设计。"
+      }
+    },
+    "embeddings": {
+      "eyebrow": "Embedding Model",
+      "title": "向量模型管理",
+      "summary": "维护后续知识库和检索能力使用的向量模型配置，供应商、密钥和 Base URL 复用 AI 供应商设置。",
+      "empty": "暂无向量模型",
+      "actions": {
+        "new": "新增向量模型",
+        "makeDefault": "设为默认"
+      },
+      "badges": {
+        "default": "默认"
+      },
+      "toast": {
+        "defaultSaved": "默认向量模型已更新"
+      },
+      "confirmDelete": "确定删除该向量模型吗？",
+      "form": {
+        "createTitle": "新增向量模型",
+        "editTitle": "编辑向量模型",
+        "isDefault": "设为默认向量模型"
+      }
+    },
+    "imageModels": {
+      "eyebrow": "Image Generation",
+      "title": "图片模型管理",
+      "summary": "维护用于 PPT 图片图层生成的模型配置，供应商、密钥和 Base URL 复用 AI 供应商设置。",
+      "empty": "暂无图片模型",
+      "actions": {
+        "new": "新增图片模型",
+        "makeDefault": "设为默认"
+      },
+      "badges": {
+        "default": "默认"
+      },
+      "toast": {
+        "defaultSaved": "默认图片模型已更新"
+      },
+      "confirmDelete": "确定删除该图片模型配置吗？",
+      "form": {
+        "createTitle": "新增图片模型",
+        "editTitle": "编辑图片模型",
+        "isDefault": "设为默认图片模型"
+      }
+    }
+  },
+  "adminUsers": {
+    "title": "用户管理",
+    "subtitle": "查看账号状态、管理员权限与账号隔离数据，必要时停用账号并立即清理会话。",
+    "listAria": "用户管理列表",
+    "loading": "正在加载用户",
+    "empty": "暂无用户",
+    "roles": {
+      "ADMIN": "管理员",
+      "USER": "普通用户"
+    },
+    "status": {
+      "active": "启用",
+      "disabled": "已禁用",
+      "self": "当前账号"
+    },
+    "fields": {
+      "createdAt": "创建时间",
+      "sessions": "会话",
+      "providers": "供应商",
+      "models": "模型"
+    },
+    "actions": {
+      "back": "返回管理端",
+      "refresh": "刷新",
+      "setAdmin": "设为管理员",
+      "setUser": "设为普通用户",
+      "enable": "启用",
+      "disable": "禁用",
+      "selfDisabled": "不能修改自己的管理员权限或启用状态"
+    },
+    "confirm": {
+      "disable": "禁用账号会立即清理该用户的所有登录会话，确定继续吗？"
+    },
+    "toast": {
+      "saved": "用户状态已更新"
+    },
+    "errors": {
+      "unauthorized": "登录已失效，请重新登录。",
+      "forbidden": "只有管理员可以管理用户。",
+      "accountDisabled": "该账号已被禁用。",
+      "lastAdmin": "系统至少需要保留一个启用的管理员。",
+      "selfBlocked": "不能修改自己的管理员权限或启用状态。",
+      "validation": "用户更新内容不符合要求。",
+      "notFound": "用户不存在或已被删除。",
+      "generic": "用户管理操作失败，请稍后重试。"
+    }
+  },
+  "options": {
+    "deckTypes": {
+      "brand-marketing": "品牌营销",
+      "business-report": "商务汇报",
+      "community-sharing": "社群分享",
+      "data-analysis": "数据分析",
+      "event-promotion": "活动宣发",
+      "fundraising-pitch": "融资路演",
+      "growth-experiment": "增长实验",
+      "industry-insight": "行业洞察",
+      "knowledge-sharing": "知识科普",
+      "operation-plan": "运营方案",
+      "personal-review": "个人述职",
+      "portfolio": "作品集",
+      "product-launch": "产品发布",
+      "project-plan": "项目计划",
+      "proposal": "方案提案",
+      "research-report": "研究报告",
+      "retrospective-summary": "复盘总结",
+      "sales-proposal": "销售提案",
+      "teaching-deck": "教学课件",
+      "training-course": "课程培训"
+    },
+    "typeGroups": {
+      "business": "商务办公",
+      "salesMarketing": "销售市场",
+      "education": "教学培训",
+      "research": "研究分析",
+      "operations": "运营活动",
+      "personal": "个人展示"
+    },
+    "styles": {
+      "data": "数据论证",
+      "minimal": "极简商务",
+      "problem-solution": "问题方案",
+      "strategic": "战略叙事",
+      "product": "产品发布",
+      "retrospective": "复盘总结",
+      "story": "故事叙事",
+      "teaching": "教学讲解",
+      "visual-proposal": "视觉提案"
+    },
+    "palettes": {
+      "star-map": "星图",
+      "matrix": "矩阵",
+      "deep-space": "深空",
+      "morning-mist": "晨雾"
+    }
+  },
+  "workbench": {
+    "title": "创作工作台",
+    "subtitle": "从创作想法生成可预览、可下载、可追溯的完整 PPT。",
+    "form": {
+      "aria": "PPT创作表单"
+    },
+    "fields": {
+      "idea": {
+        "label": "原始文本/创作想法",
+        "placeholder": "粘贴长文本，或输入一个完整创作想法。例如：为一家新能源初创公司准备融资路演，重点说明市场机会、产品优势和合作路径。"
+      },
+      "textFiles": {
+        "label": "文本类文件",
+        "action": "添加 txt / md / csv / json / docx 文件",
+        "limit": "单个文件最大 10MB",
+        "tooLarge": "已忽略超过 10MB 的文件"
+      },
+      "audience": {
+        "label": "目标受众",
+        "placeholder": "例如：投资人、客户、内部团队"
+      },
+      "goal": {
+        "label": "表达目标",
+        "placeholder": "例如：获得试点合作意向"
+      },
+      "pageCount": {
+        "label": "页数"
+      },
+      "deckType": {
+        "label": "PPT类型"
+      },
+      "style": {
+        "label": "叙事风格"
+      },
+      "palette": {
+        "label": "配色预设"
+      }
+    },
+    "validation": {
+      "idea": "请至少输入 10 个字的原始文本或创作想法。",
+      "audience": "请补充目标受众。",
+      "goal": "请补充表达目标。",
+      "pageCount": "页数需为 3 到 12 之间的整数。"
+    },
+    "actions": {
+      "reset": "重置",
+      "generate": "生成完整PPT",
+      "generating": "生成中",
+      "generateOutline": "生成大纲草稿",
+      "generatingOutline": "生成大纲中",
+      "saveOutline": "保存大纲",
+      "savingOutline": "保存中",
+      "download": "下载PPTX",
+      "playMotion": "播放动效",
+      "pauseMotion": "暂停动效",
+      "backToInput": "返回输入页"
+    },
+    "toast": {
+      "generated": "PPT 已生成并保存到历史记录",
+      "outlineGenerated": "大纲草稿已生成",
+      "outlineSaved": "大纲草稿已保存",
+      "outlineLoadFailed": "大纲草稿读取失败，请稍后重试。",
+      "outlineSaveFailed": "大纲草稿保存失败，请检查内容后重试。",
+      "failed": "AI 生成失败，请稍后重试。",
+      "loadFailed": "历史 PPT 读取失败，请稍后重试。"
+    },
+    "preview": {
+      "aria": "PPT页面结构预览",
+      "title": "全部PPT预览",
+      "mode": "本地模拟",
+      "modes": {
+        "ai-json": "AI JSON",
+        "mock": "本地模拟"
+      },
+      "generatedMeta": "{mode} · {count} 页",
+      "outlineMeta": "大纲草稿 · {mode} · {count} 页",
+      "statuses": {
+        "GENERATING": "生成中",
+        "READY": "已完成",
+        "FAILED": "失败"
+      },
+      "thumbnails": "页面缩略图",
+      "slideLabel": "第 {index} 页",
+      "elementsCount": "个元素",
+      "emptyTitle": "等待生成",
+      "emptyBody": "提交后将在这里看到全部 PPT 页面、图片图层、Web 动效、审核提示、一致性评分和 PPTX 下载入口。"
+    },
+    "history": {
+      "aria": "PPT生成历史",
+      "title": "生成历史",
+      "loading": "加载中",
+      "empty": "暂无历史 PPT，生成后会自动保存在这里。",
+      "meta": "{count} 页 · 审核 {review} · 一致性 {consistency}"
+    },
+    "drafts": {
+      "aria": "PPT大纲草稿",
+      "title": "大纲草稿",
+      "loading": "加载中",
+      "empty": "暂无大纲草稿，生成第一步后会保存在这里。",
+      "meta": "{mode} · {count} 页"
+    },
+    "review": {
+      "title": "内容审核"
+    },
+    "consistency": {
+      "title": "一致性"
+    },
+    "visualSpec": {
+      "title": "统一视觉说明"
+    },
+    "loading": {
+      "outlineTitle": "正在生成大纲草稿",
+      "outlineDescription": "AI 正在整理想法、文本和文件内容，并生成多页文案大纲与统一视觉说明。",
+      "outlineFailed": "大纲生成失败",
+      "generateTitle": "正在生成完整 PPT",
+      "generateDescription": "AI 正在基于已确认的大纲编排页面图层、生成图片请求、审核内容并合成 PPTX。",
+      "generateFailed": "完整 PPT 生成失败",
+      "missingOutlinePayload": "没有找到待生成的大纲输入，请返回输入页重新提交。",
+      "missingGeneratePayload": "没有找到待生成的草稿信息，请返回输入页重新选择大纲。",
+      "backToInput": "返回输入页",
+      "outlineProgress": "正在分析输入、拆分页面并生成统一视觉说明。",
+      "generateProgress": "正在编排图层、生成图片、审核内容并合成 PPTX。"
+    },
+    "outline": {
+      "title": "大纲草稿",
+      "reviewTitle": "确认并修改大纲",
+      "reviewSubtitle": "第二步将严格使用这里保存后的大纲、统一视觉说明和每页文案生成完整 PPT。",
+      "slideCount": "{count} 页",
+      "slides": "页面大纲",
+      "slideEditor": "页面文案编辑",
+      "fields": {
+        "deckTitle": "整套标题",
+        "deckSummary": "整套摘要",
+        "themeName": "主题名称",
+        "visualStyle": "视觉风格",
+        "colorPalette": "色板（每行一个颜色）",
+        "typography": "排版说明",
+        "imageStyle": "图片风格",
+        "layoutRules": "布局规则（每行一条）",
+        "consistencyRules": "一致性规则（每行一条）",
+        "forbiddenRules": "禁用规则（每行一条）",
+        "slideTitle": "页面标题",
+        "subtitle": "副标题",
+        "bodyPoints": "正文要点（每行一条）",
+        "speakerGoal": "演讲目标",
+        "visualIntent": "视觉意图"
+      },
+      "footerMeta": "共 {count} 张卡片 · {title}",
+      "cover": "封面",
+      "content": "内容",
+      "directory": "目录",
+      "selectSlide": "定位"
+    },
+    "elements": {
+      "title": "页面元素编排",
+      "bounds": "位置 x:{x}% y:{y}%，尺寸 {width}% × {height}%，层级 {zIndex}"
+    },
+    "imageLayers": {
+      "title": "图片图层请求",
+      "empty": "本页暂不需要生成图片图层。"
+    },
+    "elementTypes": {
+      "text": "文字",
+      "generatedImage": "生成图片",
+      "shape": "形状",
+      "icon": "图标",
+      "chartPlaceholder": "图表占位"
+    },
+    "mock": {
+      "titlePattern": "{idea}｜{deckType}｜{style}",
+      "summaryPattern": "面向{audience}，围绕“{goal}”组织 {count} 页{deckType}，采用{style}与{palette}视觉基调。",
+      "slideTemplates": [
+        {
+          "title": "开场定位",
+          "body": "用一句清晰判断建立主题边界：{idea}。"
+        },
+        {
+          "title": "受众问题",
+          "body": "把{audience}最关心的阻力、机会和判断标准放到同一页。"
+        },
+        {
+          "title": "核心观点",
+          "body": "围绕“{goal}”提炼一个可被记住的中心论断。"
+        },
+        {
+          "title": "方案路径",
+          "body": "用三段式结构说明从现状到目标结果的推进路径。"
+        },
+        {
+          "title": "证据与亮点",
+          "body": "选择最能支撑判断的数据、案例或产品能力。"
+        },
+        {
+          "title": "视觉化表达",
+          "body": "将复杂关系整理成图表、流程或对比矩阵。"
+        },
+        {
+          "title": "风险与回应",
+          "body": "提前回应{audience}可能提出的疑虑。"
+        },
+        {
+          "title": "执行节奏",
+          "body": "拆分近期行动、关键节点和协同角色。"
+        },
+        {
+          "title": "资源配置",
+          "body": "说明完成“{goal}”所需的资源、能力和边界。"
+        },
+        {
+          "title": "价值回收",
+          "body": "把投入与回报、效率与影响放在同一条逻辑线上。"
+        },
+        {
+          "title": "下一步",
+          "body": "给出一个具体、低摩擦、可确认的后续动作。"
+        },
+        {
+          "title": "附录",
+          "body": "保留关键定义、数据口径和补充材料。"
+        }
+      ]
+    },
+    "hero": {
+      "title": "有新的工作安排吗？"
+    },
+    "steps": {
+      "aria": "PPT 生成步骤",
+      "input": "输入内容",
+      "outline": "编辑大纲",
+      "preview": "预览PPT"
+    }
+  }
+}

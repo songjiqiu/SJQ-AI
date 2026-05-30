@@ -1,0 +1,192 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f6f8fb;
+  --foreground: #17202a;
+  --surface: #ffffff;
+  --surface-muted: #eef3f7;
+  --border: #d9e2ea;
+  --muted: #5d6b78;
+  --accent: #246bfe;
+  --accent-strong: #0f4bc7;
+  --accent-soft: #d9e7ff;
+  --signal: #15a37f;
+  --warning: #d97706;
+  --radius: 8px;
+  --font-sans: "Inter", "Noto Sans SC", "Microsoft YaHei", Arial, sans-serif;
+  --text-density: 1;
+}
+
+.dark {
+  --background: #10151d;
+  --foreground: #edf4f8;
+  --surface: #171f2a;
+  --surface-muted: #202a38;
+  --border: #314052;
+  --muted: #a8b5c2;
+  --accent: #6aa7ff;
+  --accent-strong: #93c5fd;
+  --accent-soft: #193354;
+  --signal: #37c8a2;
+  --warning: #f3a83b;
+}
+
+[data-palette="star-map"] {
+  --accent: #246bfe;
+  --accent-strong: #0f4bc7;
+  --accent-soft: #dbe8ff;
+  --signal: #16a085;
+}
+
+[data-palette="matrix"] {
+  --accent: #13966a;
+  --accent-strong: #0c6b4e;
+  --accent-soft: #d9f3e9;
+  --signal: #2563eb;
+}
+
+[data-palette="deep-space"] {
+  --accent: #7c3aed;
+  --accent-strong: #5b21b6;
+  --accent-soft: #eadcff;
+  --signal: #14b8a6;
+}
+
+[data-palette="morning-mist"] {
+  --accent: #c05621;
+  --accent-strong: #8b3a13;
+  --accent-soft: #f7e5d6;
+  --signal: #2563eb;
+}
+
+.dark[data-palette="star-map"],
+.dark [data-palette="star-map"] {
+  --accent-soft: #193354;
+}
+
+.dark[data-palette="matrix"],
+.dark [data-palette="matrix"] {
+  --accent-soft: #13382d;
+}
+
+.dark[data-palette="deep-space"],
+.dark [data-palette="deep-space"] {
+  --accent-soft: #2f2352;
+}
+
+.dark[data-palette="morning-mist"],
+.dark [data-palette="morning-mist"] {
+  --accent-soft: #3d2b22;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-signal: var(--signal);
+  --color-warning: var(--warning);
+  --radius-lg: var(--radius);
+  --font-sans: var(--font-sans);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--background);
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 38%, transparent), transparent 340px),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  letter-spacing: 0;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--foreground);
+}
+
+.ppt-motion {
+  animation-delay: var(--ppt-motion-delay, 0ms);
+  animation-duration: var(--ppt-motion-duration, 520ms);
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ppt-motion-fade {
+  animation-name: ppt-motion-fade;
+}
+
+.ppt-motion-rise {
+  animation-name: ppt-motion-rise;
+}
+
+.ppt-motion-focus {
+  animation-name: ppt-motion-focus;
+}
+
+.ppt-motion-none {
+  animation: none;
+}
+
+@keyframes ppt-motion-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ppt-motion-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ppt-motion-focus {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ppt-motion {
+    animation: none;
+  }
+}

@@ -1,0 +1,3 @@
+ALTER TABLE `User`
+  ADD COLUMN `displayName` VARCHAR(80) NULL,
+  ADD COLUMN `avatarUrl` VARCHAR(2048) NULL;
