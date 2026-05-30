@@ -76,6 +76,7 @@ import {
 
 export const outlinePayloadStorageKey = "pptcm_outline_payload";
 export const generatePayloadStorageKey = "pptcm_generate_payload";
+const creationFormId = "pptcm-creation-form";
 
 const deckTypeIcons: Record<DeckTypeId, LucideIcon> = {
   "brand-marketing": Megaphone,
@@ -259,6 +260,7 @@ export function CreationWorkbench() {
           <form
             aria-label={t("form.aria")}
             className="overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
+            id={creationFormId}
             onSubmit={onSubmit}
           >
             <div className="grid gap-4 p-4 sm:p-5">
@@ -423,28 +425,6 @@ export function CreationWorkbench() {
                 </div>
               </div>
             </div>
-
-            <div className="flex flex-col gap-3 border-t border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-end">
-              <div className="flex gap-2 sm:justify-end">
-                <Button onClick={resetForm} type="button" variant="secondary">
-                  <RotateCcw className="size-4" aria-hidden="true" />
-                  {t("actions.reset")}
-                </Button>
-                <Button disabled={isSubmitting} type="submit">
-                  {isSubmitting ? (
-                    <WandSparkles
-                      className="size-4 animate-pulse"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <Send className="size-4" aria-hidden="true" />
-                  )}
-                  {isSubmitting
-                    ? t("actions.generatingOutline")
-                    : t("actions.generateOutline")}
-                </Button>
-              </div>
-            </div>
           </form>
 
           <aside className="grid gap-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:content-start">
@@ -530,6 +510,32 @@ export function CreationWorkbench() {
                 )}
               </div>
             </section>
+
+            <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                <Button onClick={resetForm} type="button" variant="secondary">
+                  <RotateCcw className="size-4" aria-hidden="true" />
+                  {t("actions.reset")}
+                </Button>
+                <Button
+                  disabled={isSubmitting}
+                  form={creationFormId}
+                  type="submit"
+                >
+                  {isSubmitting ? (
+                    <WandSparkles
+                      className="size-4 animate-pulse"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <Send className="size-4" aria-hidden="true" />
+                  )}
+                  {isSubmitting
+                    ? t("actions.generatingOutline")
+                    : t("actions.generateOutline")}
+                </Button>
+              </div>
+            </div>
           </aside>
         </div>
       </div>

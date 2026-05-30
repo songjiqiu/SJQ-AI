@@ -222,6 +222,36 @@ describe("workbench stepped flow", () => {
     expect(router.push).toHaveBeenCalledWith("/workbench/preview/deck-recent");
   });
 
+  it("places the reset and outline actions below the right history panel", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({
+          drafts: [],
+          projects: []
+        })
+      }))
+    );
+    renderWithProviders(<CreationWorkbench />);
+
+    const form = screen.getByRole("form", { name: "PPT创作表单" });
+    const historyRegion = screen.getByRole("region", { name: "PPT生成历史" });
+    const resetButton = screen.getByRole("button", { name: "重置" });
+    const generateButton = screen.getByRole("button", {
+      name: /生成大纲草稿/
+    });
+
+    expect(form).not.toContainElement(resetButton);
+    expect(form).not.toContainElement(generateButton);
+    expect(
+      Boolean(
+        historyRegion.compareDocumentPosition(generateButton) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      )
+    ).toBe(true);
+  });
+
   it("outline loading creates a draft and opens the review page", async () => {
     const draft = buildOutlineDraft(request);
     const fetchMock = vi.fn(async () => ({

@@ -4,7 +4,7 @@
 
 当前版本将创作工作台拆成三步页面，并在两次耗时操作之间使用独立等待页：
 
-1. `/{locale}/workbench`：用户输入创作想法、文本类文件、PPT 类型和叙事风格；PPT 类型与叙事风格采用紧凑分组单选布局，保证内置选项直接可见。桌面端会在右侧栏显示最近大纲草稿与生成历史，移动端则显示在表单下方，便于继续编辑或打开已有 PPT。
+1. `/{locale}/workbench`：用户输入创作想法、文本类文件、PPT 类型和叙事风格；PPT 类型与叙事风格采用紧凑分组单选布局，保证内置选项直接可见。桌面端会在右侧栏显示最近大纲草稿与生成历史，并把重置和生成大纲草稿操作放在生成历史下方；移动端则随右侧栏内容显示在表单下方，便于继续编辑或打开已有 PPT。
 2. `/{locale}/workbench/outline/loading`：浏览器从 `sessionStorage` 读取输入并调用 `POST /api/decks/outline`。
 3. `/{locale}/workbench/outline/{id}`：展示并允许编辑整套标题、摘要、统一视觉说明和每页文案。
 4. `/{locale}/workbench/generate/loading`：浏览器从 `sessionStorage` 读取 `outlineDraftId` 并调用 `POST /api/decks/generate`。
