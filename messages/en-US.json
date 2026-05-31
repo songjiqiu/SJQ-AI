@@ -429,17 +429,6 @@
         "limit": "Each file up to 10 MB",
         "tooLarge": "Files larger than 10 MB were ignored"
       },
-      "audience": {
-        "label": "Audience",
-        "placeholder": "Example: investors, customers, internal teams"
-      },
-      "goal": {
-        "label": "Goal",
-        "placeholder": "Example: secure pilot partnership interest"
-      },
-      "pageCount": {
-        "label": "Slides"
-      },
       "deckType": {
         "label": "PPT Type"
       },
@@ -451,19 +440,21 @@
       }
     },
     "validation": {
-      "idea": "Enter source text or an idea with at least 10 characters.",
-      "audience": "Add the target audience.",
-      "goal": "Add the communication goal.",
-      "pageCount": "Slides must be an integer from 3 to 12."
+      "idea": "Enter source text or an idea with at least 10 characters."
     },
     "actions": {
       "reset": "Reset",
-      "generate": "Generate PPT",
+      "generate": "Generate Preview PPT",
       "generating": "Generating",
       "generateOutline": "Generate Outline",
       "generatingOutline": "Generating Outline",
+      "confirmIntent": "Confirm and Generate Outline",
+      "editOutline": "Edit Outline",
+      "cancelEdit": "Cancel Edit",
       "saveOutline": "Save Outline",
       "savingOutline": "Saving",
+      "delete": "Delete",
+      "deleting": "Deleting",
       "download": "Download PPTX",
       "playMotion": "Play Motion",
       "pauseMotion": "Pause Motion",
@@ -471,12 +462,27 @@
     },
     "toast": {
       "generated": "The PPT has been generated and saved to history",
+      "intentAnalyzed": "Input analysis generated",
+      "intentInvalid": "Check the audience, goal, core message, and slide count.",
       "outlineGenerated": "Outline draft generated",
       "outlineSaved": "Outline draft saved",
       "outlineLoadFailed": "Failed to load the outline draft. Please try again later.",
       "outlineSaveFailed": "Failed to save the outline draft. Check the content and try again.",
+      "draftDeleted": "Outline draft deleted",
+      "historyDeleted": "Generation history deleted",
+      "deleteDraftFailed": "Failed to delete the outline draft. Please try again later.",
+      "deleteHistoryFailed": "Failed to delete the generation history. Please try again later.",
       "failed": "AI generation failed. Please try again later.",
       "loadFailed": "Failed to load the historical PPT. Please try again later."
+    },
+    "errors": {
+      "aiJsonGenerationFailed": "The AI response did not pass structured validation. The app tried compatibility repair automatically but it still failed. Try again later, or check whether the current LLM model reliably supports JSON output in Experience Settings.",
+      "databaseMigrationRequired": "Database migrations are not complete. Run pnpm db:migrate and try again.",
+      "debugDetails": "Debug details",
+      "failureDetails": "Failure details",
+      "activeGenerationExists": "This item is still generating. Delete it after generation finishes.",
+      "unauthorized": "Your session has expired. Please log in again.",
+      "validation": "The input or outline structure is invalid. Check it and try again."
     },
     "preview": {
       "aria": "PPT page structure preview",
@@ -503,15 +509,19 @@
       "aria": "PPT generation history",
       "title": "Generation History",
       "loading": "Loading",
-      "empty": "No historical PPT yet. New generations are saved here automatically.",
-      "meta": "{count} slides · review {review} · consistency {consistency}"
+      "empty": "No completed PPT yet. Successful generations will appear here automatically.",
+      "meta": "{count} slides · review {review} · consistency {consistency}",
+      "deleteAria": "Delete generation history: {title}",
+      "confirmDelete": "Delete generation history \"{title}\"? Local PPTX and image layer files will also be removed."
     },
     "drafts": {
       "aria": "PPT outline drafts",
       "title": "Outline Drafts",
       "loading": "Loading",
       "empty": "No outline drafts yet. Step-one generations will be saved here.",
-      "meta": "{mode} · {count} slides"
+      "meta": "{mode} · {count} slides",
+      "deleteAria": "Delete outline draft: {title}",
+      "confirmDelete": "Delete outline draft \"{title}\"?"
     },
     "review": {
       "title": "Content Review"
@@ -523,25 +533,52 @@
       "title": "Unified Visual Spec"
     },
     "loading": {
+      "intentTitle": "Analyzing Input",
+      "intentDescription": "AI is identifying the audience, goal, core message, and recommended slide count.",
+      "intentFailed": "Input analysis failed",
       "outlineTitle": "Generating outline draft",
       "outlineDescription": "AI is organizing the idea, text, and files into slide copy and a unified visual spec.",
       "outlineFailed": "Outline generation failed",
-      "generateTitle": "Generating full PPT",
+      "generateTitle": "Generating preview PPT",
       "generateDescription": "AI is composing page layers, image requests, review notes, consistency checks, and the PPTX from the confirmed outline.",
-      "generateFailed": "Full PPT generation failed",
-      "missingOutlinePayload": "No outline input was found. Return to the input page and submit again.",
+      "generateFailed": "Preview PPT generation failed",
+      "generateBackgroundTitle": "Generation is continuing in the background",
+      "missingIntentPayload": "No input was found for analysis. Return to the input page and submit again.",
+      "missingOutlinePayload": "No confirmed outline input was found. Return to the input page and submit again.",
       "missingGeneratePayload": "No draft information was found. Return to the input page and choose an outline again.",
       "backToInput": "Back to Input",
-      "outlineProgress": "Analyzing input, splitting slides, and generating the unified visual spec.",
-      "generateProgress": "Composing layers, generating images, reviewing content, and building the PPTX."
+      "intentProgress": "Generating audience, goal, core message, and recommended slide count.",
+      "outlineProgress": "Generating the structure outline, unified visual spec, and per-slide copy JSON.",
+      "generateProgress": "Composing layers, generating images, reviewing content, and building the PPTX.",
+      "generateBackgroundProgress": "This task is taking longer than usual, but it has not failed. Stay here to open the preview automatically, or return to input and find it in history after it completes."
+    },
+    "intent": {
+      "title": "Confirm Input Analysis",
+      "subtitle": "Review the AI analysis of audience, goal, core message, and slide count. PPT type and narrative style stay immutable references for later generation.",
+      "loading": "Loading input analysis...",
+      "analysisTitle": "Input Analysis",
+      "filesTitle": "Added Files",
+      "fileMeta": "{characters} chars · {size} B",
+      "pageCountBadge": "{count} slides recommended",
+      "footerMeta": "After confirmation, the structure outline, unified visual spec, and per-slide copy JSON will be generated.",
+      "fields": {
+        "audience": "Audience",
+        "goal": "Goal",
+        "coreMessage": "Core Message",
+        "recommendedPageCount": "Recommended Slides"
+      }
     },
     "outline": {
       "title": "Outline Draft",
       "reviewTitle": "Review and Edit Outline",
-      "reviewSubtitle": "Step two will strictly use the saved outline, unified visual spec, and slide copy here to generate the full PPT.",
+      "reviewSubtitle": "Review the AI outline first. Use Edit when changes are needed; the preview PPT will strictly use the saved outline.",
       "slideCount": "{count} slides",
       "slides": "Slide Outline",
       "slideEditor": "Slide Copy Editor",
+      "previewAria": "Read-only outline preview",
+      "previewMode": "Preview Mode",
+      "editMode": "Edit Mode",
+      "readonlyHint": "The saved outline is shown read-only by default. Use Edit to adjust titles, directory, slide copy, and the unified visual spec.",
       "fields": {
         "deckTitle": "Deck Title",
         "deckSummary": "Deck Summary",
@@ -561,6 +598,7 @@
       },
       "footerMeta": "{count} cards · {title}",
       "cover": "Cover",
+      "chapter": "Chapter",
       "content": "Content",
       "directory": "Directory",
       "selectSlide": "Select"

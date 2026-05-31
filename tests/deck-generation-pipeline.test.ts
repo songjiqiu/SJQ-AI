@@ -14,6 +14,7 @@ const input: AnalyzeDeckRequest = {
   sourceText: "这是一段用于测试完整生成管线的长文本，包含市场机会、产品优势、合作路径和执行计划。",
   audience: "投资人",
   goal: "获得试点合作意向",
+  coreMessage: "用市场机会与试点成果证明合作价值。",
   pageCount: 4,
   deckType: "business-report",
   style: "strategic",

@@ -10,15 +10,21 @@ const auth = vi.hoisted(() => ({
 
 const deckService = vi.hoisted(() => ({
   DeckProjectNotFoundError: class DeckProjectNotFoundError extends Error {},
+  createDeckGenerationTaskForUser: vi.fn(),
+  deleteDeckProjectForUser: vi.fn(),
   generateDeckFromOutlineDraftSchema: {
     parse: vi.fn((value) => value)
   },
   generateDeckFromOutlineDraftForUser: vi.fn(),
   generateDeckForUser: vi.fn(),
   getDeckAssetForUser: vi.fn(),
+  getDeckGenerationStatusForUser: vi.fn(),
   getDeckProjectForUser: vi.fn(),
   getDeckPptxAssetForUser: vi.fn(),
-  listDeckProjects: vi.fn()
+  listDeckProjects: vi.fn(),
+  regenerateDeckSlideForUser: vi.fn(),
+  startDeckGenerationTaskForUser: vi.fn(),
+  updateDeckSlideForUser: vi.fn()
 }));
 
 const aiConfig = vi.hoisted(() => ({
@@ -37,14 +43,22 @@ vi.mock("@/lib/auth/session", () => ({
 }));
 
 vi.mock("@/lib/ai-config/service", () => aiConfig);
+vi.mock("@/lib/decks/errors", () => ({
+  ActiveGenerationExistsError: class ActiveGenerationExistsError extends Error {}
+}));
 vi.mock("@/lib/decks/service", () => deckService);
 vi.mock("@/lib/decks/storage", () => storage);
 
 import { GET as GET_DECKS } from "@/app/api/decks/route";
 import { POST as POST_GENERATE } from "@/app/api/decks/generate/route";
-import { GET as GET_DECK } from "@/app/api/decks/[id]/route";
+import {
+  DELETE as DELETE_DECK,
+  GET as GET_DECK
+} from "@/app/api/decks/[id]/route";
+import { GET as GET_STATUS } from "@/app/api/decks/[id]/status/route";
 import { GET as GET_PPTX } from "@/app/api/decks/[id]/pptx/route";
 import { GET as GET_ASSET } from "@/app/api/decks/[id]/assets/[assetId]/route";
+import { ActiveGenerationExistsError } from "@/lib/decks/errors";
 
 const generatedDeck = {
   id: "deck-1",
@@ -58,8 +72,17 @@ describe("deck routes", () => {
     vi.clearAllMocks();
   });
 
-  it("generates and saves a deck for the current user", async () => {
-    deckService.generateDeckFromOutlineDraftForUser.mockResolvedValue(generatedDeck);
+  it("starts an async deck generation task for the current user", async () => {
+    deckService.createDeckGenerationTaskForUser.mockResolvedValue({
+      id: "deck-1",
+      progress: {
+        current: 0,
+        message: "queued",
+        stage: "queued",
+        total: 3
+      },
+      status: "GENERATING"
+    });
 
     const response = await POST_GENERATE(
       new Request("http://localhost/api/decks/generate", {
@@ -71,13 +94,131 @@ describe("deck routes", () => {
     );
     const payload = await response.json();
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(202);
     expect(payload.id).toBe("deck-1");
-    expect(deckService.generateDeckFromOutlineDraftForUser).toHaveBeenCalledWith(
+    expect(deckService.createDeckGenerationTaskForUser).toHaveBeenCalledWith(
       "user-1",
-      "draft-1",
+      "draft-1"
+    );
+    expect(deckService.startDeckGenerationTaskForUser).toHaveBeenCalledWith(
+      "user-1",
+      "deck-1",
       expect.any(Object)
     );
+  });
+
+  it("does not start a duplicate runner when reusing an active generation task", async () => {
+    deckService.createDeckGenerationTaskForUser.mockResolvedValue({
+      id: "deck-1",
+      progress: {
+        current: 1,
+        message: "images",
+        stage: "images",
+        total: 3
+      },
+      reused: true,
+      status: "GENERATING"
+    });
+
+    const response = await POST_GENERATE(
+      new Request("http://localhost/api/decks/generate", {
+        body: JSON.stringify({
+          outlineDraftId: "draft-1"
+        }),
+        method: "POST"
+      })
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(202);
+    expect(payload).not.toHaveProperty("reused");
+    expect(payload.id).toBe("deck-1");
+    expect(deckService.startDeckGenerationTaskForUser).not.toHaveBeenCalled();
+  });
+
+  it("reads async deck generation status", async () => {
+    deckService.getDeckGenerationStatusForUser.mockResolvedValue({
+      details: {
+        current: 3,
+        error: null,
+        projectId: "deck-1",
+        stage: "ready",
+        total: 3
+      },
+      error: null,
+      id: "deck-1",
+      previewUrl: "/workbench/preview/deck-1",
+      progress: {
+        current: 3,
+        message: "ready",
+        stage: "ready",
+        total: 3
+      },
+      status: "READY"
+    });
+
+    const response = await GET_STATUS(
+      new Request("http://localhost/api/decks/deck-1/status"),
+      {
+        params: Promise.resolve({
+          id: "deck-1"
+        })
+      }
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.status).toBe("READY");
+    expect(payload.details).toEqual({
+      current: 3,
+      error: null,
+      projectId: "deck-1",
+      stage: "ready",
+      total: 3
+    });
+    expect(deckService.getDeckGenerationStatusForUser).toHaveBeenCalledWith(
+      "user-1",
+      "deck-1"
+    );
+  });
+
+  it("returns async deck generation failure details", async () => {
+    deckService.getDeckGenerationStatusForUser.mockResolvedValue({
+      details: {
+        current: 0,
+        error: "AI_JSON_GENERATION_FAILED: SlideCompositionPlan validation failed",
+        projectId: "deck-1",
+        stage: "failed",
+        total: 3
+      },
+      error: "AI_JSON_GENERATION_FAILED: SlideCompositionPlan validation failed",
+      id: "deck-1",
+      progress: {
+        current: 0,
+        message: "AI_JSON_GENERATION_FAILED: SlideCompositionPlan validation failed",
+        stage: "failed",
+        total: 3
+      },
+      status: "FAILED"
+    });
+
+    const response = await GET_STATUS(
+      new Request("http://localhost/api/decks/deck-1/status"),
+      {
+        params: Promise.resolve({
+          id: "deck-1"
+        })
+      }
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.error).toContain("AI_JSON_GENERATION_FAILED");
+    expect(payload.details).toMatchObject({
+      error: "AI_JSON_GENERATION_FAILED: SlideCompositionPlan validation failed",
+      projectId: "deck-1",
+      stage: "failed"
+    });
   });
 
   it("lists and opens only current-user deck history", async () => {
@@ -114,6 +255,52 @@ describe("deck routes", () => {
       "user-1",
       "deck-1"
     );
+  });
+
+  it("deletes current-user deck history", async () => {
+    deckService.deleteDeckProjectForUser.mockResolvedValue(undefined);
+
+    const response = await DELETE_DECK(
+      new Request("http://localhost/api/decks/deck-1", {
+        method: "DELETE"
+      }),
+      {
+        params: Promise.resolve({
+          id: "deck-1"
+        })
+      }
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({
+      ok: true
+    });
+    expect(deckService.deleteDeckProjectForUser).toHaveBeenCalledWith(
+      "user-1",
+      "deck-1"
+    );
+  });
+
+  it("returns 409 when deleting deck history with active generation", async () => {
+    deckService.deleteDeckProjectForUser.mockRejectedValue(
+      new ActiveGenerationExistsError()
+    );
+
+    const response = await DELETE_DECK(
+      new Request("http://localhost/api/decks/deck-1", {
+        method: "DELETE"
+      }),
+      {
+        params: Promise.resolve({
+          id: "deck-1"
+        })
+      }
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(payload.error).toBe("ACTIVE_GENERATION_EXISTS");
   });
 
   it("downloads a generated PPTX asset", async () => {

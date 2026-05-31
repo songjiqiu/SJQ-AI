@@ -5,11 +5,13 @@ import {
   getUserDefaultAiEnv,
   getUserDefaultImageEnv
 } from "@/lib/ai-config/service";
+import { createImageQualityReviewer } from "@/lib/ai-deck/image-assets";
 import { createImageLayerGenerator } from "@/lib/ai-deck/image-generator";
 import { requireCurrentUser } from "@/lib/auth/session";
 import {
-  generateDeckFromOutlineDraftForUser,
-  generateDeckFromOutlineDraftSchema
+  createDeckGenerationTaskForUser,
+  generateDeckFromOutlineDraftSchema,
+  startDeckGenerationTaskForUser
 } from "@/lib/decks/service";
 
 export async function POST(request: Request) {
@@ -22,20 +24,34 @@ export async function POST(request: Request) {
       getUserDefaultAiEnv(user.id),
       getUserDefaultImageEnv(user.id)
     ]);
-    const result = await generateDeckFromOutlineDraftForUser(
+    const task = await createDeckGenerationTaskForUser(
       user.id,
-      payload.outlineDraftId,
-      {
+      payload.outlineDraftId
+    );
+
+    if (!task.reused) {
+      startDeckGenerationTaskForUser(user.id, task.id, {
         analyzerOptions: userAiEnv
           ? {
               env: userAiEnv
             }
           : undefined,
-        imageGenerator: createImageLayerGenerator(userImageEnv ?? undefined)
-      }
-    );
+        imageGenerator: createImageLayerGenerator(userImageEnv ?? undefined),
+        imageQualityReviewer: createImageQualityReviewer(userAiEnv)
+      });
+    }
 
-    return NextResponse.json(result);
+    return NextResponse.json(
+      {
+        details: task.details,
+        error: task.error,
+        id: task.id,
+        previewUrl: task.previewUrl,
+        progress: task.progress,
+        status: task.status
+      },
+      { status: 202 }
+    );
   } catch (error) {
     return handleApiError(error);
   }

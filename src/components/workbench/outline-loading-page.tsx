@@ -8,16 +8,109 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
+import type { DeckIntentAnalysisResult } from "@/lib/ai-deck/schema";
 import type { DeckOutlineDraft } from "@/lib/deck-outline/schema";
 
-import { outlinePayloadStorageKey } from "./creation-workbench";
+import {
+  intentAnalysisStorageKey,
+  intentPayloadStorageKey,
+  outlinePayloadStorageKey
+} from "./creation-workbench";
+import {
+  WorkbenchApiError,
+  createWorkbenchApiError
+} from "./api-errors";
 import { WorkbenchStepNav } from "./workbench-shared";
+
+type WorkbenchApiErrorPayload = {
+  details?: unknown;
+  error?: string;
+};
+
+export function IntentAnalysisLoadingPage() {
+  const t = useTranslations("workbench");
+  const router = useRouter();
+  const startedRef = useRef(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<unknown>(null);
+
+  useEffect(() => {
+    if (startedRef.current) {
+      return;
+    }
+
+    startedRef.current = true;
+
+    const payloadText = window.sessionStorage.getItem(intentPayloadStorageKey);
+
+    async function analyzeIntent() {
+      if (!payloadText) {
+        setErrorMessage(t("loading.missingIntentPayload"));
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/decks/outline/analyze", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: payloadText
+        });
+        const payload = (await response.json()) as DeckIntentAnalysisResult &
+          WorkbenchApiErrorPayload;
+
+        if (!response.ok) {
+          throw createWorkbenchApiError(payload, t);
+        }
+
+        window.sessionStorage.setItem(
+          intentAnalysisStorageKey,
+          JSON.stringify(payload)
+        );
+        toast.success(t("toast.intentAnalyzed"));
+        router.replace("/workbench/outline/analyze/confirm");
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : t("toast.failed");
+
+        setErrorMessage(message);
+        setErrorDetails(
+          error instanceof WorkbenchApiError ? error.debugDetails : null
+        );
+        toast.error(message);
+      }
+    }
+
+    void analyzeIntent();
+  }, [router, t]);
+
+  return (
+    <>
+      <WorkbenchStepNav current={1} />
+      <LoadingShell
+        actionLabel={t("loading.backToInput")}
+        description={t("loading.intentDescription")}
+        errorDetails={errorDetails}
+        errorDetailsLabel={t("errors.failureDetails")}
+        errorMessage={errorMessage}
+        icon={errorMessage ? <AlertCircle /> : <WandSparkles />}
+        onAction={() => router.replace("/workbench")}
+        progressLabel={t("loading.intentProgress")}
+        title={
+          errorMessage ? t("loading.intentFailed") : t("loading.intentTitle")
+        }
+      />
+    </>
+  );
+}
 
 export function OutlineLoadingPage() {
   const t = useTranslations("workbench");
   const router = useRouter();
   const startedRef = useRef(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<unknown>(null);
 
   useEffect(() => {
     if (startedRef.current) {
@@ -42,12 +135,11 @@ export function OutlineLoadingPage() {
           },
           body: payloadText
         });
-        const payload = (await response.json()) as DeckOutlineDraft & {
-          error?: string;
-        };
+        const payload = (await response.json()) as DeckOutlineDraft &
+          WorkbenchApiErrorPayload;
 
         if (!response.ok) {
-          throw new Error(payload.error ?? t("toast.failed"));
+          throw createWorkbenchApiError(payload, t);
         }
 
         window.sessionStorage.removeItem(outlinePayloadStorageKey);
@@ -58,6 +150,9 @@ export function OutlineLoadingPage() {
           error instanceof Error ? error.message : t("toast.failed");
 
         setErrorMessage(message);
+        setErrorDetails(
+          error instanceof WorkbenchApiError ? error.debugDetails : null
+        );
         toast.error(message);
       }
     }
@@ -71,6 +166,8 @@ export function OutlineLoadingPage() {
       <LoadingShell
         actionLabel={t("loading.backToInput")}
         description={t("loading.outlineDescription")}
+        errorDetails={errorDetails}
+        errorDetailsLabel={t("errors.failureDetails")}
         errorMessage={errorMessage}
         icon={errorMessage ? <AlertCircle /> : <WandSparkles />}
         onAction={() => router.replace("/workbench")}
@@ -86,6 +183,8 @@ export function OutlineLoadingPage() {
 export function LoadingShell({
   actionLabel,
   description,
+  errorDetails,
+  errorDetailsLabel,
   errorMessage,
   icon,
   onAction,
@@ -94,6 +193,8 @@ export function LoadingShell({
 }: {
   actionLabel: string;
   description: string;
+  errorDetails?: unknown;
+  errorDetailsLabel?: string;
   errorMessage: string | null;
   icon: ReactNode;
   onAction: () => void;
@@ -110,6 +211,16 @@ export function LoadingShell({
         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
           {errorMessage ?? description}
         </p>
+        {errorMessage && errorDetails !== undefined && errorDetails !== null ? (
+          <details className="mt-4 rounded-lg border border-border bg-background text-left">
+            <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-foreground">
+              {errorDetailsLabel}
+            </summary>
+            <pre className="max-h-80 overflow-auto border-t border-border p-3 text-xs leading-5 text-muted">
+              {formatDebugDetails(errorDetails)}
+            </pre>
+          </details>
+        ) : null}
         {!errorMessage && progressLabel ? (
           <div className="mx-auto mt-5 max-w-sm">
             <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
@@ -129,4 +240,16 @@ export function LoadingShell({
       </section>
     </main>
   );
+}
+
+function formatDebugDetails(details: unknown) {
+  if (typeof details === "string") {
+    return details;
+  }
+
+  try {
+    return JSON.stringify(details, null, 2);
+  } catch {
+    return String(details);
+  }
 }

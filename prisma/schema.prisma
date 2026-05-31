@@ -22,6 +22,12 @@ enum DeckAssetKind {
   PPTX
 }
 
+enum ReusableImageAssetStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum AiModelKind {
   LLM
   IMAGE
@@ -43,6 +49,7 @@ model User {
   aiModels     AiModelConfig[]
   deckProjects DeckProject[]
   outlineDrafts DeckOutlineDraft[]
+  reusableImageAssets ReusableImageAsset[]
 
   @@index([role, isActive])
 }
@@ -108,7 +115,9 @@ model DeckProject {
   unifiedVisualSpec     Json
   contentReview         Json
   consistencyReport     Json
+  generationProgress    Json?
   pptxAssetId           String?           @db.VarChar(191)
+  sourceOutlineDraftId  String?           @db.VarChar(191)
   generationError       String?           @db.VarChar(1000)
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
@@ -128,6 +137,7 @@ model DeckOutlineDraft {
   summary           String   @db.VarChar(500)
   input             Json
   fileSummaries     Json
+  intentAnalysis    Json?
   unifiedVisualSpec Json
   slides            Json
   createdAt         DateTime @default(now())
@@ -144,6 +154,7 @@ model DeckSlide {
   slideId               String       @db.VarChar(80)
   index                 Int
   content               Json
+  pageDesign            Json?
   elements              Json
   imageLayerRequests    Json
   generatedImageLayers  Json
@@ -164,6 +175,7 @@ model DeckAsset {
   slideId         String?
   elementId       String?       @db.VarChar(80)
   requestId       String?       @db.VarChar(100)
+  sourceReusableAssetId String?  @db.VarChar(191)
   kind            DeckAssetKind
   provider        String        @db.VarChar(80)
   mimeType        String        @db.VarChar(120)
@@ -175,7 +187,40 @@ model DeckAsset {
   createdAt       DateTime      @default(now())
   project         DeckProject   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   slide           DeckSlide?    @relation(fields: [slideId], references: [id], onDelete: SetNull)
+  sourceReusableAsset ReusableImageAsset? @relation(fields: [sourceReusableAssetId], references: [id], onDelete: SetNull)
 
   @@index([projectId, kind])
   @@index([slideId])
+  @@index([sourceReusableAssetId])
+}
+
+model ReusableImageAsset {
+  id                    String                   @id @default(cuid())
+  userId                String
+  cacheKey              String                   @db.VarChar(64)
+  status                ReusableImageAssetStatus @default(PENDING)
+  provider              String                   @db.VarChar(80)
+  modelId               String                   @db.VarChar(160)
+  imageType             String                   @db.VarChar(40)
+  aspectRatio           String                   @db.VarChar(16)
+  transparentBackground Boolean                  @default(false)
+  prompt                String                   @db.Text
+  avoid                 String                   @db.Text
+  keywords              Json
+  visualStyle           String                   @db.VarChar(500)
+  mimeType              String                   @db.VarChar(120)
+  filename              String                   @db.VarChar(255)
+  relativePath          String                   @db.VarChar(500)
+  sizeBytes             Int
+  width                 Int
+  height                Int
+  qualityReview         Json
+  metadata              Json
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  user                  User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deckAssets            DeckAsset[]
+
+  @@unique([userId, cacheKey])
+  @@index([userId, status])
 }

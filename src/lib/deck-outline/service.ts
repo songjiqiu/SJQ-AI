@@ -1,14 +1,21 @@
 import { Prisma } from "@prisma/client";
 
 import {
+  analyzeDeckIntent,
   createDeckOutline,
   type AnalyzeDeckOptions
 } from "@/lib/ai-deck/analyzer";
-import type { AnalyzeDeckRequest } from "@/lib/ai-deck/schema";
+import {
+  deckOutlineIntentInputSchema,
+  type AnalyzeDeckRequest,
+  type DeckOutlineIntentInput,
+  type DeckIntentAnalysisResult
+} from "@/lib/ai-deck/schema";
 import { NotFoundError } from "@/lib/ai-config/service";
 import { deckInputFileExtensions } from "@/lib/create-deck/file-options";
 import { prisma } from "@/lib/db/prisma";
 import { isMissingPrismaModelStorageError } from "@/lib/db/prisma-errors";
+import { ActiveGenerationExistsError } from "@/lib/decks/errors";
 
 import {
   createDeckOutlineDraftSchema,
@@ -45,6 +52,7 @@ export async function createDeckOutlineDraftForUser(
 
   validateTextFiles(input.textFiles);
 
+  const intentAnalysis = buildConfirmedIntentAnalysis(input);
   const outlineInput = buildAnalyzeDeckRequest(input);
   const outline = await createDeckOutline(outlineInput, options.analyzerOptions);
   const draft = await prisma.deckOutlineDraft.create({
@@ -54,19 +62,25 @@ export async function createDeckOutlineDraftForUser(
       title: outline.deckTitle,
       summary: outline.deckSummary,
       input: toInputJson(outlineInput),
-      fileSummaries: toInputJson(
-        input.textFiles.map((file) => ({
-          characterCount: file.content.length,
-          name: file.name,
-          size: file.size
-        }))
-      ),
+      fileSummaries: toInputJson(intentAnalysis.fileSummaries),
+      intentAnalysis: toInputJson(intentAnalysis),
       unifiedVisualSpec: toInputJson(outline.unifiedVisualSpec),
       slides: toInputJson(outline.slides)
     }
   });
 
   return serializeDeckOutlineDraft(draft);
+}
+
+export async function analyzeDeckOutlineIntentForUser(
+  rawInput: unknown,
+  options: CreateDeckOutlineDraftOptions = {}
+) {
+  const input = deckOutlineIntentInputSchema.parse(rawInput);
+
+  validateTextFiles(input.textFiles);
+
+  return analyzeDeckIntent(input, options.analyzerOptions);
 }
 
 export async function listDeckOutlineDrafts(
@@ -171,18 +185,81 @@ export async function updateDeckOutlineDraftForUser(
   return serializeDeckOutlineDraft(draft);
 }
 
+export async function deleteDeckOutlineDraftForUser(
+  userId: string,
+  draftId: string
+) {
+  const existing = await prisma.deckOutlineDraft.findFirst({
+    where: {
+      id: draftId,
+      userId
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (!existing) {
+    throw new NotFoundError("Outline draft not found");
+  }
+
+  const activeProject = await prisma.deckProject.findFirst({
+    where: {
+      sourceOutlineDraftId: draftId,
+      status: "GENERATING",
+      userId
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (activeProject) {
+    throw new ActiveGenerationExistsError();
+  }
+
+  await prisma.deckOutlineDraft.delete({
+    where: {
+      id: draftId
+    }
+  });
+}
+
 function buildAnalyzeDeckRequest(
   input: CreateDeckOutlineDraftInput
 ): AnalyzeDeckRequest {
   return {
     sourceText: mergeSourceText(input),
-    audience: input.audience,
-    goal: input.goal,
-    pageCount: input.pageCount,
+    audience: input.confirmedIntent.audience,
+    goal: input.confirmedIntent.goal,
+    coreMessage: input.confirmedIntent.coreMessage,
+    pageCount: input.confirmedIntent.recommendedPageCount,
     deckType: input.deckType,
     style: input.style,
     palette: input.palette,
     locale: input.locale
+  };
+}
+
+function buildConfirmedIntentAnalysis(
+  input: CreateDeckOutlineDraftInput
+): DeckIntentAnalysisResult {
+  return {
+    ...input.confirmedIntent,
+    fileSummaries: input.textFiles.map((file) => ({
+      characterCount: file.content.length,
+      name: file.name,
+      size: file.size
+    })),
+    input: {
+      idea: input.idea,
+      sourceText: input.sourceText,
+      textFiles: input.textFiles,
+      deckType: input.deckType,
+      style: input.style,
+      palette: input.palette,
+      locale: input.locale
+    }
   };
 }
 
@@ -199,7 +276,11 @@ function mergeSourceText(input: CreateDeckOutlineDraftInput) {
   return merged.length > 12000 ? merged.slice(0, 12000) : merged;
 }
 
-function validateTextFiles(files: CreateDeckOutlineDraftInput["textFiles"]) {
+function validateTextFiles(
+  files:
+    | CreateDeckOutlineDraftInput["textFiles"]
+    | DeckOutlineIntentInput["textFiles"]
+) {
   const details = files
     .filter((file) => !supportedTextFileExtensions.has(getExtension(file.name)))
     .map((file) => ({
@@ -228,6 +309,7 @@ function serializeDeckOutlineDraft(
     deckSummary: draft.summary,
     input: draft.input,
     fileSummaries: draft.fileSummaries,
+    intentAnalysis: readIntentAnalysis(draft),
     unifiedVisualSpec: draft.unifiedVisualSpec,
     slides: draft.slides,
     createdAt: draft.createdAt.toISOString(),
@@ -241,4 +323,10 @@ function parseMode(mode: string): "ai-json" | "mock" {
 
 function toInputJson(value: unknown) {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+}
+
+function readIntentAnalysis(
+  draft: Prisma.DeckOutlineDraftGetPayload<Record<string, never>>
+) {
+  return "intentAnalysis" in draft ? draft.intentAnalysis ?? undefined : undefined;
 }

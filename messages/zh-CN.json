@@ -414,7 +414,7 @@
   },
   "workbench": {
     "title": "创作工作台",
-    "subtitle": "从创作想法生成可预览、可下载、可追溯的完整 PPT。",
+    "subtitle": "从创作想法生成可预览、可下载、可追溯的 PPT。",
     "form": {
       "aria": "PPT创作表单"
     },
@@ -429,17 +429,6 @@
         "limit": "单个文件最大 10MB",
         "tooLarge": "已忽略超过 10MB 的文件"
       },
-      "audience": {
-        "label": "目标受众",
-        "placeholder": "例如：投资人、客户、内部团队"
-      },
-      "goal": {
-        "label": "表达目标",
-        "placeholder": "例如：获得试点合作意向"
-      },
-      "pageCount": {
-        "label": "页数"
-      },
       "deckType": {
         "label": "PPT类型"
       },
@@ -451,19 +440,21 @@
       }
     },
     "validation": {
-      "idea": "请至少输入 10 个字的原始文本或创作想法。",
-      "audience": "请补充目标受众。",
-      "goal": "请补充表达目标。",
-      "pageCount": "页数需为 3 到 12 之间的整数。"
+      "idea": "请至少输入 10 个字的原始文本或创作想法。"
     },
     "actions": {
       "reset": "重置",
-      "generate": "生成完整PPT",
+      "generate": "生成预览PPT",
       "generating": "生成中",
       "generateOutline": "生成大纲草稿",
       "generatingOutline": "生成大纲中",
+      "confirmIntent": "确认并生成大纲",
+      "editOutline": "编辑大纲",
+      "cancelEdit": "取消编辑",
       "saveOutline": "保存大纲",
       "savingOutline": "保存中",
+      "delete": "删除",
+      "deleting": "删除中",
       "download": "下载PPTX",
       "playMotion": "播放动效",
       "pauseMotion": "暂停动效",
@@ -471,12 +462,27 @@
     },
     "toast": {
       "generated": "PPT 已生成并保存到历史记录",
+      "intentAnalyzed": "输入分析已生成",
+      "intentInvalid": "请检查受众、目标、核心信息和页数。",
       "outlineGenerated": "大纲草稿已生成",
       "outlineSaved": "大纲草稿已保存",
       "outlineLoadFailed": "大纲草稿读取失败，请稍后重试。",
       "outlineSaveFailed": "大纲草稿保存失败，请检查内容后重试。",
+      "draftDeleted": "大纲草稿已删除",
+      "historyDeleted": "生成历史已删除",
+      "deleteDraftFailed": "大纲草稿删除失败，请稍后重试。",
+      "deleteHistoryFailed": "生成历史删除失败，请稍后重试。",
       "failed": "AI 生成失败，请稍后重试。",
       "loadFailed": "历史 PPT 读取失败，请稍后重试。"
+    },
+    "errors": {
+      "aiJsonGenerationFailed": "AI 返回内容暂未通过结构化校验，已自动尝试兼容修复但仍失败。请稍后重试，或在体验设置中检查当前 LLM 模型是否稳定支持 JSON 输出。",
+      "databaseMigrationRequired": "数据库迁移未完成，请先运行 pnpm db:migrate 后重试。",
+      "debugDetails": "调试详情",
+      "failureDetails": "失败详情",
+      "activeGenerationExists": "该内容正在生成中，完成后再删除。",
+      "unauthorized": "登录已失效，请重新登录。",
+      "validation": "输入内容或大纲结构不符合要求，请检查后重试。"
     },
     "preview": {
       "aria": "PPT页面结构预览",
@@ -503,15 +509,19 @@
       "aria": "PPT生成历史",
       "title": "生成历史",
       "loading": "加载中",
-      "empty": "暂无历史 PPT，生成后会自动保存在这里。",
-      "meta": "{count} 页 · 审核 {review} · 一致性 {consistency}"
+      "empty": "暂无已完成 PPT，生成成功后会自动保存在这里。",
+      "meta": "{count} 页 · 审核 {review} · 一致性 {consistency}",
+      "deleteAria": "删除生成历史：{title}",
+      "confirmDelete": "确定删除生成历史“{title}”吗？本地 PPTX 和图片图层产物也会被清理。"
     },
     "drafts": {
       "aria": "PPT大纲草稿",
       "title": "大纲草稿",
       "loading": "加载中",
       "empty": "暂无大纲草稿，生成第一步后会保存在这里。",
-      "meta": "{mode} · {count} 页"
+      "meta": "{mode} · {count} 页",
+      "deleteAria": "删除大纲草稿：{title}",
+      "confirmDelete": "确定删除大纲草稿“{title}”吗？"
     },
     "review": {
       "title": "内容审核"
@@ -523,25 +533,52 @@
       "title": "统一视觉说明"
     },
     "loading": {
+      "intentTitle": "正在分析输入",
+      "intentDescription": "AI 正在判断受众、表达目标、核心信息，并推荐合适页数。",
+      "intentFailed": "输入分析失败",
       "outlineTitle": "正在生成大纲草稿",
       "outlineDescription": "AI 正在整理想法、文本和文件内容，并生成多页文案大纲与统一视觉说明。",
       "outlineFailed": "大纲生成失败",
-      "generateTitle": "正在生成完整 PPT",
+      "generateTitle": "正在生成预览 PPT",
       "generateDescription": "AI 正在基于已确认的大纲编排页面图层、生成图片请求、审核内容并合成 PPTX。",
-      "generateFailed": "完整 PPT 生成失败",
-      "missingOutlinePayload": "没有找到待生成的大纲输入，请返回输入页重新提交。",
+      "generateFailed": "预览 PPT 生成失败",
+      "generateBackgroundTitle": "生成仍在后台继续",
+      "missingIntentPayload": "没有找到待分析的输入，请返回输入页重新提交。",
+      "missingOutlinePayload": "没有找到已确认的大纲输入，请返回输入页重新提交。",
       "missingGeneratePayload": "没有找到待生成的草稿信息，请返回输入页重新选择大纲。",
       "backToInput": "返回输入页",
-      "outlineProgress": "正在分析输入、拆分页面并生成统一视觉说明。",
-      "generateProgress": "正在编排图层、生成图片、审核内容并合成 PPTX。"
+      "intentProgress": "正在生成受众、目标、核心信息和推荐页数。",
+      "outlineProgress": "正在生成结构大纲、统一视觉说明和每页文案 JSON。",
+      "generateProgress": "正在编排图层、生成图片、审核内容并合成 PPTX。",
+      "generateBackgroundProgress": "任务耗时较长，但没有失败。你可以留在本页等待自动进入预览，也可以返回输入页，完成后会出现在生成历史中。"
+    },
+    "intent": {
+      "title": "确认输入分析",
+      "subtitle": "请确认 AI 对受众、目标、核心信息和页数的判断。PPT 类型和叙事风格会作为不可变引用进入后续生成。",
+      "loading": "正在读取输入分析结果...",
+      "analysisTitle": "输入分析",
+      "filesTitle": "已添加文件",
+      "fileMeta": "{characters} 字符 · {size} B",
+      "pageCountBadge": "推荐 {count} 页",
+      "footerMeta": "确认后将生成结构大纲、统一视觉说明和每页详细文案 JSON。",
+      "fields": {
+        "audience": "目标受众",
+        "goal": "表达目标",
+        "coreMessage": "核心信息",
+        "recommendedPageCount": "推荐页数"
+      }
     },
     "outline": {
       "title": "大纲草稿",
       "reviewTitle": "确认并修改大纲",
-      "reviewSubtitle": "第二步将严格使用这里保存后的大纲、统一视觉说明和每页文案生成完整 PPT。",
+      "reviewSubtitle": "先确认 AI 生成的大纲；需要调整时点击编辑，预览 PPT 将严格使用已保存的大纲生成。",
       "slideCount": "{count} 页",
       "slides": "页面大纲",
       "slideEditor": "页面文案编辑",
+      "previewAria": "大纲只读预览",
+      "previewMode": "预览模式",
+      "editMode": "编辑模式",
+      "readonlyHint": "默认展示已保存大纲，不会直接修改内容；点击编辑后可调整标题、目录、页面文案和统一视觉说明。",
       "fields": {
         "deckTitle": "整套标题",
         "deckSummary": "整套摘要",
@@ -561,6 +598,7 @@
       },
       "footerMeta": "共 {count} 张卡片 · {title}",
       "cover": "封面",
+      "chapter": "章节",
       "content": "内容",
       "directory": "目录",
       "selectSlide": "定位"

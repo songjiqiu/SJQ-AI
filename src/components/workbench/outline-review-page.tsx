@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Layers3, Save } from "lucide-react";
+import { ArrowLeft, Layers3, PencilLine, Save, Trash2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -10,7 +10,15 @@ import { useRouter } from "@/i18n/navigation";
 import type { DeckOutlineDraft } from "@/lib/deck-outline/schema";
 
 import { generatePayloadStorageKey } from "./creation-workbench";
-import { OutlineDraftEditor, WorkbenchStepNav } from "./workbench-shared";
+import {
+  deleteWorkbenchResource,
+  getWorkbenchApiErrorMessage
+} from "./api-errors";
+import {
+  OutlineDraftEditor,
+  OutlineDraftPreview,
+  WorkbenchStepNav
+} from "./workbench-shared";
 
 export function OutlineReviewPage({
   initialDraft
@@ -19,21 +27,55 @@ export function OutlineReviewPage({
 }) {
   const t = useTranslations("workbench");
   const router = useRouter();
+  const [savedDraft, setSavedDraft] = useState(initialDraft);
   const [draft, setDraft] = useState(initialDraft);
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isContinuing, setIsContinuing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const visibleDraft = isEditing ? draft : savedDraft;
   const selectedSlide = draft.slides[selectedSlideIndex] ?? draft.slides[0];
+  const getOutlineErrorMessage = (code?: string) =>
+    code ? getWorkbenchApiErrorMessage(code, t) : t("toast.outlineSaveFailed");
+
+  const beginEditing = () => {
+    setDraft(savedDraft);
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setDraft(savedDraft);
+    setIsEditing(false);
+  };
+
+  const startGenerate = (outlineDraftId: string) => {
+    window.sessionStorage.setItem(
+      generatePayloadStorageKey,
+      JSON.stringify({
+        outlineDraftId
+      })
+    );
+    router.push("/workbench/generate/loading");
+  };
 
   const saveDraft = async () => {
     setIsSaving(true);
 
     try {
-      const saved = await persistDraft(draft, t("toast.outlineSaveFailed"));
+      const saved = await persistDraft(draft, getOutlineErrorMessage);
 
+      setSavedDraft(saved);
       setDraft(saved);
+      setIsEditing(false);
       toast.success(t("toast.outlineSaved"));
       return saved;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : t("toast.outlineSaveFailed");
+
+      toast.error(message);
+      return undefined;
     } finally {
       setIsSaving(false);
     }
@@ -42,17 +84,19 @@ export function OutlineReviewPage({
   const continueToGenerate = async () => {
     setIsContinuing(true);
 
-    try {
-      const saved = await persistDraft(draft, t("toast.outlineSaveFailed"));
+    if (!isEditing) {
+      startGenerate(savedDraft.id);
+      return;
+    }
 
-      window.sessionStorage.setItem(
-        generatePayloadStorageKey,
-        JSON.stringify({
-          outlineDraftId: saved.id
-        })
-      );
+    try {
+      const saved = await persistDraft(draft, getOutlineErrorMessage);
+
+      setSavedDraft(saved);
+      setDraft(saved);
+      setIsEditing(false);
       toast.success(t("toast.outlineSaved"));
-      router.push("/workbench/generate/loading");
+      startGenerate(saved.id);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : t("toast.outlineSaveFailed");
@@ -62,11 +106,41 @@ export function OutlineReviewPage({
     }
   };
 
+  const deleteDraft = async () => {
+    if (
+      !window.confirm(
+        t("drafts.confirmDelete", {
+          title: savedDraft.deckTitle
+        })
+      )
+    ) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      await deleteWorkbenchResource(
+        `/api/decks/outline/${savedDraft.id}`,
+        t,
+        t("toast.deleteDraftFailed")
+      );
+      toast.success(t("toast.draftDeleted"));
+      router.push("/workbench");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : t("toast.deleteDraftFailed");
+
+      toast.error(message);
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <main className="min-h-[calc(100vh-4rem)]">
       <WorkbenchStepNav current={2} />
       <div className="mx-auto grid max-w-6xl gap-4 px-4 py-5 pb-28">
-        <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <section className="grid gap-3">
           <div>
             <button
               className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-muted outline-none transition hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent"
@@ -83,32 +157,50 @@ export function OutlineReviewPage({
               {t("outline.reviewSubtitle")}
             </p>
           </div>
-          <span className="rounded-full bg-accent-soft px-3 py-1 text-sm font-medium text-accent-strong">
-            {t("outline.slideCount", { count: draft.slides.length })}
-          </span>
         </section>
 
-        <OutlineDraftEditor
-          draft={draft}
-          selectedSlide={selectedSlide}
-          selectedSlideIndex={selectedSlideIndex}
-          setDraft={setDraft}
-          setSelectedSlideIndex={setSelectedSlideIndex}
-          variant="cards"
-        />
+        {isEditing ? (
+          <OutlineDraftEditor
+            draft={draft}
+            selectedSlide={selectedSlide}
+            selectedSlideIndex={selectedSlideIndex}
+            setDraft={setDraft}
+            setSelectedSlideIndex={setSelectedSlideIndex}
+            variant="cards"
+          />
+        ) : (
+          <OutlineDraftPreview draft={savedDraft} />
+        )}
       </div>
 
       <footer className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/92 px-4 py-3 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-muted">
+        <div className="mx-auto grid max-w-6xl gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-center">
+          <div className="min-w-0 text-sm text-muted">
             {t("outline.footerMeta", {
-              count: draft.slides.length,
-              title: draft.deckTitle
+              count: visibleDraft.slides.length,
+              title: visibleDraft.deckTitle
             })}
           </div>
-          <div className="flex flex-wrap gap-2 sm:justify-end">
+          <OutlineModeControls
+            disabled={isEditing ? isSaving || isContinuing : isContinuing}
+            isEditing={isEditing}
+            onBeginEditing={beginEditing}
+            onCancelEditing={cancelEditing}
+            slideCount={visibleDraft.slides.length}
+          />
+          <div className="flex flex-wrap gap-2 lg:justify-end">
+            <Button
+              disabled={isSaving || isContinuing || isDeleting}
+              onClick={() => void deleteDraft()}
+              type="button"
+              variant="secondary"
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
+              {isDeleting ? t("actions.deleting") : t("actions.delete")}
+            </Button>
+            {isEditing ? (
               <Button
-                disabled={isSaving || isContinuing}
+                disabled={isSaving || isContinuing || isDeleting}
                 onClick={() => void saveDraft()}
                 type="button"
                 variant="secondary"
@@ -116,14 +208,15 @@ export function OutlineReviewPage({
                 <Save className="size-4" aria-hidden="true" />
                 {isSaving ? t("actions.savingOutline") : t("actions.saveOutline")}
               </Button>
-              <Button
-                disabled={isSaving || isContinuing}
-                onClick={() => void continueToGenerate()}
-                type="button"
-              >
-                <Layers3 className="size-4" aria-hidden="true" />
-                {isContinuing ? t("actions.generating") : t("actions.generate")}
-              </Button>
+            ) : null}
+            <Button
+              disabled={isSaving || isContinuing || isDeleting}
+              onClick={() => void continueToGenerate()}
+              type="button"
+            >
+              <Layers3 className="size-4" aria-hidden="true" />
+              {isContinuing ? t("actions.generating") : t("actions.generate")}
+            </Button>
           </div>
         </div>
       </footer>
@@ -131,7 +224,58 @@ export function OutlineReviewPage({
   );
 }
 
-async function persistDraft(draft: DeckOutlineDraft, fallbackMessage: string) {
+function OutlineModeControls({
+  disabled,
+  isEditing,
+  onBeginEditing,
+  onCancelEditing,
+  slideCount
+}: {
+  disabled: boolean;
+  isEditing: boolean;
+  onBeginEditing: () => void;
+  onCancelEditing: () => void;
+  slideCount: number;
+}) {
+  const t = useTranslations("workbench");
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+      <span className="rounded-full bg-surface-muted px-3 py-1 text-sm font-medium text-muted">
+        {t(isEditing ? "outline.editMode" : "outline.previewMode")}
+      </span>
+      <span className="rounded-full bg-accent-soft px-3 py-1 text-sm font-medium text-accent-strong">
+        {t("outline.slideCount", { count: slideCount })}
+      </span>
+      {isEditing ? (
+        <Button
+          disabled={disabled}
+          onClick={onCancelEditing}
+          type="button"
+          variant="secondary"
+        >
+          <X className="size-4" aria-hidden="true" />
+          {t("actions.cancelEdit")}
+        </Button>
+      ) : (
+        <Button
+          disabled={disabled}
+          onClick={onBeginEditing}
+          type="button"
+          variant="secondary"
+        >
+          <PencilLine className="size-4" aria-hidden="true" />
+          {t("actions.editOutline")}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+async function persistDraft(
+  draft: DeckOutlineDraft,
+  getErrorMessage: (code?: string) => string
+) {
   const response = await fetch(`/api/decks/outline/${draft.id}`, {
     method: "PATCH",
     headers: {
@@ -149,7 +293,7 @@ async function persistDraft(draft: DeckOutlineDraft, fallbackMessage: string) {
   };
 
   if (!response.ok) {
-    throw new Error(payload.error ?? fallbackMessage);
+    throw new Error(getErrorMessage(payload.error));
   }
 
   return payload;

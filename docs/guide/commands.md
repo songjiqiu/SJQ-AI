@@ -28,7 +28,7 @@ NEXT_ALLOWED_DEV_ORIGINS=192.168.0.117
 pnpm test
 ```
 
-当前测试使用 Vitest 和 React Testing Library，覆盖中英文资源 key、角色入口分流、认证跳转、管理端入口、创作表单 schema、完整 PPT 生成管线、Next.js deck API 和工作台基础交互。默认测试不包含生产打包。
+当前测试使用 Vitest 和 React Testing Library，覆盖中英文资源 key、角色入口分流、认证跳转、管理端入口、创作表单 schema、异步预览 PPT 生成管线、Next.js deck API、图片素材缓存和工作台基础交互。默认测试不包含生产打包。
 
 ## 静态检查
 
@@ -44,7 +44,9 @@ pnpm db:generate
 pnpm db:migrate
 ```
 
-数据库连接由 `DATABASE_URL` 提供，例如 `mysql://root:root@localhost:3306/ai-ppt`。Prisma 7 的连接串在 `prisma.config.ts` 中读取，运行迁移前需要确保 MySQL 服务可用且数据库已创建。
+数据库连接由 `DATABASE_URL` 提供，例如 `mysql://root:root@localhost:3306/ai-ppt?allowPublicKeyRetrieval=true`。Prisma 7 的连接串在 `prisma.config.ts` 中读取，运行迁移前需要确保 MySQL 服务可用且数据库已创建。
+
+本地 MySQL 8 使用默认 `caching_sha2_password` 且未启用 TLS 时，需要保留 `allowPublicKeyRetrieval=true`。缺少该参数时，MariaDB 驱动无法在认证阶段获取 RSA 公钥，Prisma 页面请求可能被包装成 `DriverAdapterError: pool timeout`。
 
 本地出现 AI 供应商、LLM 模型、图片模型、向量模型新增失败或查询失败时，先检查迁移是否完整：
 

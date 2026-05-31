@@ -4,15 +4,17 @@ import { ZodError } from "zod";
 import { handleApiError } from "@/lib/api/responses";
 import { getUserDefaultAiEnv } from "@/lib/ai-config/service";
 import { analyzeDeck } from "@/lib/ai-deck/analyzer";
+import { analyzeDeckRequestSchema } from "@/lib/ai-deck/schema";
 import { requireCurrentUser, UnauthorizedError } from "@/lib/auth/session";
 
 export async function POST(request: Request) {
   try {
     const user = await requireCurrentUser();
     const payload = await request.json();
+    const parsedPayload = analyzeDeckRequestSchema.parse(payload);
     const userAiEnv = await getUserDefaultAiEnv(user.id);
     const result = await analyzeDeck(
-      payload,
+      parsedPayload,
       userAiEnv
         ? {
             env: userAiEnv

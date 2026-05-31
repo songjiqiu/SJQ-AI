@@ -4,7 +4,14 @@ import type {
   ConsistencyReport,
   ContentReview,
   SlideCompositionPlan,
+  SlideElement,
   SlideMotionPlan
+} from "./schema";
+import {
+  slideCanvasHeight,
+  slideCanvasSafeMargin,
+  slideCanvasUnit,
+  slideCanvasWidth
 } from "./schema";
 
 const sensitivePatterns = [
@@ -205,6 +212,101 @@ export function buildConsistencyReport(
   };
 }
 
+export function normalizeSlideCompositionPlan(
+  slide: SlideCompositionPlan
+): SlideCompositionPlan {
+  const convertedElements = slide.elements.map((element) => ({
+    ...element,
+    bounds: normalizeBounds(element.bounds)
+  }));
+  const diagnostics = analyzeSlideLayout({
+    elements: convertedElements
+  });
+
+  return {
+    ...slide,
+    canvas: normalizedCanvas(),
+    elements: convertedElements.map((element) =>
+      fitTextElementWithinBounds(element, diagnostics.hasOverflow)
+    ),
+    layoutDiagnostics: mergeLayoutDiagnostics(slide.layoutDiagnostics, diagnostics)
+  };
+}
+
+export function analyzeSlideLayout(slide: Pick<SlideCompositionPlan, "elements">) {
+  const warnings: string[] = [];
+  let hasOverflow = false;
+  let overlapCount = 0;
+  let textOverflowCount = 0;
+  const elements = slide.elements;
+  const usedArea = elements.reduce(
+    (sum, element) => sum + element.bounds.width * element.bounds.height,
+    0
+  );
+  const density = round(Math.min(1, usedArea / (slideCanvasWidth * slideCanvasHeight)));
+
+  for (const element of elements) {
+    const overflows =
+      element.bounds.x < 0 ||
+      element.bounds.y < 0 ||
+      element.bounds.x + element.bounds.width > slideCanvasWidth ||
+      element.bounds.y + element.bounds.height > slideCanvasHeight;
+
+    if (overflows) {
+      hasOverflow = true;
+      warnings.push(`元素 ${element.id} 超出页面边界。`);
+    }
+
+    if (element.type === "text" && estimateTextOverflow(element)) {
+      textOverflowCount += 1;
+      hasOverflow = true;
+      warnings.push(`文本元素 ${element.id} 可能溢出。`);
+    }
+  }
+
+  for (let index = 0; index < elements.length; index += 1) {
+    for (let next = index + 1; next < elements.length; next += 1) {
+      if (elementsOverlap(elements[index], elements[next])) {
+        overlapCount += 1;
+      }
+    }
+  }
+
+  if (overlapCount > 0) {
+    warnings.push(`${overlapCount} 组元素存在重叠。`);
+  }
+
+  if (density > 0.82) {
+    warnings.push("页面内容密度过高，需要用户确认。");
+  } else if (density > 0.72) {
+    warnings.push("页面内容密度偏高。");
+  }
+
+  const needsUserConfirmation = hasOverflow || overlapCount > 0 || density > 0.82;
+  const overflowFixes: Array<
+    "reduce-font-size" | "compress-copy" | "adjust-layout" | "suggest-split" | "needs-user-confirmation"
+  > = [];
+
+  if (textOverflowCount > 0 || hasOverflow) {
+    overflowFixes.push("reduce-font-size", "compress-copy", "adjust-layout");
+  }
+
+  if (density > 0.82) {
+    overflowFixes.push("suggest-split", "needs-user-confirmation");
+  }
+
+  return {
+    density,
+    hasOverflow,
+    needsUserConfirmation,
+    overflowFixes: Array.from(new Set(overflowFixes)),
+    splitSuggestion: needsUserConfirmation
+      ? "建议人工确认是否需要拆分页面；v1 不会自动增加页数。"
+      : undefined,
+    warnings: warnings.slice(0, 8)
+  };
+}
+
 export function buildSlideMotionPlan(slide: SlideCompositionPlan): SlideMotionPlan {
   const preset = slide.index % 3 === 0 ? "focus" : slide.index % 2 === 0 ? "rise" : "fade";
   const baseDelay = 80;
@@ -226,12 +328,128 @@ export function buildSlideMotionPlan(slide: SlideCompositionPlan): SlideMotionPl
 function scoreSlideLayout(slide: SlideCompositionPlan) {
   const overflowCount = slide.elements.filter(
     (element) =>
-      element.bounds.x + element.bounds.width > 100 ||
-      element.bounds.y + element.bounds.height > 100
+      element.bounds.x + element.bounds.width > slideCanvasWidth ||
+      element.bounds.y + element.bounds.height > slideCanvasHeight
   ).length;
   const crowdedCount = slide.elements.filter(
     (element) => element.bounds.width * element.bounds.height > 5200
   ).length;
 
   return Math.max(60, 98 - overflowCount * 20 - crowdedCount * 4);
+}
+
+function normalizedCanvas() {
+  return {
+    aspectRatio: "16:9" as const,
+    height: slideCanvasHeight as 7.5,
+    safeMargin: slideCanvasSafeMargin as 0.5,
+    unit: slideCanvasUnit as "inch",
+    width: slideCanvasWidth as 13.333
+  };
+}
+
+function normalizeBounds(bounds: SlideElement["bounds"]) {
+  const isLegacyPercent =
+    bounds.x > slideCanvasWidth ||
+    bounds.y > slideCanvasHeight ||
+    bounds.width > slideCanvasWidth ||
+    bounds.height > slideCanvasHeight;
+  const normalized = isLegacyPercent
+    ? {
+        x: (bounds.x / 100) * slideCanvasWidth,
+        y: (bounds.y / 100) * slideCanvasHeight,
+        width: (bounds.width / 100) * slideCanvasWidth,
+        height: (bounds.height / 100) * slideCanvasHeight
+      }
+    : bounds;
+
+  return {
+    x: round(clamp(normalized.x, 0, slideCanvasWidth - 0.05)),
+    y: round(clamp(normalized.y, 0, slideCanvasHeight - 0.05)),
+    width: round(clamp(normalized.width, 0.05, slideCanvasWidth - normalized.x)),
+    height: round(clamp(normalized.height, 0.05, slideCanvasHeight - normalized.y))
+  };
+}
+
+function fitTextElementWithinBounds(element: SlideElement, hasOverflow: boolean) {
+  if (element.type !== "text" || !element.textStyle || !hasOverflow) {
+    return element;
+  }
+
+  return {
+    ...element,
+    textStyle: {
+      ...element.textStyle,
+      fontSize: Math.max(8, element.textStyle.fontSize - 2)
+    }
+  };
+}
+
+function estimateTextOverflow(element: SlideElement) {
+  if (element.type !== "text" || !element.content) {
+    return false;
+  }
+
+  const fontSize = element.textStyle?.fontSize ?? 14;
+  const lineHeight = element.textStyle?.lineHeight ?? 1.25;
+  const maxLines = element.textStyle?.maxLines ?? 6;
+  const charsPerLine = Math.max(
+    1,
+    Math.floor(element.bounds.width / ((fontSize * 0.55) / 72))
+  );
+  const explicitLines = element.content.split(/\n/);
+  const estimatedLines = explicitLines.reduce(
+    (sum, line) => sum + Math.max(1, Math.ceil([...line].length / charsPerLine)),
+    0
+  );
+  const requiredHeight = ((fontSize * lineHeight) / 72) * estimatedLines;
+
+  return estimatedLines > maxLines || requiredHeight > element.bounds.height;
+}
+
+function elementsOverlap(a: SlideElement, b: SlideElement) {
+  if (a.zIndex !== b.zIndex && (a.semanticType === "background" || b.semanticType === "background")) {
+    return false;
+  }
+
+  const horizontal =
+    a.bounds.x < b.bounds.x + b.bounds.width &&
+    a.bounds.x + a.bounds.width > b.bounds.x;
+  const vertical =
+    a.bounds.y < b.bounds.y + b.bounds.height &&
+    a.bounds.y + a.bounds.height > b.bounds.y;
+  const area =
+    Math.min(a.bounds.x + a.bounds.width, b.bounds.x + b.bounds.width) -
+    Math.max(a.bounds.x, b.bounds.x);
+  const height =
+    Math.min(a.bounds.y + a.bounds.height, b.bounds.y + b.bounds.height) -
+    Math.max(a.bounds.y, b.bounds.y);
+
+  return horizontal && vertical && area * height > 0.04;
+}
+
+function mergeLayoutDiagnostics(
+  original: SlideCompositionPlan["layoutDiagnostics"],
+  computed: SlideCompositionPlan["layoutDiagnostics"]
+) {
+  return {
+    ...original,
+    density: computed.density,
+    hasOverflow: original.hasOverflow || computed.hasOverflow,
+    needsUserConfirmation:
+      original.needsUserConfirmation || computed.needsUserConfirmation,
+    overflowFixes: Array.from(
+      new Set([...original.overflowFixes, ...computed.overflowFixes])
+    ),
+    splitSuggestion: computed.splitSuggestion ?? original.splitSuggestion,
+    warnings: Array.from(new Set([...original.warnings, ...computed.warnings])).slice(0, 8)
+  };
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function round(value: number) {
+  return Math.round(value * 1000) / 1000;
 }

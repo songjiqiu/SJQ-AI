@@ -7,9 +7,7 @@ import {
 
 const validForm = {
   ...createDeckFormDefaults,
-  idea: "为新能源初创公司准备融资路演",
-  audience: "投资人",
-  goal: "获得试点合作意向"
+  idea: "为新能源初创公司准备融资路演"
 };
 
 describe("createDeckFormSchema", () => {
@@ -61,15 +59,9 @@ describe("createDeckFormSchema", () => {
     expect(
       createDeckFormSchema.safeParse({ ...validForm, idea: "短" }).success
     ).toBe(false);
-    expect(
-      createDeckFormSchema.safeParse({ ...validForm, audience: "" }).success
-    ).toBe(false);
-    expect(
-      createDeckFormSchema.safeParse({ ...validForm, goal: "" }).success
-    ).toBe(false);
   });
 
-  it("limits page count to 3 through 12", () => {
+  it("limits page count to 3 through 18", () => {
     expect(
       createDeckFormSchema.safeParse({ ...validForm, pageCount: 2 }).success
     ).toBe(false);
@@ -77,10 +69,10 @@ describe("createDeckFormSchema", () => {
       createDeckFormSchema.safeParse({ ...validForm, pageCount: 3 }).success
     ).toBe(true);
     expect(
-      createDeckFormSchema.safeParse({ ...validForm, pageCount: 12 }).success
+      createDeckFormSchema.safeParse({ ...validForm, pageCount: 18 }).success
     ).toBe(true);
     expect(
-      createDeckFormSchema.safeParse({ ...validForm, pageCount: 13 }).success
+      createDeckFormSchema.safeParse({ ...validForm, pageCount: 19 }).success
     ).toBe(false);
   });
 });

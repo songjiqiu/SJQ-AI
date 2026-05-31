@@ -25,6 +25,7 @@ export type ImageLayerGeneration = {
 };
 
 export interface ImageLayerGenerator {
+  modelId?: string;
   generateLayer(
     context: ImageLayerGenerationContext
   ): Promise<ImageLayerGeneration>;
@@ -51,6 +52,8 @@ type OpenAIImagesClient = {
 };
 
 export class MockImageLayerGenerator implements ImageLayerGenerator {
+  readonly modelId = "mock-svg";
+
   async generateLayer({
     request,
     slide,
@@ -101,7 +104,7 @@ export class MockImageLayerGenerator implements ImageLayerGenerator {
 export class OpenAIImageLayerGenerator implements ImageLayerGenerator {
   private readonly client: OpenAIImagesClient;
   private readonly fallback = new MockImageLayerGenerator();
-  private readonly model: string;
+  readonly modelId: string;
 
   constructor({
     client,
@@ -110,7 +113,7 @@ export class OpenAIImageLayerGenerator implements ImageLayerGenerator {
     client?: OpenAIImagesClient;
     env: AiImageEnv;
   }) {
-    this.model = env.AI_IMAGE_MODEL || "gpt-image-2";
+    this.modelId = env.AI_IMAGE_MODEL || "gpt-image-2";
     this.client =
       client ??
       (new OpenAI({
@@ -123,10 +126,10 @@ export class OpenAIImageLayerGenerator implements ImageLayerGenerator {
     context: ImageLayerGenerationContext
   ): Promise<ImageLayerGeneration> {
     try {
-      const size = getImageApiSize(context.request.aspectRatio, this.model);
+      const size = getImageApiSize(context.request.aspectRatio, this.modelId);
       const response = await this.client.images.generate({
-        background: getImageBackground(context.request, this.model),
-        model: this.model,
+        background: getImageBackground(context.request, this.modelId),
+        model: this.modelId,
         moderation: "auto",
         n: 1,
         output_format: "png",
@@ -149,13 +152,13 @@ export class OpenAIImageLayerGenerator implements ImageLayerGenerator {
         height,
         metadata: {
           aspectRatio: context.request.aspectRatio,
-          model: this.model,
+          model: this.modelId,
           requestedSize: size,
           revisedPrompt: image?.revised_prompt,
           transparentBackground: context.request.transparentBackground
         },
         mimeType: "image/png",
-        provider: this.model,
+        provider: this.modelId,
         width
       };
     } catch (error) {
@@ -166,9 +169,9 @@ export class OpenAIImageLayerGenerator implements ImageLayerGenerator {
         metadata: {
           ...generated.metadata,
           fallbackReason: error instanceof Error ? error.message : String(error),
-          requestedModel: this.model
+          requestedModel: this.modelId
         },
-        provider: `${this.model}-fallback-mock-svg`
+        provider: `${this.modelId}-fallback-mock-svg`
       };
     }
   }

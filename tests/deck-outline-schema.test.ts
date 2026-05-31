@@ -13,12 +13,17 @@ const validInput = {
       content: "## 试点数据\n转化率提升 20%。"
     }
   ],
-  audience: "投资人",
-  goal: "获得试点合作意向",
-  pageCount: 4,
   style: "strategic",
   palette: "star-map",
-  locale: "zh-CN"
+  locale: "zh-CN",
+  confirmedIntent: {
+    deckType: "business-report",
+    style: "strategic",
+    audience: "投资人",
+    goal: "获得试点合作意向",
+    coreMessage: "用市场机会与试点成果证明合作价值。",
+    recommendedPageCount: 4
+  }
 };
 
 describe("createDeckOutlineDraftSchema", () => {
@@ -34,7 +39,12 @@ describe("createDeckOutlineDraftSchema", () => {
     const parsed = createDeckOutlineDraftSchema.parse({
       ...validInput,
       deckType: "research-report",
-      style: "data"
+      style: "data",
+      confirmedIntent: {
+        ...validInput.confirmedIntent,
+        deckType: "research-report",
+        style: "data"
+      }
     });
 
     expect(parsed.deckType).toBe("research-report");
@@ -45,6 +55,21 @@ describe("createDeckOutlineDraftSchema", () => {
     const parsed = createDeckOutlineDraftSchema.parse(validInput);
 
     expect(parsed.deckType).toBe("business-report");
+  });
+
+  it("requires confirmed intent to keep the original deck type and style", () => {
+    expect(
+      createDeckOutlineDraftSchema.safeParse({
+        ...validInput,
+        deckType: "research-report"
+      }).success
+    ).toBe(false);
+    expect(
+      createDeckOutlineDraftSchema.safeParse({
+        ...validInput,
+        style: "data"
+      }).success
+    ).toBe(false);
   });
 
   it("limits text files to five and 10MB each", () => {

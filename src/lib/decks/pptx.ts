@@ -6,9 +6,6 @@ import type {
   UnifiedVisualSpec
 } from "@/lib/ai-deck/schema";
 
-const slideWidth = 13.333;
-const slideHeight = 7.5;
-
 export type PptxImageAsset = {
   assetId: string;
   bytes: Buffer;
@@ -83,10 +80,13 @@ export async function createDeckPptxBuffer({
             : "3C4856",
           fit: "shrink",
           fontFace: "Microsoft YaHei",
-          fontSize: element.role.includes("标题") || element.role.toLowerCase().includes("title")
-            ? 25
-            : 13,
-          bold: element.role.includes("标题") || element.role.toLowerCase().includes("title"),
+          fontSize:
+            element.textStyle?.fontSize ??
+            (element.semanticType === "title" ? 25 : 13),
+          bold:
+            element.textStyle?.fontWeight === "bold" ||
+            element.textStyle?.fontWeight === "semibold" ||
+            element.semanticType === "title",
           margin: 0.08,
           valign: "middle"
         });
@@ -149,10 +149,10 @@ export async function createDeckPptxBuffer({
 
 function toPptBox(element: SlideElement) {
   return {
-    x: round((element.bounds.x / 100) * slideWidth),
-    y: round((element.bounds.y / 100) * slideHeight),
-    w: round((element.bounds.width / 100) * slideWidth),
-    h: round((element.bounds.height / 100) * slideHeight)
+    x: round(element.bounds.x),
+    y: round(element.bounds.y),
+    w: round(element.bounds.width),
+    h: round(element.bounds.height)
   };
 }
 

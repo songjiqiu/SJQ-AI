@@ -12,7 +12,9 @@ const aiConfig = vi.hoisted(() => ({
 }));
 
 const outlineService = vi.hoisted(() => ({
+  analyzeDeckOutlineIntentForUser: vi.fn(),
   createDeckOutlineDraftForUser: vi.fn(),
+  deleteDeckOutlineDraftForUser: vi.fn(),
   getDeckOutlineDraftForUser: vi.fn(),
   listDeckOutlineDrafts: vi.fn(),
   updateDeckOutlineDraftForUser: vi.fn()
@@ -29,6 +31,9 @@ vi.mock("@/lib/ai-config/service", () => ({
 }));
 
 vi.mock("@/lib/deck-outline/service", () => outlineService);
+vi.mock("@/lib/decks/errors", () => ({
+  ActiveGenerationExistsError: class ActiveGenerationExistsError extends Error {}
+}));
 vi.mock("@/lib/decks/service", () => ({
   DeckProjectNotFoundError: class DeckProjectNotFoundError extends Error {}
 }));
@@ -37,10 +42,13 @@ import {
   GET as GET_OUTLINES,
   POST as POST_OUTLINE
 } from "@/app/api/decks/outline/route";
+import { POST as POST_ANALYZE_OUTLINE } from "@/app/api/decks/outline/analyze/route";
 import {
+  DELETE as DELETE_OUTLINE,
   GET as GET_OUTLINE,
   PATCH as PATCH_OUTLINE
 } from "@/app/api/decks/outline/[id]/route";
+import { ActiveGenerationExistsError } from "@/lib/decks/errors";
 
 const draft = {
   id: "draft-1",
@@ -64,13 +72,18 @@ describe("deck outline routes", () => {
       new Request("http://localhost/api/decks/outline", {
         body: JSON.stringify({
           idea: "为新能源初创公司准备融资路演，重点说明市场机会和合作路径。",
-          audience: "投资人",
-          goal: "获得试点合作意向",
-          pageCount: 3,
           deckType: "fundraising-pitch",
           style: "strategic",
           palette: "star-map",
-          locale: "zh-CN"
+          locale: "zh-CN",
+          confirmedIntent: {
+            deckType: "fundraising-pitch",
+            style: "strategic",
+            audience: "投资人",
+            goal: "获得试点合作意向",
+            coreMessage: "用市场机会与试点成果证明合作价值。",
+            recommendedPageCount: 3
+          }
         }),
         method: "POST"
       })
@@ -82,11 +95,60 @@ describe("deck outline routes", () => {
     expect(outlineService.createDeckOutlineDraftForUser).toHaveBeenCalledWith(
       "user-1",
       expect.objectContaining({
-        audience: "投资人",
+        deckType: "fundraising-pitch",
+        confirmedIntent: expect.objectContaining({
+          audience: "投资人",
+          recommendedPageCount: 3
+        })
+      }),
+      expect.any(Object)
+    );
+  });
+
+  it("analyzes outline intent without creating a draft", async () => {
+    outlineService.createDeckOutlineDraftForUser.mockClear();
+    outlineService.analyzeDeckOutlineIntentForUser.mockResolvedValue({
+      input: {
+        idea: "为新能源初创公司准备融资路演，重点说明市场机会和合作路径。",
+        sourceText: "",
+        textFiles: [],
+        deckType: "fundraising-pitch",
+        style: "strategic",
+        palette: "star-map",
+        locale: "zh-CN"
+      },
+      fileSummaries: [],
+      deckType: "fundraising-pitch",
+      style: "strategic",
+      audience: "投资人",
+      goal: "获得试点合作意向",
+      coreMessage: "用市场机会与试点成果证明合作价值。",
+      recommendedPageCount: 5
+    });
+
+    const response = await POST_ANALYZE_OUTLINE(
+      new Request("http://localhost/api/decks/outline/analyze", {
+        body: JSON.stringify({
+          idea: "为新能源初创公司准备融资路演，重点说明市场机会和合作路径。",
+          deckType: "fundraising-pitch",
+          style: "strategic",
+          palette: "star-map",
+          locale: "zh-CN"
+        }),
+        method: "POST"
+      })
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.recommendedPageCount).toBe(5);
+    expect(outlineService.analyzeDeckOutlineIntentForUser).toHaveBeenCalledWith(
+      expect.objectContaining({
         deckType: "fundraising-pitch"
       }),
       expect.any(Object)
     );
+    expect(outlineService.createDeckOutlineDraftForUser).not.toHaveBeenCalled();
   });
 
   it("lists, reads, and updates current-user outline drafts", async () => {
@@ -137,5 +199,51 @@ describe("deck outline routes", () => {
         deckTitle: "更新后大纲"
       })
     );
+  });
+
+  it("deletes current-user outline drafts", async () => {
+    outlineService.deleteDeckOutlineDraftForUser.mockResolvedValue(undefined);
+
+    const response = await DELETE_OUTLINE(
+      new Request("http://localhost/api/decks/outline/draft-1", {
+        method: "DELETE"
+      }),
+      {
+        params: Promise.resolve({
+          id: "draft-1"
+        })
+      }
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({
+      ok: true
+    });
+    expect(outlineService.deleteDeckOutlineDraftForUser).toHaveBeenCalledWith(
+      "user-1",
+      "draft-1"
+    );
+  });
+
+  it("returns 409 when deleting an outline draft with active generation", async () => {
+    outlineService.deleteDeckOutlineDraftForUser.mockRejectedValue(
+      new ActiveGenerationExistsError()
+    );
+
+    const response = await DELETE_OUTLINE(
+      new Request("http://localhost/api/decks/outline/draft-1", {
+        method: "DELETE"
+      }),
+      {
+        params: Promise.resolve({
+          id: "draft-1"
+        })
+      }
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(payload.error).toBe("ACTIVE_GENERATION_EXISTS");
   });
 });

@@ -1,8 +1,9 @@
-import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 export const storageRoot = path.join(process.cwd(), "storage");
 export const deckStorageRoot = path.join(storageRoot, "decks");
+export const reusableAssetStorageRoot = path.join(storageRoot, "assets");
 
 export type StoredDeckFile = {
   filename: string;
@@ -34,6 +35,65 @@ export async function writeDeckFile({
   };
 }
 
+export async function writeReusableAssetFile({
+  bytes,
+  filename,
+  userId
+}: {
+  bytes: Buffer | Uint8Array;
+  filename: string;
+  userId: string;
+}): Promise<StoredDeckFile> {
+  const safeUserId = safePathPart(userId);
+  const safeFilename = safePathPart(filename);
+  const directory = path.join(reusableAssetStorageRoot, safeUserId);
+  const filePath = path.join(directory, safeFilename);
+
+  await mkdir(directory, { recursive: true });
+  await writeFile(filePath, bytes);
+
+  return {
+    filename: safeFilename,
+    relativePath: toStorageRelativePath(path.join("assets", safeUserId, safeFilename)),
+    sizeBytes: bytes.byteLength
+  };
+}
+
+export async function copyStorageFileToDeck({
+  filename,
+  projectId,
+  sourceRelativePath
+}: {
+  filename: string;
+  projectId: string;
+  sourceRelativePath: string;
+}): Promise<StoredDeckFile | null> {
+  const sourcePath = resolveStoragePath(sourceRelativePath);
+
+  if (!sourcePath) {
+    return null;
+  }
+
+  const safeProjectId = safePathPart(projectId);
+  const safeFilename = safePathPart(filename);
+  const directory = path.join(deckStorageRoot, safeProjectId);
+  const targetPath = path.join(directory, safeFilename);
+
+  try {
+    await mkdir(directory, { recursive: true });
+    await copyFile(sourcePath, targetPath);
+    const fileStat = await stat(targetPath);
+
+    return {
+      filename: safeFilename,
+      relativePath: toStorageRelativePath(path.join("decks", safeProjectId, safeFilename)),
+      sizeBytes: fileStat.size
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function readStorageFile(relativePath: string) {
   const filePath = resolveStoragePath(relativePath);
 
@@ -51,6 +111,31 @@ export async function readStorageFile(relativePath: string) {
     };
   } catch {
     return null;
+  }
+}
+
+export async function deleteStorageFile(relativePath: string) {
+  const filePath = resolveStoragePath(relativePath);
+
+  if (!filePath) {
+    return;
+  }
+
+  await rm(filePath, {
+    force: true
+  });
+}
+
+export async function deleteDeckStorageDirectory(projectId: string) {
+  const safeProjectId = safePathPart(projectId);
+  const directory = path.resolve(deckStorageRoot, safeProjectId);
+  const root = path.resolve(deckStorageRoot);
+
+  if (directory !== root && directory.startsWith(`${root}${path.sep}`)) {
+    await rm(directory, {
+      force: true,
+      recursive: true
+    });
   }
 }
 

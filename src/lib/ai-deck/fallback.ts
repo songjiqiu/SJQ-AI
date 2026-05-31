@@ -1,7 +1,13 @@
 import {
   slideCompositionPlanSchema,
+  slideCanvasHeight,
+  slideCanvasSafeMargin,
+  slideCanvasUnit,
+  slideCanvasWidth,
   type AnalyzeDeckRequest,
   type AnalyzedDeckResult,
+  type DeckIntentAnalysisResult,
+  type DeckOutlineIntentInput,
   type SlideCompositionPlan,
   type SlideContent,
   type UnifiedVisualSpec
@@ -127,6 +133,44 @@ function compactText(text: string, maxLength: number) {
     : normalized;
 }
 
+function buildSourceTextFromIntent(input: DeckOutlineIntentInput) {
+  const sections = [
+    ["创作想法", input.idea],
+    ["补充文本", input.sourceText],
+    ...input.textFiles.map((file) => [`文件：${file.name}`, file.content] as const)
+  ]
+    .filter(([, content]) => content.trim().length > 0)
+    .map(([title, content]) => `【${title}】\n${content.trim()}`);
+  const merged = sections.join("\n\n").replace(/\s+\n/g, "\n").trim();
+
+  return merged.length > 12000 ? merged.slice(0, 12000) : merged;
+}
+
+export function buildMockDeckIntentAnalysis(
+  input: DeckOutlineIntentInput
+): DeckIntentAnalysisResult {
+  const isChinese = input.locale === "zh-CN";
+  const sourceText = buildSourceTextFromIntent(input);
+  const compact = compactText(sourceText, isChinese ? 80 : 120);
+
+  return {
+    input,
+    fileSummaries: input.textFiles.map((file) => ({
+      characterCount: file.content.length,
+      name: file.name,
+      size: file.size
+    })),
+    deckType: input.deckType,
+    style: input.style,
+    audience: isChinese ? "通用受众" : "general audience",
+    goal: isChinese ? "清晰传达核心内容" : "communicate the core message clearly",
+    coreMessage: isChinese
+      ? `围绕“${compact}”提炼一条清晰、可被记住的核心表达。`
+      : `Turn "${compact}" into one clear, memorable core message.`,
+    recommendedPageCount: sourceText.length > 1800 ? 8 : sourceText.length > 900 ? 6 : 5
+  };
+}
+
 export function buildMockAnalyzedDeck(input: AnalyzeDeckRequest): AnalyzedDeckResult {
   const locale = input.locale;
   const styleName = styleCopy[locale][input.style];
@@ -178,11 +222,13 @@ export function buildMockAnalyzedDeck(input: AnalyzeDeckRequest): AnalyzedDeckRe
     const bodyPoints = isChinese
       ? [
           `围绕“${compactText(input.goal, 42)}”组织本页信息。`,
+          `承接核心信息：${compactText(input.coreMessage, 48)}。`,
           `面向${compactText(input.audience, 32)}说明关键判断。`,
           `从原始文本中提炼第 ${index} 个表达重点。`
         ]
       : [
           `Organize this slide around "${compactText(input.goal, 52)}".`,
+          `Carry the core message: ${compactText(input.coreMessage, 58)}.`,
           `Explain the key point for ${compactText(input.audience, 42)}.`,
           `Extract focus point ${index} from the source text.`
         ];
@@ -213,8 +259,8 @@ export function buildMockAnalyzedDeck(input: AnalyzeDeckRequest): AnalyzedDeckRe
     deckTitle,
     deckSummary:
       locale === "zh-CN"
-        ? `面向${input.audience}的${deckTypeName}，围绕“${input.goal}”以${styleName}拆分为 ${input.pageCount} 页结构化演示。`
-        : `A ${input.pageCount}-slide ${deckTypeName} deck for ${input.audience}, organized around "${input.goal}" with a ${styleName} structure.`,
+        ? `面向${input.audience}的${deckTypeName}，围绕“${input.goal}”和“${input.coreMessage}”以${styleName}拆分为 ${input.pageCount} 页结构化演示。`
+        : `A ${input.pageCount}-slide ${deckTypeName} deck for ${input.audience}, organized around "${input.goal}" and "${input.coreMessage}" with a ${styleName} structure.`,
     unifiedVisualSpec,
     slides
   };
@@ -237,10 +283,50 @@ export function buildMockSlideCompositionPlanFromContent({
     slideId: slide.slideId,
     index: slide.index,
     content: slide,
+    expressionIntent: isChinese
+      ? `突出“${compactText(slide.title, 40)}”的单页重点，让听众快速理解本页判断。`
+      : `Highlight "${compactText(slide.title, 52)}" as the slide's core intent.`,
+    contentHierarchy: {
+      primaryMessage: slide.bodyPoints[0] ?? slide.title,
+      levels: [
+        {
+          label: slide.title,
+          level: 1,
+          summary: slide.speakerGoal
+        },
+        ...slide.bodyPoints.slice(0, 4).map((point, pointIndex) => ({
+          label: isChinese ? `要点 ${pointIndex + 1}` : `Point ${pointIndex + 1}`,
+          level: 2,
+          summary: point
+        }))
+      ]
+    },
+    designPlan: {
+      expressionIntent: isChinese
+        ? "左侧建立文字阅读主线，右侧使用主视觉承托主题。"
+        : "Use a left-side text path with a right-side hero visual.",
+      layoutTemplate: "title-body-hero",
+      visualStrategy: unifiedVisualSpec.imageStyle,
+      readingOrder: [
+        `${slide.slideId}-title`,
+        `${slide.slideId}-body`,
+        visualElementId,
+        `${slide.slideId}-accent`
+      ]
+    },
+    layoutDiagnostics: {
+      density: 0.52,
+      hasOverflow: false,
+      needsUserConfirmation: false,
+      overflowFixes: [],
+      warnings: []
+    },
     canvas: {
       aspectRatio: "16:9",
-      width: 100,
-      height: 56.25
+      height: slideCanvasHeight,
+      safeMargin: slideCanvasSafeMargin,
+      unit: slideCanvasUnit,
+      width: slideCanvasWidth
     },
     elements: [
       {
@@ -248,28 +334,51 @@ export function buildMockSlideCompositionPlanFromContent({
         type: "text",
         role: isChinese ? "标题" : "Title",
         content: slide.title,
-        bounds: { x: 7, y: 7, width: 54, height: 8 },
+        bounds: { x: 0.76, y: 0.66, width: 7.2, height: 0.62 },
+        editable: true,
+        hierarchyLevel: 1,
+        semanticType: "title",
         zIndex: 30,
         styleNotes: isChinese ? "大号标题，强对比" : "Large title with strong contrast",
-        requiresImageGeneration: false
+        requiresImageGeneration: false,
+        textStyle: {
+          align: "left",
+          fontSize: 28,
+          fontWeight: "bold",
+          lineHeight: 1.15,
+          maxLines: 2
+        }
       },
       {
         id: `${slide.slideId}-body`,
         type: "text",
         role: isChinese ? "正文要点" : "Body points",
         content: slide.bodyPoints.join("\n"),
-        bounds: { x: 7, y: 18, width: 45, height: 25 },
+        bounds: { x: 0.82, y: 1.62, width: 5.7, height: 3.18 },
+        editable: true,
+        hierarchyLevel: 2,
+        semanticType: "body",
         zIndex: 30,
         styleNotes: isChinese
           ? "三条以内要点，保持行距"
           : "Up to three points with comfortable line height",
-        requiresImageGeneration: false
+        requiresImageGeneration: false,
+        textStyle: {
+          align: "left",
+          fontSize: 15,
+          fontWeight: "regular",
+          lineHeight: 1.32,
+          maxLines: 7
+        }
       },
       {
         id: visualElementId,
         type: "generatedImage",
         role: isChinese ? "主视觉图层" : "Hero image layer",
-        bounds: { x: 57, y: 14, width: 34, height: 31 },
+        bounds: { x: 7.15, y: 1.24, width: 4.75, height: 3.52 },
+        editable: true,
+        hierarchyLevel: 2,
+        semanticType: "heroVisual",
         zIndex: 20,
         styleNotes: unifiedVisualSpec.imageStyle,
         requiresImageGeneration: true,
@@ -279,7 +388,10 @@ export function buildMockSlideCompositionPlanFromContent({
         id: `${slide.slideId}-accent`,
         type: "shape",
         role: isChinese ? "强调色块" : "Accent shape",
-        bounds: { x: 6, y: 48, width: 88, height: 3 },
+        bounds: { x: 0.72, y: 6.62, width: 11.75, height: 0.18 },
+        editable: true,
+        hierarchyLevel: 4,
+        semanticType: "accentShape",
         zIndex: 10,
         styleNotes: isChinese
           ? "低对比强调线，统一页脚节奏"
@@ -294,10 +406,15 @@ export function buildMockSlideCompositionPlanFromContent({
         purpose: isChinese
           ? "生成本页主视觉透明图层"
           : "Generate the transparent hero visual layer",
+        imageType: "illustration",
+        keywords: [slide.title, input.deckType, input.style].slice(0, 6),
         prompt: isChinese
           ? `为PPT第 ${slide.index} 页生成透明背景主视觉：${slide.visualIntent}。统一风格：${unifiedVisualSpec.visualStyle}`
           : `Generate a transparent-background hero visual for slide ${slide.index}: ${slide.visualIntent}. Unified style: ${unifiedVisualSpec.visualStyle}`,
         negativePrompt: isChinese
+          ? "不要文字、不要水印、不要复杂背景、不要低清晰度"
+          : "No text, no watermark, no complex background, no low-resolution artifacts",
+        avoid: isChinese
           ? "不要文字、不要水印、不要复杂背景、不要低清晰度"
           : "No text, no watermark, no complex background, no low-resolution artifacts",
         transparentBackground: true,
