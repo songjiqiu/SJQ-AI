@@ -38,6 +38,8 @@ export type ImageQualityReview = {
   warnings: string[];
 };
 
+const imageQualityReviewTimeoutMs = 30_000;
+
 export type MaterializedImageLayer = {
   assetId: string;
   bytes: Buffer;
@@ -293,35 +295,40 @@ export function createImageQualityReviewer(
     }
 
     try {
-      const response = await client.chat.completions.create({
-        messages: [
-          {
-            role: "system",
-            content:
-              "你是 PPT 图片素材质量审核员。只输出 JSON，不要解释。JSON 字段：passed(boolean), score(number 0-100), summary(string), warnings(string[])."
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: `请审核这张 PPT 图片素材是否满足用途：${request.purpose}\nPrompt: ${request.prompt}\nAvoid: ${request.avoid}`
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:${generated.mimeType};base64,${generated.bytes.toString("base64")}`
+      const response = await client.chat.completions.create(
+        {
+          messages: [
+            {
+              role: "system",
+              content:
+                "你是 PPT 图片素材质量审核员。只输出 JSON，不要解释。JSON 字段：passed(boolean), score(number 0-100), summary(string), warnings(string[])."
+            },
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: `请审核这张 PPT 图片素材是否满足用途：${request.purpose}\nPrompt: ${request.prompt}\nAvoid: ${request.avoid}`
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: `data:${generated.mimeType};base64,${generated.bytes.toString("base64")}`
+                  }
                 }
-              }
-            ]
-          }
-        ],
-        model,
-        response_format: {
-          type: "json_object"
+              ]
+            }
+          ],
+          model,
+          response_format: {
+            type: "json_object"
+          },
+          temperature: 0
         },
-        temperature: 0
-      });
+        {
+          timeout: imageQualityReviewTimeoutMs
+        }
+      );
       const content = response.choices[0]?.message?.content;
       const parsed = content ? JSON.parse(content) : null;
 

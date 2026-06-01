@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { deckStyleSchemaIds, deckTypeIds, paletteIds } from "./options";
+import { deckTypeIds, paletteIds } from "./options";
 
 export const createDeckHiddenDefaultsByLocale = {
   "zh-CN": {
@@ -25,7 +25,6 @@ export const createDeckFormDefaults = {
   goal: createDeckHiddenDefaultsByLocale["zh-CN"].goal,
   pageCount: 6,
   deckType: "business-report",
-  style: "strategic",
   palette: "star-map"
 } satisfies CreateDeckForm;
 
@@ -46,9 +45,8 @@ export const createDeckFormSchema = z.object({
     .int("pageCount.integer")
     .min(3)
     .max(18)
-    .default(createDeckHiddenDefaultsByLocale["zh-CN"].pageCount),
+    .optional(),
   deckType: z.enum(deckTypeIds).default("business-report"),
-  style: z.enum(deckStyleSchemaIds).default("strategic"),
   palette: z.enum(paletteIds)
 });
 

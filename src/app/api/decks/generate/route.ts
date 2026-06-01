@@ -46,6 +46,7 @@ export async function POST(request: Request) {
         details: task.details,
         error: task.error,
         id: task.id,
+        previewReady: task.previewReady,
         previewUrl: task.previewUrl,
         progress: task.progress,
         status: task.status

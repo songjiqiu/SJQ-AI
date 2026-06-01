@@ -7,7 +7,10 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
-import type { DeckIntentAnalysisResult } from "@/lib/ai-deck/schema";
+import type {
+  DeckIntentAnalysisResult,
+  DeckStructureOutline
+} from "@/lib/ai-deck/schema";
 
 import {
   intentAnalysisStorageKey,
@@ -27,6 +30,8 @@ export function IntentConfirmPage() {
   const [goal, setGoal] = useState("");
   const [coreMessage, setCoreMessage] = useState("");
   const [recommendedPageCount, setRecommendedPageCount] = useState(6);
+  const [structureOutline, setStructureOutline] =
+    useState<DeckStructureOutline | null>(null);
 
   useEffect(() => {
     const stored = window.sessionStorage.getItem(intentAnalysisStorageKey);
@@ -46,6 +51,7 @@ export function IntentConfirmPage() {
         setGoal(parsed.goal);
         setCoreMessage(parsed.coreMessage);
         setRecommendedPageCount(parsed.recommendedPageCount);
+        setStructureOutline(parsed.structureOutline);
       }, 0);
     } catch {
       router.replace("/workbench");
@@ -71,13 +77,27 @@ export function IntentConfirmPage() {
     const trimmedGoal = goal.trim();
     const trimmedCoreMessage = coreMessage.trim();
     const pageCount = Math.trunc(Number(recommendedPageCount));
+    const normalizedStructure = structureOutline
+      ? syncStructureSlideCount(structureOutline, pageCount)
+      : null;
 
     if (
       trimmedAudience.length < 2 ||
       trimmedGoal.length < 2 ||
       trimmedCoreMessage.length < 2 ||
       pageCount < 3 ||
-      pageCount > 18
+      pageCount > 18 ||
+      !normalizedStructure ||
+      normalizedStructure.deckTitle.trim().length < 2 ||
+      normalizedStructure.deckSummary.trim().length < 8 ||
+      normalizedStructure.slides.length !== pageCount ||
+      normalizedStructure.slides.some(
+        (slide) =>
+          slide.title.trim().length < 2 ||
+          slide.purpose.trim().length < 6 ||
+          slide.keyMessage.trim().length < 4 ||
+          slide.visualDirection.trim().length < 6
+      )
     ) {
       toast.error(t("toast.intentInvalid"));
       return;
@@ -87,13 +107,19 @@ export function IntentConfirmPage() {
       outlinePayloadStorageKey,
       JSON.stringify({
         ...analysis.input,
-        confirmedIntent: {
+        pageCount,
+        confirmedPlan: {
+          input: {
+            ...analysis.input,
+            pageCount
+          },
+          fileSummaries: analysis.fileSummaries,
           deckType: analysis.deckType,
-          style: analysis.style,
           audience: trimmedAudience,
           goal: trimmedGoal,
           coreMessage: trimmedCoreMessage,
-          recommendedPageCount: pageCount
+          recommendedPageCount: pageCount,
+          structureOutline: normalizedStructure
         }
       })
     );
@@ -102,7 +128,7 @@ export function IntentConfirmPage() {
     router.push("/workbench/outline/loading");
   };
 
-  if (!analysis) {
+  if (!analysis || !structureOutline) {
     return (
       <>
         <WorkbenchStepNav current={1} />
@@ -142,15 +168,20 @@ export function IntentConfirmPage() {
           </span>
         </section>
 
-        <section className="grid gap-4 rounded-lg border border-border bg-surface p-4 shadow-sm md:grid-cols-[1fr_1fr] md:p-5">
+        <section className="grid gap-4 rounded-lg border border-border bg-surface p-4 shadow-sm md:p-5">
           <ReadonlyMeta
             label={t("fields.deckType.label")}
             value={optionT(`deckTypes.${analysis.deckType}`)}
           />
-          <ReadonlyMeta
-            label={t("fields.style.label")}
-            value={optionT(`styles.${analysis.style}`)}
-          />
+        </section>
+
+        <section className="grid gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm md:p-5">
+          <div className="text-sm font-semibold text-foreground">
+            {t("intent.sourceTitle")}
+          </div>
+          <div className="rounded-lg border border-border bg-background p-3 text-sm leading-6 text-muted">
+            {summarizeSourceIdea(analysis.input.idea)}
+          </div>
         </section>
 
         <section className="grid gap-4 rounded-lg border border-border bg-surface p-4 shadow-sm md:p-5">
@@ -189,12 +220,100 @@ export function IntentConfirmPage() {
               max={18}
               min={3}
               onChange={(event) =>
-                setRecommendedPageCount(Number(event.target.value))
+                updatePageCount(Number(event.target.value))
               }
               type="number"
               value={recommendedPageCount}
             />
           </Field>
+        </section>
+
+        <section className="grid gap-4 rounded-lg border border-border bg-surface p-4 shadow-sm md:p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Layers3 className="size-4 text-accent" aria-hidden="true" />
+            {t("intent.structureTitle")}
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <Field label={t("outline.fields.deckTitle")}>
+              <input
+                className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
+                onChange={(event) =>
+                  updateStructure({ deckTitle: event.target.value })
+                }
+                value={structureOutline.deckTitle}
+              />
+            </Field>
+            <Field label={t("outline.fields.deckSummary")}>
+              <textarea
+                className="min-h-24 w-full resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm leading-6 text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
+                onChange={(event) =>
+                  updateStructure({ deckSummary: event.target.value })
+                }
+                value={structureOutline.deckSummary}
+              />
+            </Field>
+          </div>
+          <div className="grid gap-3">
+            {structureOutline.slides.map((slide, index) => (
+              <article
+                className="grid gap-3 rounded-lg border border-border bg-background p-3"
+                key={slide.slideId}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="rounded-md bg-accent-soft px-2 py-1 text-xs font-medium text-accent-strong">
+                    {t("preview.slideLabel", { index: slide.index })}
+                  </span>
+                  <span className="text-xs text-muted">{slide.slideId}</span>
+                </div>
+                <Field label={t("intent.fields.structureTitle")}>
+                  <input
+                    className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
+                    onChange={(event) =>
+                      updateStructureSlide(index, {
+                        title: event.target.value
+                      })
+                    }
+                    value={slide.title}
+                  />
+                </Field>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <Field label={t("intent.fields.purpose")}>
+                    <textarea
+                      className="min-h-24 w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-sm leading-6 text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
+                      onChange={(event) =>
+                        updateStructureSlide(index, {
+                          purpose: event.target.value
+                        })
+                      }
+                      value={slide.purpose}
+                    />
+                  </Field>
+                  <Field label={t("intent.fields.keyMessage")}>
+                    <textarea
+                      className="min-h-24 w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-sm leading-6 text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
+                      onChange={(event) =>
+                        updateStructureSlide(index, {
+                          keyMessage: event.target.value
+                        })
+                      }
+                      value={slide.keyMessage}
+                    />
+                  </Field>
+                  <Field label={t("intent.fields.visualDirection")}>
+                    <textarea
+                      className="min-h-24 w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-sm leading-6 text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
+                      onChange={(event) =>
+                        updateStructureSlide(index, {
+                          visualDirection: event.target.value
+                        })
+                      }
+                      value={slide.visualDirection}
+                    />
+                  </Field>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
 
         {analysis.fileSummaries.length > 0 ? (
@@ -239,6 +358,50 @@ export function IntentConfirmPage() {
       </footer>
     </main>
   );
+
+  function updatePageCount(nextValue: number) {
+    const nextPageCount = Math.trunc(Number(nextValue));
+
+    setRecommendedPageCount(nextPageCount);
+
+    if (Number.isFinite(nextPageCount) && nextPageCount >= 3 && nextPageCount <= 18) {
+      setStructureOutline((current) =>
+        current ? syncStructureSlideCount(current, nextPageCount) : current
+      );
+    }
+  }
+
+  function updateStructure(patch: Partial<DeckStructureOutline>) {
+    setStructureOutline((current) =>
+      current
+        ? {
+            ...current,
+            ...patch
+          }
+        : current
+    );
+  }
+
+  function updateStructureSlide(
+    indexToUpdate: number,
+    patch: Partial<DeckStructureOutline["slides"][number]>
+  ) {
+    setStructureOutline((current) =>
+      current
+        ? {
+            ...current,
+            slides: current.slides.map((slide, index) =>
+              index === indexToUpdate
+                ? {
+                    ...slide,
+                    ...patch
+                  }
+                : slide
+            )
+          }
+        : current
+    );
+  }
 }
 
 function ReadonlyMeta({ label, value }: { label: string; value: string }) {
@@ -250,4 +413,43 @@ function ReadonlyMeta({ label, value }: { label: string; value: string }) {
       </span>
     </div>
   );
+}
+
+function summarizeSourceIdea(idea: string) {
+  const normalized = idea.replace(/\s+/g, " ").trim();
+  const maxLength = 280;
+
+  return normalized.length > maxLength
+    ? `${normalized.slice(0, maxLength - 1)}...`
+    : normalized;
+}
+
+function syncStructureSlideCount(
+  outline: DeckStructureOutline,
+  pageCount: number
+): DeckStructureOutline {
+  const safeCount = Math.min(18, Math.max(3, pageCount));
+  const slides = outline.slides.slice(0, safeCount);
+
+  while (slides.length < safeCount) {
+    const index = slides.length + 1;
+
+    slides.push({
+      slideId: `slide-${index}`,
+      index,
+      title: `第 ${index} 页`,
+      purpose: `说明第 ${index} 页与整体表达目标的关系。`,
+      keyMessage: "补充本页核心信息。",
+      visualDirection: "使用清晰主视觉配合文字信息。"
+    });
+  }
+
+  return {
+    ...outline,
+    slides: slides.map((slide, index) => ({
+      ...slide,
+      index: index + 1,
+      slideId: slide.slideId || `slide-${index + 1}`
+    }))
+  };
 }

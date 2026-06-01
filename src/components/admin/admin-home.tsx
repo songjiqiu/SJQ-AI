@@ -1,6 +1,12 @@
 "use client";
 
-import { ArrowRight, Presentation, ShieldCheck, Users } from "lucide-react";
+import {
+  ArrowRight,
+  LayoutTemplate,
+  Presentation,
+  ShieldCheck,
+  Users
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
@@ -13,6 +19,12 @@ export function AdminHome() {
       href: "/admin/users",
       icon: Users,
       title: t("entries.users.title")
+    },
+    {
+      body: t("entries.templates.body"),
+      href: "/admin/templates",
+      icon: LayoutTemplate,
+      title: t("entries.templates.title")
     },
     {
       body: t("entries.workbench.body"),

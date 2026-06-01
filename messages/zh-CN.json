@@ -78,6 +78,10 @@
         "title": "用户管理",
         "body": "查看账号、角色、启用状态和账号隔离数据，并在需要时调整用户权限。"
       },
+      "templates": {
+        "title": "模板工作区",
+        "body": "维护 PPT 模板库、页面分类和可复用页面 JSON，为后续生成流程准备版式资产。"
+      },
       "workbench": {
         "title": "创作工作台",
         "body": "进入面向普通创作流程的 PPT 拆页、视觉说明和页面元素编排界面。"
@@ -166,9 +170,13 @@
     },
     "actions": {
       "close": "关闭",
+      "cancel": "取消",
       "edit": "编辑",
       "delete": "删除",
       "save": "保存配置"
+    },
+    "confirm": {
+      "deleteTitle": "确认删除配置"
     },
     "common": {
       "enabled": "启用",
@@ -339,6 +347,7 @@
     },
     "actions": {
       "back": "返回管理端",
+      "cancel": "取消",
       "refresh": "刷新",
       "setAdmin": "设为管理员",
       "setUser": "设为普通用户",
@@ -347,6 +356,7 @@
       "selfDisabled": "不能修改自己的管理员权限或启用状态"
     },
     "confirm": {
+      "disableTitle": "确认禁用账号",
       "disable": "禁用账号会立即清理该用户的所有登录会话，确定继续吗？"
     },
     "toast": {
@@ -361,6 +371,185 @@
       "validation": "用户更新内容不符合要求。",
       "notFound": "用户不存在或已被删除。",
       "generic": "用户管理操作失败，请稍后重试。"
+    }
+  },
+  "adminTemplates": {
+    "title": "PPT模板库管理",
+    "subtitle": "按页面类型维护可复用 PPT 模板，模板保存完整页面 JSON，并支持在设计器中调整元素、图层和图片请求。",
+    "categoriesAria": "PPT模板分类",
+    "listAria": "PPT模板列表",
+    "searchPlaceholder": "搜索模板名称、说明或标签",
+    "loading": "正在加载模板",
+    "empty": "当前分类暂无模板",
+    "categories": {
+      "chapter": "章节页",
+      "cover-title": "封面大标题",
+      "title-body-points": "标题 + 正文/要点",
+      "big-image-background": "大图背景",
+      "left-image-right-text": "左图右文",
+      "left-text-right-image": "左文右图",
+      "left-text-right-chart": "左文右图表",
+      "big-chart": "大图表",
+      "two-column-compare": "双栏对比",
+      "quote": "引用/金句页",
+      "time-axis": "时间轴",
+      "process-steps": "流程/步骤",
+      "key-metrics": "关键指标页",
+      "quadrant-matrix": "四象限/矩阵",
+      "ending": "结束页"
+    },
+    "defaults": {
+      "name": "{category}模板 {count}",
+      "description": "基于{category}分类默认样板创建，可在设计器中继续调整。"
+    },
+    "createPanel": {
+      "title": "新建模板",
+      "description": "为当前“{category}”分类创建模板，可使用默认样板，也可上传 JSON 导入。",
+      "defaultHint": "复制当前分类的默认页面 JSON，创建后进入设计器继续调整。",
+      "fileLabel": "选择 JSON 模板文件",
+      "fileHint": "支持完整导入格式，也兼容原始 SlideCompositionPlan JSON。"
+    },
+    "status": {
+      "enabled": "启用",
+      "disabled": "停用"
+    },
+    "actions": {
+      "back": "返回管理端",
+      "backToTemplates": "返回模板库",
+      "refresh": "刷新",
+      "downloadJsonFormat": "下载JSON模板格式",
+      "newTemplate": "新建模板",
+      "createFromDefault": "使用默认样板创建",
+      "importJson": "从JSON导入",
+      "createInCategory": "新建{category}",
+      "edit": "编辑",
+      "enable": "启用",
+      "disable": "停用",
+      "delete": "删除",
+      "cancel": "取消",
+      "undo": "撤销",
+      "redo": "重做",
+      "save": "保存模板",
+      "saving": "保存中",
+      "add": "添加",
+      "duplicate": "复制",
+      "bringToFront": "置顶",
+      "sendToBack": "置底",
+      "alignCenterX": "水平居中",
+      "alignCenterY": "垂直居中"
+    },
+    "confirm": {
+      "deleteTitle": "确认删除模板",
+      "delete": "确定删除模板“{name}”吗？删除后不可恢复。"
+    },
+    "toast": {
+      "created": "模板已创建",
+      "imported": "JSON导入成功",
+      "saved": "模板已保存",
+      "deleted": "模板已删除"
+    },
+    "errors": {
+      "unauthorized": "登录已失效，请重新登录。",
+      "forbidden": "只有管理员可以管理模板。",
+      "accountDisabled": "该账号已被禁用。",
+      "validation": "模板内容不符合要求，请检查页面 JSON、必填字段和坐标范围。",
+      "invalidJson": "JSON格式无效，请检查文件内容后重试。",
+      "notFound": "模板不存在或已被删除。",
+      "generic": "模板管理操作失败，请稍后重试。"
+    },
+    "designer": {
+      "meta": "{category} · {elements} 个元素",
+      "layers": "图层",
+      "layerMeta": "{type} · 层级 {zIndex}",
+      "templateInfo": "模板信息",
+      "elementInfo": "元素信息",
+      "textStyle": "文字样式",
+      "imageRequest": "图片请求",
+      "noElementSelected": "选择画布或图层中的元素后，可编辑内容、位置、样式和图片请求。",
+      "newTextContent": "新文本",
+      "newElementNotes": "新增元素，可继续调整样式和位置。",
+      "defaultImagePurpose": "生成模板图片图层",
+      "defaultImagePrompt": "为 PPT 模板生成专业、简洁、无文字的图片图层。",
+      "defaultNegativePrompt": "不要文字、不要水印、不要复杂背景、不要低清晰度",
+      "defaultImageNotes": "保持专业演示风格，边缘干净，适合叠加在页面中。",
+      "missingImageRequest": "该图片元素暂未绑定图片请求，可切换为其他元素类型或重新创建图片元素。"
+    },
+    "fields": {
+      "name": "模板名称",
+      "category": "分类",
+      "description": "说明",
+      "tags": "标签（每行一个）",
+      "sortOrder": "排序",
+      "isEnabled": "启用模板",
+      "elementType": "元素类型",
+      "semanticType": "语义",
+      "role": "角色",
+      "content": "内容",
+      "styleNotes": "样式说明",
+      "zIndex": "层级",
+      "hierarchyLevel": "信息层级",
+      "editable": "允许编辑",
+      "requiresImageGeneration": "需要图片生成",
+      "fontSize": "字号",
+      "lineHeight": "行高",
+      "fontWeight": "字重",
+      "align": "对齐",
+      "textColor": "文字颜色",
+      "imagePurpose": "用途",
+      "imageType": "图片类型",
+      "aspectRatio": "比例",
+      "keywords": "关键词（每行一个）",
+      "prompt": "提示词",
+      "negativePrompt": "负向提示词",
+      "visualNotes": "视觉说明",
+      "transparentBackground": "透明背景"
+    },
+    "bounds": {
+      "x": "X",
+      "y": "Y",
+      "width": "宽度",
+      "height": "高度"
+    },
+    "elementTypes": {
+      "text": "文字",
+      "generatedImage": "生成图片",
+      "shape": "形状",
+      "icon": "图标",
+      "chartPlaceholder": "图表占位"
+    },
+    "semanticTypes": {
+      "title": "标题",
+      "subtitle": "副标题",
+      "body": "正文",
+      "heroVisual": "主视觉",
+      "supportingVisual": "辅助视觉",
+      "accentShape": "强调形状",
+      "icon": "图标",
+      "chart": "图表",
+      "card": "卡片",
+      "badge": "徽标",
+      "background": "背景",
+      "footer": "页脚"
+    },
+    "fontWeights": {
+      "regular": "常规",
+      "medium": "中等",
+      "semibold": "半粗",
+      "bold": "加粗"
+    },
+    "align": {
+      "left": "左对齐",
+      "center": "居中",
+      "right": "右对齐"
+    },
+    "imageTypes": {
+      "photo": "照片",
+      "illustration": "插画",
+      "icon": "图标",
+      "diagram": "图解",
+      "texture": "纹理",
+      "background": "背景",
+      "cutout": "透明主体"
     }
   },
   "options": {
@@ -391,19 +580,7 @@
       "salesMarketing": "销售市场",
       "education": "教学培训",
       "research": "研究分析",
-      "operations": "运营活动",
       "personal": "个人展示"
-    },
-    "styles": {
-      "data": "数据论证",
-      "minimal": "极简商务",
-      "problem-solution": "问题方案",
-      "strategic": "战略叙事",
-      "product": "产品发布",
-      "retrospective": "复盘总结",
-      "story": "故事叙事",
-      "teaching": "教学讲解",
-      "visual-proposal": "视觉提案"
     },
     "palettes": {
       "star-map": "星图",
@@ -425,22 +602,25 @@
       },
       "textFiles": {
         "label": "文本类文件",
-        "action": "添加 txt / md / csv / json / docx 文件",
+        "action": "添加文件",
+        "formats": "支持 txt / md / csv / json / docx 文件",
         "limit": "单个文件最大 10MB",
         "tooLarge": "已忽略超过 10MB 的文件"
       },
       "deckType": {
         "label": "PPT类型"
       },
-      "style": {
-        "label": "叙事风格"
-      },
       "palette": {
         "label": "配色预设"
+      },
+      "pageCount": {
+        "label": "指定页数（可选）",
+        "placeholder": "AI 推荐"
       }
     },
     "validation": {
-      "idea": "请至少输入 10 个字的原始文本或创作想法。"
+      "idea": "请至少输入 10 个字的原始文本或创作想法。",
+      "pageCount": "页数需为 3 到 18 之间的整数。"
     },
     "actions": {
       "reset": "重置",
@@ -455,13 +635,19 @@
       "savingOutline": "保存中",
       "delete": "删除",
       "deleting": "删除中",
+      "cancel": "取消",
       "download": "下载PPTX",
       "playMotion": "播放动效",
       "pauseMotion": "暂停动效",
-      "backToInput": "返回输入页"
+      "backToInput": "返回输入页",
+      "uploadNewFile": "上传新文件"
+    },
+    "confirm": {
+      "deleteTitle": "确认删除"
     },
     "toast": {
       "generated": "PPT 已生成并保存到历史记录",
+      "previewReady": "前几页预览已生成，剩余内容正在后台继续",
       "intentAnalyzed": "输入分析已生成",
       "intentInvalid": "请检查受众、目标、核心信息和页数。",
       "outlineGenerated": "大纲草稿已生成",
@@ -494,6 +680,10 @@
       },
       "generatedMeta": "{mode} · {count} 页",
       "outlineMeta": "大纲草稿 · {mode} · {count} 页",
+      "lightweightReady": "前几页可先预览，剩余页面和图片正在后台生成。",
+      "downloadPending": "完成后下载",
+      "progressAria": "PPT 生成进度",
+      "progressCount": "{current}/{total} 页",
       "statuses": {
         "GENERATING": "生成中",
         "READY": "已完成",
@@ -537,7 +727,7 @@
       "intentDescription": "AI 正在判断受众、表达目标、核心信息，并推荐合适页数。",
       "intentFailed": "输入分析失败",
       "outlineTitle": "正在生成大纲草稿",
-      "outlineDescription": "AI 正在整理想法、文本和文件内容，并生成多页文案大纲与统一视觉说明。",
+      "outlineDescription": "AI 正在基于已确认结构大纲生成每页详细文案 JSON 与统一全局视觉规范。",
       "outlineFailed": "大纲生成失败",
       "generateTitle": "正在生成预览 PPT",
       "generateDescription": "AI 正在基于已确认的大纲编排页面图层、生成图片请求、审核内容并合成 PPTX。",
@@ -548,24 +738,30 @@
       "missingGeneratePayload": "没有找到待生成的草稿信息，请返回输入页重新选择大纲。",
       "backToInput": "返回输入页",
       "intentProgress": "正在生成受众、目标、核心信息和推荐页数。",
-      "outlineProgress": "正在生成结构大纲、统一视觉说明和每页文案 JSON。",
+      "outlineProgress": "正在生成结构大纲、每页文案 JSON 和统一全局视觉规范。",
       "generateProgress": "正在编排图层、生成图片、审核内容并合成 PPTX。",
       "generateBackgroundProgress": "任务耗时较长，但没有失败。你可以留在本页等待自动进入预览，也可以返回输入页，完成后会出现在生成历史中。"
     },
     "intent": {
       "title": "确认输入分析",
-      "subtitle": "请确认 AI 对受众、目标、核心信息和页数的判断。PPT 类型和叙事风格会作为不可变引用进入后续生成。",
+      "subtitle": "请确认 AI 对受众、目标、核心信息和页数的判断。PPT 类型会作为场景结构参考进入后续生成。",
       "loading": "正在读取输入分析结果...",
       "analysisTitle": "输入分析",
+      "structureTitle": "结构大纲",
+      "sourceTitle": "原始输入摘要",
       "filesTitle": "已添加文件",
       "fileMeta": "{characters} 字符 · {size} B",
       "pageCountBadge": "推荐 {count} 页",
-      "footerMeta": "确认后将生成结构大纲、统一视觉说明和每页详细文案 JSON。",
+      "footerMeta": "确认后将基于这份结构大纲生成每页详细文案 JSON 与统一全局视觉规范。",
       "fields": {
         "audience": "目标受众",
         "goal": "表达目标",
         "coreMessage": "核心信息",
-        "recommendedPageCount": "推荐页数"
+        "recommendedPageCount": "推荐页数",
+        "structureTitle": "页面标题",
+        "purpose": "页面目的",
+        "keyMessage": "核心观点",
+        "visualDirection": "视觉方向"
       }
     },
     "outline": {
@@ -590,11 +786,169 @@
         "layoutRules": "布局规则（每行一条）",
         "consistencyRules": "一致性规则（每行一条）",
         "forbiddenRules": "禁用规则（每行一条）",
+        "pageSpec": "页面基础规格",
+        "aspectRatio": "画布比例",
+        "width": "宽度",
+        "height": "高度",
+        "unit": "单位",
+        "safeMargin": "安全边距",
+        "gridColumns": "栅格栏数",
+        "layoutInstruction": "排版说明",
+        "typographyRules": "字体层级规则",
+        "defaultFontSize": "默认字号",
+        "minFontSize": "最小字号",
+        "maxLines": "最大行数",
+        "lineHeight": "行高",
+        "fontFallback": "字体 fallback（每行一个）",
+        "colorRoles": "颜色角色",
+        "background": "背景色角色",
+        "bodyText": "正文色角色",
+        "accent": "强调色角色",
+        "decorative": "装饰色角色",
+        "highlight": "高亮色角色",
+        "chart": "图表色角色",
+        "contrastRequirement": "对比度要求",
+        "imageRules": "图片生成/使用规则",
+        "backgroundAvoidsHighContrastTextArea": "背景图避开高对比文字区域",
+        "subjectAvoidsTitleArea": "主体避开标题区",
+        "usageNotes": "使用说明（每行一条）",
+        "basicInfo": "基础信息",
+        "colorSystem": "色彩系统",
+        "layoutTypography": "版式与字体",
+        "rulesList": "规则清单",
         "slideTitle": "页面标题",
         "subtitle": "副标题",
         "bodyPoints": "正文要点（每行一条）",
         "speakerGoal": "演讲目标",
-        "visualIntent": "视觉意图"
+        "visualIntent": "视觉意图",
+        "advancedSlideInfo": "高级页面信息",
+        "coreStatement": "本页核心表达句",
+        "narrativeRole": "叙事作用",
+        "explanationDepth": "讲解深度",
+        "contentLayersPrimary": "主信息（每行一条）",
+        "contentLayersSupporting": "支撑信息（每行一条）",
+        "contentLayersSupplementary": "补充信息（每行一条）",
+        "transitionFromPrevious": "承接上一页",
+        "transitionToNext": "引出下一页",
+        "sourceRequirement": "信息来源要求",
+        "sourceRequired": "需要注明来源",
+        "sourceCategories": "来源类型（每行一个枚举）",
+        "sourceNote": "来源说明",
+        "adaptationRules": "可扩展/可压缩规则",
+        "splitWhen": "拆页条件",
+        "splitCandidates": "可拆分内容（每行一条）",
+        "mergeWhen": "合并条件",
+        "mergeWith": "可合并对象",
+        "audienceFocus": "受众关注点",
+        "audienceFocusLens": "受众视角",
+        "viewerObjective": "行动或认知目标",
+        "viewerObjectiveType": "目标类型",
+        "contentBoundary": "内容边界",
+        "inScope": "本页展开范围",
+        "outOfScope": "本页不展开内容（每行一条）",
+        "advancedVisualSpec": "高级视觉规范",
+        "pptTypeVisualTone": "视觉基调与 PPT 类型映射",
+        "deckType": "PPT 类型",
+        "recommendedTone": "推荐视觉基调",
+        "visualKeywords": "视觉关键词（每行一条）",
+        "businessReport": "商务汇报",
+        "trainingCourse": "课程培训",
+        "brandMarketing": "品牌营销",
+        "researchReport": "研究报告",
+        "surface": "卡片/表面色角色",
+        "titleText": "标题色角色",
+        "coverTitle": "封面标题",
+        "pageTitle": "页标题",
+        "body": "正文",
+        "annotation": "注释",
+        "chartLabel": "图表标签",
+        "fontSize": "字号",
+        "fontWeight": "字重",
+        "usage": "用途",
+        "advancedRules": "高级规则",
+        "informationDensityRules": "信息密度规则",
+        "defaultLevel": "默认密度",
+        "spacingRules": "间距和留白规则",
+        "pageMargin": "页面边距",
+        "sectionGap": "区块间距",
+        "elementGap": "元素间距",
+        "whitespace": "留白规则",
+        "chartVisualRules": "图表视觉规范",
+        "chartTypes": "图表类型",
+        "axisAndGrid": "坐标轴与网格",
+        "labelRules": "标签规则",
+        "colorUsage": "配色使用",
+        "sourceNotes": "来源标注",
+        "imageIllustrationRules": "图片/插画风格规范",
+        "style": "风格",
+        "composition": "构图",
+        "consistency": "一致性",
+        "iconStyleRules": "图标风格规范",
+        "iconStyle": "图标风格",
+        "stroke": "线宽/笔触",
+        "emphasisRules": "强调规则",
+        "keyNumbers": "重点数字",
+        "keywords": "关键词",
+        "conclusion": "结论句",
+        "forbiddenVisualRules": "视觉禁用规则（每行一条）"
+      },
+      "values": {
+        "yes": "是",
+        "no": "否",
+        "required": "需注明",
+        "notRequired": "不强制",
+        "narrativeRole": {
+          "setup": "铺垫",
+          "argument": "论证",
+          "turning-point": "转折",
+          "climax": "高潮",
+          "summary": "总结",
+          "call-to-action": "行动号召"
+        },
+        "explanationDepth": {
+          "focus": "重点页",
+          "transition": "过渡页",
+          "summary": "总结页",
+          "supporting": "辅助页"
+        },
+        "sourceCategory": {
+          "data": "数据",
+          "case": "案例",
+          "quote": "引用",
+          "course-material": "教材内容",
+          "user-input": "用户输入",
+          "none": "无需来源"
+        },
+        "audienceFocus": {
+          "business-conclusion": "商务看结论",
+          "teaching-understanding": "教学看理解",
+          "sales-value": "销售看价值",
+          "research-evidence": "研究看证据",
+          "general": "通用关注点"
+        },
+        "viewerObjective": {
+          "understand": "理解",
+          "believe": "相信",
+          "remember": "记住",
+          "act": "采取行动"
+        },
+        "fontWeight": {
+          "regular": "常规",
+          "medium": "中等",
+          "semibold": "半粗",
+          "bold": "加粗"
+        },
+        "density": {
+          "low": "低",
+          "medium": "中",
+          "high": "高"
+        },
+        "iconStyle": {
+          "line": "线性",
+          "filled": "面性",
+          "duotone": "双色",
+          "monochrome": "单色"
+        }
       },
       "footerMeta": "共 {count} 张卡片 · {title}",
       "cover": "封面",
@@ -605,11 +959,30 @@
     },
     "elements": {
       "title": "页面元素编排",
+      "layer": "层级 {zIndex}",
       "bounds": "位置 x:{x}% y:{y}%，尺寸 {width}% × {height}%，层级 {zIndex}"
     },
     "imageLayers": {
       "title": "图片图层请求",
       "empty": "本页暂不需要生成图片图层。"
+    },
+    "designQuality": {
+      "title": "设计质量评分",
+      "repairStatus": "自动修复",
+      "layoutCandidates": "候选版式",
+      "dimensions": {
+        "informationHierarchy": "信息层级",
+        "visualConsistency": "视觉一致",
+        "contentDensity": "内容密度",
+        "renderability": "可渲染性",
+        "expressionCompleteness": "表达完整"
+      },
+      "repair": {
+        "not-needed": "无需修复",
+        "repaired": "已自动修复",
+        "failed": "修复失败，保留最佳版本",
+        "still-low": "已修复但仍需复核"
+      }
     },
     "elementTypes": {
       "text": "文字",
@@ -619,8 +992,8 @@
       "chartPlaceholder": "图表占位"
     },
     "mock": {
-      "titlePattern": "{idea}｜{deckType}｜{style}",
-      "summaryPattern": "面向{audience}，围绕“{goal}”组织 {count} 页{deckType}，采用{style}与{palette}视觉基调。",
+      "titlePattern": "{idea}｜{deckType}",
+      "summaryPattern": "面向{audience}，围绕“{goal}”组织 {count} 页{deckType}，采用{palette}视觉基调。",
       "slideTemplates": [
         {
           "title": "开场定位",

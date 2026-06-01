@@ -14,7 +14,11 @@ import {
 } from "@/lib/admin/users";
 import { DeckOutlineFileValidationError } from "@/lib/deck-outline/service";
 import { ActiveGenerationExistsError } from "@/lib/decks/errors";
-import { DeckProjectNotFoundError } from "@/lib/decks/service";
+import {
+  DeckProjectNotFoundError,
+  DeckSlideFileValidationError
+} from "@/lib/decks/service";
+import { PptTemplateNotFoundError } from "@/lib/admin/templates/service";
 import { isMissingPrismaStorageError } from "@/lib/db/prisma-errors";
 
 export function apiError(code: string, status: number, details?: unknown) {
@@ -151,6 +155,10 @@ export function handleApiError(error: unknown) {
     return apiError("NOT_FOUND", 404);
   }
 
+  if (error instanceof PptTemplateNotFoundError) {
+    return apiError("NOT_FOUND", 404);
+  }
+
   if (error instanceof ActiveGenerationExistsError) {
     return apiError("ACTIVE_GENERATION_EXISTS", 409);
   }
@@ -168,6 +176,10 @@ export function handleApiError(error: unknown) {
 
   if (error instanceof DeckOutlineFileValidationError) {
     return apiError("VALIDATION_FAILED", 400, error.details);
+  }
+
+  if (error instanceof DeckSlideFileValidationError) {
+    return apiError("VALIDATION_FAILED", 400);
   }
 
   if (error instanceof AiJsonError) {

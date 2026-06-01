@@ -73,16 +73,35 @@ describe("deck outline routes", () => {
         body: JSON.stringify({
           idea: "为新能源初创公司准备融资路演，重点说明市场机会和合作路径。",
           deckType: "fundraising-pitch",
-          style: "strategic",
           palette: "star-map",
           locale: "zh-CN",
-          confirmedIntent: {
+          confirmedPlan: {
+            input: {
+              idea: "为新能源初创公司准备融资路演，重点说明市场机会和合作路径。",
+              sourceText: "",
+              textFiles: [],
+              deckType: "fundraising-pitch",
+              palette: "star-map",
+              locale: "zh-CN"
+            },
+            fileSummaries: [],
             deckType: "fundraising-pitch",
-            style: "strategic",
             audience: "投资人",
             goal: "获得试点合作意向",
             coreMessage: "用市场机会与试点成果证明合作价值。",
-            recommendedPageCount: 3
+            recommendedPageCount: 3,
+            structureOutline: {
+              deckTitle: "新能源融资路演",
+              deckSummary: "这是一份用于确认结构的大纲草稿。",
+              slides: [1, 2, 3].map((index) => ({
+                slideId: `slide-${index}`,
+                index,
+                title: `第 ${index} 页`,
+                purpose: `说明第 ${index} 页的表达目的。`,
+                keyMessage: `第 ${index} 页核心观点。`,
+                visualDirection: "使用清晰主视觉配合文字信息。"
+              }))
+            }
           }
         }),
         method: "POST"
@@ -96,7 +115,7 @@ describe("deck outline routes", () => {
       "user-1",
       expect.objectContaining({
         deckType: "fundraising-pitch",
-        confirmedIntent: expect.objectContaining({
+        confirmedPlan: expect.objectContaining({
           audience: "投资人",
           recommendedPageCount: 3
         })
@@ -113,17 +132,27 @@ describe("deck outline routes", () => {
         sourceText: "",
         textFiles: [],
         deckType: "fundraising-pitch",
-        style: "strategic",
         palette: "star-map",
         locale: "zh-CN"
       },
       fileSummaries: [],
       deckType: "fundraising-pitch",
-      style: "strategic",
       audience: "投资人",
       goal: "获得试点合作意向",
       coreMessage: "用市场机会与试点成果证明合作价值。",
-      recommendedPageCount: 5
+      recommendedPageCount: 5,
+      structureOutline: {
+        deckTitle: "新能源融资路演",
+        deckSummary: "这是一份用于确认结构的大纲草稿。",
+        slides: [1, 2, 3, 4, 5].map((index) => ({
+          slideId: `slide-${index}`,
+          index,
+          title: `第 ${index} 页`,
+          purpose: `说明第 ${index} 页的表达目的。`,
+          keyMessage: `第 ${index} 页核心观点。`,
+          visualDirection: "使用清晰主视觉配合文字信息。"
+        }))
+      }
     });
 
     const response = await POST_ANALYZE_OUTLINE(
@@ -131,7 +160,6 @@ describe("deck outline routes", () => {
         body: JSON.stringify({
           idea: "为新能源初创公司准备融资路演，重点说明市场机会和合作路径。",
           deckType: "fundraising-pitch",
-          style: "strategic",
           palette: "star-map",
           locale: "zh-CN"
         }),
@@ -142,6 +170,7 @@ describe("deck outline routes", () => {
 
     expect(response.status).toBe(200);
     expect(payload.recommendedPageCount).toBe(5);
+    expect(payload.structureOutline.slides).toHaveLength(5);
     expect(outlineService.analyzeDeckOutlineIntentForUser).toHaveBeenCalledWith(
       expect.objectContaining({
         deckType: "fundraising-pitch"

@@ -29,7 +29,6 @@ describe("POST /api/decks/analyze", () => {
           goal: "获得试点合作意向",
           pageCount: 3,
           deckType: "business-report",
-          style: "strategic",
           palette: "star-map",
           locale: "zh-CN"
         })

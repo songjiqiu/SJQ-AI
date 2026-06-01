@@ -14,6 +14,8 @@ storage/uploads/avatars/*
 !storage/uploads/avatars/.gitkeep
 storage/decks/*
 !storage/decks/.gitkeep
+storage/assets/*
+!storage/assets/.gitkeep
 
 .env
 .env.*

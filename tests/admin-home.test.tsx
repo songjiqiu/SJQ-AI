@@ -39,6 +39,10 @@ describe("AdminHome", () => {
       "href",
       "/admin/users"
     );
+    expect(screen.getByRole("link", { name: /模板工作区/ })).toHaveAttribute(
+      "href",
+      "/admin/templates"
+    );
     expect(screen.getByRole("link", { name: /创作工作台/ })).toHaveAttribute(
       "href",
       "/workbench"

@@ -16,43 +16,34 @@ describe("createDeckFormSchema", () => {
 
     expect(parsed.pageCount).toBe(6);
     expect(parsed.deckType).toBe("business-report");
-    expect(parsed.style).toBe("strategic");
     expect(parsed.palette).toBe("star-map");
   });
 
-  it("accepts expanded deck types and narrative styles", () => {
+  it("accepts expanded deck types", () => {
     const parsed = createDeckFormSchema.parse({
       ...validForm,
-      deckType: "fundraising-pitch",
-      style: "data"
+      deckType: "fundraising-pitch"
     });
 
     expect(parsed.deckType).toBe("fundraising-pitch");
-    expect(parsed.style).toBe("data");
   });
 
-  it("rejects unknown deck types and narrative styles", () => {
+  it("rejects unknown deck types", () => {
     expect(
       createDeckFormSchema.safeParse({
         ...validForm,
         deckType: "unknown-type"
       }).success
     ).toBe(false);
-    expect(
-      createDeckFormSchema.safeParse({
-        ...validForm,
-        style: "unknown-style"
-      }).success
-    ).toBe(false);
   });
 
-  it("keeps legacy product style parseable for saved data", () => {
+  it("ignores legacy narrative style values from saved form data", () => {
     const parsed = createDeckFormSchema.parse({
       ...validForm,
       style: "product"
     });
 
-    expect(parsed.style).toBe("product");
+    expect(parsed).not.toHaveProperty("style");
   });
 
   it("rejects missing or too short required text", () => {

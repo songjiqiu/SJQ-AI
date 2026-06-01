@@ -1,6 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { MockImageLayerGenerator } from "@/lib/ai-deck/image-generator";
+import {
+  MockImageLayerGenerator,
+  OpenAIImageLayerGenerator
+} from "@/lib/ai-deck/image-generator";
 import {
   buildContentReview,
   buildConsistencyReport,
@@ -17,7 +20,6 @@ const input: AnalyzeDeckRequest = {
   coreMessage: "用市场机会与试点成果证明合作价值。",
   pageCount: 4,
   deckType: "business-report",
-  style: "strategic",
   palette: "star-map",
   locale: "zh-CN"
 };
@@ -84,5 +86,51 @@ describe("deck generation pipeline helpers", () => {
       true
     );
     expect(pptx.length).toBeGreaterThan(1000);
+  });
+
+  it("falls back to mock image layers when the image provider hangs", async () => {
+    vi.useFakeTimers();
+
+    try {
+      const analyzed = buildMockAnalyzedDeck(input);
+      const slide = analyzed.slides[0];
+      const request = slide.imageLayerRequests[0];
+      const client = {
+        images: {
+          generate: vi.fn(() => new Promise<never>(() => undefined))
+        }
+      };
+      const generator = new OpenAIImageLayerGenerator({
+        client,
+        env: {
+          AI_IMAGE_MODEL: "gpt-image-2",
+          IMAGE_API_KEY: "test-key",
+          IMAGE_REQUEST_TIMEOUT_MS: "10000"
+        }
+      });
+      const generationPromise = generator.generateLayer({
+        request,
+        slide,
+        unifiedVisualSpec: analyzed.unifiedVisualSpec
+      });
+
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      const generated = await generationPromise;
+
+      expect(client.images.generate).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          signal: expect.any(Object),
+          timeout: 10_000
+        })
+      );
+      expect(generated.provider).toBe("gpt-image-2-fallback-mock-svg");
+      expect(generated.metadata.fallbackReason).toContain(
+        "图片生成请求超过 10 秒未返回。"
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

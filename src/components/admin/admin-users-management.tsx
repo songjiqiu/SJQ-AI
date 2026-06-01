@@ -14,6 +14,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { AdminUserDto } from "@/lib/admin/types";
@@ -44,6 +45,8 @@ export function AdminUsersManagement({
   const [users, setUsers] = useState(initialUsers);
   const [isLoading, setIsLoading] = useState(false);
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
+  const [pendingDisableUser, setPendingDisableUser] =
+    useState<AdminUserDto | null>(null);
   const numberFormatter = useMemo(
     () => new Intl.NumberFormat(locale),
     [locale]
@@ -94,10 +97,6 @@ export function AdminUsersManagement({
     user: AdminUserDto,
     input: Partial<Pick<AdminUserDto, "isActive" | "role">>
   ) {
-    if (input.isActive === false && !window.confirm(t("confirm.disable"))) {
-      return;
-    }
-
     setSavingUserId(user.id);
 
     try {
@@ -124,8 +123,20 @@ export function AdminUsersManagement({
       const message = error instanceof Error ? error.message : t("errors.generic");
       toast.error(message);
     } finally {
+      if (pendingDisableUser?.id === user.id) {
+        setPendingDisableUser(null);
+      }
       setSavingUserId(null);
     }
+  }
+
+  function requestActiveStatusChange(user: AdminUserDto) {
+    if (user.isActive) {
+      setPendingDisableUser(user);
+      return;
+    }
+
+    void updateUser(user, { isActive: true });
   }
 
   return (
@@ -248,9 +259,7 @@ export function AdminUsersManagement({
                     </Button>
                     <Button
                       disabled={isSelf || isSaving}
-                      onClick={() =>
-                        void updateUser(user, { isActive: !user.isActive })
-                      }
+                      onClick={() => requestActiveStatusChange(user)}
                       size="sm"
                       title={isSelf ? t("actions.selfDisabled") : undefined}
                       type="button"
@@ -277,6 +286,24 @@ export function AdminUsersManagement({
           </div>
         )}
       </section>
+      <AlertDialog
+        actionLabel={t("actions.disable")}
+        cancelLabel={t("actions.cancel")}
+        description={t("confirm.disable")}
+        loading={savingUserId === pendingDisableUser?.id}
+        onAction={() => {
+          if (pendingDisableUser) {
+            void updateUser(pendingDisableUser, { isActive: false });
+          }
+        }}
+        onOpenChange={(open) => {
+          if (!open && savingUserId !== pendingDisableUser?.id) {
+            setPendingDisableUser(null);
+          }
+        }}
+        open={pendingDisableUser !== null}
+        title={t("confirm.disableTitle")}
+      />
     </main>
   );
 }

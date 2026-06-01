@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within
+} from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -108,5 +114,45 @@ describe("AdminUsersManagement", () => {
     expect(screen.getByRole("button", { name: "设为普通用户" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "禁用" })).toBeDisabled();
     expect(screen.getByText("当前账号")).toBeInTheDocument();
+  });
+
+  it("confirms disabling a user with a styled dialog", async () => {
+    const updatedUser = {
+      ...baseUser,
+      isActive: false
+    };
+    const fetchMock = vi.fn(async () =>
+      jsonResponse({
+        user: updatedUser
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderManagement([baseUser]);
+
+    fireEvent.click(screen.getByRole("button", { name: "禁用" }));
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "确认禁用账号"
+    });
+
+    expect(
+      within(dialog).getByText(
+        "禁用账号会立即清理该用户的所有登录会话，确定继续吗？"
+      )
+    ).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "禁用" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/admin/users/user-1",
+        expect.objectContaining({
+          body: JSON.stringify({
+            isActive: false
+          }),
+          method: "PATCH"
+        })
+      );
+    });
+    expect(await screen.findByText("已禁用")).toBeInTheDocument();
   });
 });

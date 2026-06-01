@@ -12,7 +12,6 @@ const input: AnalyzeDeckRequest = {
   coreMessage: "用市场机会与试点成果证明合作价值。",
   pageCount: 3,
   deckType: "business-report",
-  style: "strategic",
   palette: "star-map",
   locale: "zh-CN"
 };
@@ -41,6 +40,8 @@ const prisma = vi.hoisted(() => ({
   },
   deckSlide: {
     create: vi.fn(),
+    findFirst: vi.fn(),
+    findMany: vi.fn(),
     update: vi.fn()
   },
   deckOutlineDraft: {
@@ -111,6 +112,38 @@ describe("generateDeckFromOutlineDraftForUser", () => {
     prisma.deckSlide.update.mockResolvedValue({});
     prisma.deckAsset.create.mockResolvedValue({});
     prisma.deckAsset.update.mockResolvedValue({});
+    prisma.deckSlide.findFirst.mockImplementation(async ({ where }) => {
+      const call = prisma.deckSlide.create.mock.calls.find(
+        ([item]) =>
+          item.data.projectId === where.projectId &&
+          item.data.index === where.index
+      );
+
+      return call
+        ? {
+            id: `deck-slide-${call[0].data.index}`,
+            ...call[0].data
+          }
+        : null;
+    });
+    prisma.deckSlide.findMany.mockImplementation(async ({ where }) =>
+      prisma.deckSlide.create.mock.calls
+        .filter(([call]) => call.data.projectId === where.projectId)
+        .map(([call]) => {
+          const updates = prisma.deckSlide.update.mock.calls.filter(
+            ([updateCall]) =>
+              updateCall.where.id === `deck-slide-${call.data.index}`
+          );
+          const latestUpdate = updates[updates.length - 1]?.[0].data ?? {};
+
+          return {
+            id: `deck-slide-${call.data.index}`,
+            ...call.data,
+            ...latestUpdate
+          };
+        })
+        .sort((a, b) => a.index - b.index)
+    );
     prisma.deckProject.findFirst.mockResolvedValue({
       generationProgress: {
         current: 0,
@@ -120,7 +153,12 @@ describe("generateDeckFromOutlineDraftForUser", () => {
       },
       id: "deck-1",
       input,
+      mode: "mock",
+      summary: "编辑后的摘要用于服务测试。",
+      title: "编辑后的路演标题",
       sourceOutlineDraftId: "draft-1",
+      status: "GENERATING",
+      unifiedVisualSpec: analyzed.unifiedVisualSpec,
       userId: "user-1"
     });
     prisma.deckProject.update.mockImplementation(async ({ data }) => ({
@@ -156,8 +194,12 @@ describe("generateDeckFromOutlineDraftForUser", () => {
         content: call.data.content,
         elements: call.data.elements,
         generatedImageLayers:
-          prisma.deckSlide.update.mock.calls[call.data.index - 1][0].data
-            .generatedImageLayers,
+          prisma.deckSlide.update.mock.calls
+            .filter(
+              ([updateCall]) =>
+                updateCall.where.id === `deck-slide-${call.data.index}`
+            )
+            .at(-1)?.[0].data.generatedImageLayers ?? [],
         imageLayerRequests: call.data.imageLayerRequests,
         index: call.data.index,
         motionPlan: call.data.motionPlan,
@@ -192,6 +234,8 @@ describe("generateDeckFromOutlineDraftForUser", () => {
 
     expect(result.deckTitle).toBe("编辑后的路演标题");
     expect(result.slides[0].content.title).toBe("编辑后的开场标题");
+    expect(result.slides[0].pageIntent.pageRole).toBeTruthy();
+    expect(result.slides[0].semanticElements.length).toBeGreaterThanOrEqual(3);
     expect(result.pptxUrl).toBe("/api/decks/deck-1/pptx");
     expect(prisma.deckOutlineDraft.findFirst).toHaveBeenCalledWith({
       where: {
@@ -256,6 +300,124 @@ describe("generateDeckFromOutlineDraftForUser", () => {
     );
   });
 
+  it("generates async preview slides with completed-count progress", async () => {
+    prisma.deckProject.findFirst
+      .mockResolvedValueOnce({
+        generationProgress: {
+          current: 0,
+          message: "已创建生成任务。",
+          stage: "queued",
+          total: input.pageCount
+        },
+        id: "deck-1",
+        input,
+        mode: "mock",
+        sourceOutlineDraftId: "draft-1",
+        status: "GENERATING",
+        summary: "编辑后的摘要用于服务测试。",
+        title: "编辑后的路演标题",
+        unifiedVisualSpec: analyzed.unifiedVisualSpec,
+        userId: "user-1"
+      })
+      .mockResolvedValueOnce({
+        assets: [],
+        id: "deck-1",
+        input,
+        mode: "mock",
+        slides: [],
+        status: "GENERATING",
+        summary: "编辑后的摘要用于服务测试。",
+        title: "编辑后的路演标题",
+        unifiedVisualSpec: analyzed.unifiedVisualSpec,
+        userId: "user-1"
+      });
+
+    const result = await runDeckGenerationTaskForUser("user-1", "deck-1", {
+      analyzerOptions: {
+        env: {
+          OPENAI_API_KEY: ""
+        }
+      },
+      imageGenerator: new MockImageLayerGenerator()
+    });
+    const progressUpdates = prisma.deckProject.updateMany.mock.calls
+      .map(([call]) => call.data.generationProgress)
+      .filter(Boolean);
+
+    expect(result).toMatchObject({
+      deckTitle: "编辑后的路演标题",
+      pptxUrl: "/api/decks/deck-1/pptx",
+      status: "READY"
+    });
+    expect(prisma.deckSlide.create).toHaveBeenCalledTimes(input.pageCount);
+    expect(prisma.deckSlide.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          pageDesign: expect.objectContaining({
+            constraints: expect.objectContaining({
+              coreMessagePresent: true,
+              titleUnique: true
+            }),
+            designQualityScore: expect.objectContaining({
+              dimensions: expect.objectContaining({
+                informationHierarchy: expect.objectContaining({
+                  score: expect.any(Number)
+                })
+              }),
+              totalScore: expect.any(Number)
+            }),
+            layoutSelection: expect.objectContaining({
+              candidates: expect.arrayContaining([
+                expect.objectContaining({
+                  layoutType: expect.any(String)
+                })
+              ]),
+              selectedLayoutType: expect.any(String)
+            }),
+            pageIntent: expect.objectContaining({
+              pageRole: expect.any(String)
+            }),
+            semanticElements: expect.arrayContaining([
+              expect.objectContaining({
+                category: expect.any(String),
+                id: expect.any(String),
+                priority: expect.any(Number)
+              })
+            ])
+          })
+        })
+      })
+    );
+    expect(progressUpdates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          current: 0,
+          message: "正在生成页面图层 JSON。",
+          stage: "composing",
+          total: input.pageCount
+        }),
+        expect.objectContaining({
+          current: 1,
+          message: expect.stringContaining("已完成 1/3 页"),
+          stage: "composing",
+          total: input.pageCount
+        }),
+        expect.objectContaining({
+          current: 3,
+          message: expect.stringContaining("已完成 3/3 页"),
+          stage: "images",
+          total: input.pageCount
+        }),
+        expect.objectContaining({
+          current: 3,
+          message: "正在合成 PPTX 文件。",
+          stage: "pptx",
+          total: input.pageCount
+        })
+      ])
+    );
+  });
+
   it("reuses a recent active async generation task for the same outline", async () => {
     prisma.deckProject.findFirst.mockResolvedValueOnce({
       createdAt: new Date(),
@@ -271,11 +433,22 @@ describe("generateDeckFromOutlineDraftForUser", () => {
       status: "GENERATING",
       userId: "user-1"
     });
+    prisma.deckProject.findFirst.mockResolvedValueOnce({
+      _count: {
+        slides: 5
+      },
+      id: "deck-active",
+      input,
+      status: "GENERATING",
+      userId: "user-1"
+    });
 
     const task = await createDeckGenerationTaskForUser("user-1", "draft-1");
 
     expect(task).toMatchObject({
       id: "deck-active",
+      previewReady: true,
+      previewUrl: "/workbench/preview/deck-active",
       reused: true,
       status: "GENERATING"
     });
@@ -340,6 +513,38 @@ describe("generateDeckFromOutlineDraftForUser", () => {
       })
     );
     expect(prisma.deckProject.create).toHaveBeenCalled();
+  });
+
+  it("marks status preview ready after the first lightweight slides are stored", async () => {
+    prisma.deckProject.findFirst.mockResolvedValue({
+      _count: {
+        slides: 5
+      },
+      assets: [],
+      generationError: null,
+      generationProgress: {
+        current: 5,
+        message: "正在生成第 6/6 页。",
+        stage: "composing",
+        total: 6
+      },
+      id: "deck-1",
+      input: {
+        ...input,
+        pageCount: 6
+      },
+      pptxAssetId: null,
+      status: "GENERATING",
+      userId: "user-1"
+    });
+
+    const status = await getDeckGenerationStatusForUser("user-1", "deck-1");
+
+    expect(status).toMatchObject({
+      previewReady: true,
+      previewUrl: "/workbench/preview/deck-1",
+      status: "GENERATING"
+    });
   });
 
   it("lists only completed deck history with a PPTX asset", async () => {

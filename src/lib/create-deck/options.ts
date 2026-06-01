@@ -38,7 +38,9 @@ export const deckTypeGroups = [
       "product-launch",
       "sales-proposal",
       "brand-marketing",
-      "event-promotion"
+      "event-promotion",
+      "operation-plan",
+      "growth-experiment"
     ]
   },
   {
@@ -50,10 +52,6 @@ export const deckTypeGroups = [
     types: ["research-report", "data-analysis", "industry-insight"]
   },
   {
-    id: "operations",
-    types: ["operation-plan", "growth-experiment"]
-  },
-  {
     id: "personal",
     types: ["portfolio", "personal-review", "community-sharing"]
   }
@@ -61,23 +59,6 @@ export const deckTypeGroups = [
   id: string;
   types: readonly (typeof deckTypeIds)[number][];
 }>;
-
-export const deckStyleIds = [
-  "strategic",
-  "data",
-  "story",
-  "problem-solution",
-  "minimal",
-  "teaching",
-  "visual-proposal",
-  "retrospective"
-] as const;
-
-export const legacyDeckStyleIds = ["product"] as const;
-export const deckStyleSchemaIds = [
-  ...deckStyleIds,
-  ...legacyDeckStyleIds
-] as const;
 
 export const paletteIds = [
   "star-map",
@@ -88,6 +69,4 @@ export const paletteIds = [
 
 export type DeckTypeId = (typeof deckTypeIds)[number];
 export type DeckTypeGroupId = (typeof deckTypeGroups)[number]["id"];
-export type DeckStyleId = (typeof deckStyleIds)[number];
-export type DeckStyleSchemaId = (typeof deckStyleSchemaIds)[number];
 export type PaletteId = (typeof paletteIds)[number];

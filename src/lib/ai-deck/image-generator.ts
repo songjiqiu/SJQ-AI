@@ -35,21 +35,32 @@ export type AiImageEnv = {
   AI_IMAGE_MODEL?: string;
   IMAGE_API_KEY?: string;
   IMAGE_BASE_URL?: string;
+  IMAGE_REQUEST_TIMEOUT_MS?: string;
+};
+
+type ImageRequestOptions = {
+  signal?: AbortSignal;
+  timeout?: number;
 };
 
 type OpenAIImagesClient = {
   images: {
-    generate: (payload: Record<string, unknown>) => Promise<{
-      data?: Array<{
-        b64_json?: string;
-        revised_prompt?: string;
-        url?: string;
+    generate: (
+      payload: Record<string, unknown>,
+      options?: ImageRequestOptions
+    ) => Promise<{
+        data?: Array<{
+          b64_json?: string;
+          revised_prompt?: string;
+          url?: string;
+        }>;
+        output_format?: "png" | "webp" | "jpeg";
+        size?: string;
       }>;
-      output_format?: "png" | "webp" | "jpeg";
-      size?: string;
-    }>;
   };
 };
+
+const defaultImageRequestTimeoutMs = 120_000;
 
 export class MockImageLayerGenerator implements ImageLayerGenerator {
   readonly modelId = "mock-svg";
@@ -105,6 +116,7 @@ export class OpenAIImageLayerGenerator implements ImageLayerGenerator {
   private readonly client: OpenAIImagesClient;
   private readonly fallback = new MockImageLayerGenerator();
   readonly modelId: string;
+  private readonly requestTimeoutMs: number;
 
   constructor({
     client,
@@ -114,6 +126,9 @@ export class OpenAIImageLayerGenerator implements ImageLayerGenerator {
     env: AiImageEnv;
   }) {
     this.modelId = env.AI_IMAGE_MODEL || "gpt-image-2";
+    this.requestTimeoutMs = parseImageRequestTimeoutMs(
+      env.IMAGE_REQUEST_TIMEOUT_MS
+    );
     this.client =
       client ??
       (new OpenAI({
@@ -127,23 +142,38 @@ export class OpenAIImageLayerGenerator implements ImageLayerGenerator {
   ): Promise<ImageLayerGeneration> {
     try {
       const size = getImageApiSize(context.request.aspectRatio, this.modelId);
-      const response = await this.client.images.generate({
-        background: getImageBackground(context.request, this.modelId),
-        model: this.modelId,
-        moderation: "auto",
-        n: 1,
-        output_format: "png",
-        prompt: buildImagePrompt(context),
-        quality: "auto",
-        size
-      });
+      const controller = new AbortController();
+      const response = await withTimeout(
+        this.client.images.generate(
+          {
+            background: getImageBackground(context.request, this.modelId),
+            model: this.modelId,
+            moderation: "auto",
+            n: 1,
+            output_format: "png",
+            prompt: buildImagePrompt(context),
+            quality: "auto",
+            size
+          },
+          {
+            signal: controller.signal,
+            timeout: this.requestTimeoutMs
+          }
+        ),
+        this.requestTimeoutMs,
+        `图片生成请求超过 ${formatTimeoutSeconds(this.requestTimeoutMs)} 秒未返回。`,
+        controller
+      );
       const image = response.data?.[0];
 
       if (!image) {
         throw new Error("Image generation response did not include an image.");
       }
 
-      const bytes = await readGeneratedImageBytes(image);
+      const bytes = await readGeneratedImageBytes(
+        image,
+        this.requestTimeoutMs
+      );
       const { width, height } = getDimensions(context.request.aspectRatio);
 
       return {
@@ -181,7 +211,8 @@ export function createImageLayerGenerator(
   env: AiImageEnv = {
     AI_IMAGE_MODEL: process.env.AI_IMAGE_MODEL,
     IMAGE_API_KEY: process.env.IMAGE_API_KEY,
-    IMAGE_BASE_URL: process.env.IMAGE_BASE_URL
+    IMAGE_BASE_URL: process.env.IMAGE_BASE_URL,
+    IMAGE_REQUEST_TIMEOUT_MS: process.env.IMAGE_REQUEST_TIMEOUT_MS
   }
 ): ImageLayerGenerator {
   if (!env.IMAGE_API_KEY) {
@@ -274,9 +305,12 @@ function buildImagePrompt({
     `- Image style: ${unifiedVisualSpec.imageStyle}`,
     `- Typography: ${unifiedVisualSpec.typography}`,
     `- Palette: ${unifiedVisualSpec.colorPalette.join(", ")}`,
+    `- Image rules: ${unifiedVisualSpec.imageRules.usageNotes.join(" ")}`,
     "",
     "Constraints:",
     `- Avoid: ${request.negativePrompt}`,
+    "- Background images must not contain high-contrast text areas.",
+    "- The main subject must not sit under the slide title area.",
     "- Keep the image clean enough for a professional presentation.",
     "- Do not add text unless the request explicitly asks for text."
   ]
@@ -285,16 +319,27 @@ function buildImagePrompt({
     .slice(0, 32000);
 }
 
-async function readGeneratedImageBytes(image: {
-  b64_json?: string;
-  url?: string;
-}) {
+async function readGeneratedImageBytes(
+  image: {
+    b64_json?: string;
+    url?: string;
+  },
+  requestTimeoutMs: number
+) {
   if (image?.b64_json) {
     return Buffer.from(image.b64_json, "base64");
   }
 
   if (image?.url) {
-    const response = await fetch(image.url);
+    const controller = new AbortController();
+    const response = await withTimeout(
+      fetch(image.url, {
+        signal: controller.signal
+      }),
+      requestTimeoutMs,
+      `生成图片下载超过 ${formatTimeoutSeconds(requestTimeoutMs)} 秒未返回。`,
+      controller
+    );
 
     if (!response.ok) {
       throw new Error("Generated image URL could not be downloaded.");
@@ -304,6 +349,45 @@ async function readGeneratedImageBytes(image: {
   }
 
   throw new Error("Image generation response did not include image data.");
+}
+
+function parseImageRequestTimeoutMs(value: string | undefined) {
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return defaultImageRequestTimeoutMs;
+  }
+
+  return Math.max(10_000, Math.min(10 * 60_000, Math.round(parsed)));
+}
+
+function formatTimeoutSeconds(ms: number) {
+  return Math.round(ms / 1000);
+}
+
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  message: string,
+  controller?: AbortController
+) {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          controller?.abort();
+          reject(new Error(message));
+        }, timeoutMs);
+      })
+    ]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
 }
 
 function normalizeColor(value: string | undefined, fallback: string) {

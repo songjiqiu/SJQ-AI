@@ -42,6 +42,7 @@ import {
   usePalettePreset
 } from "@/components/theme/palette-provider";
 import { ThemeModeControl } from "@/components/theme/theme-mode-control";
+import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
 import type {
@@ -88,6 +89,12 @@ type ModelFormState = {
 };
 
 type ModelFormKind = "models" | "imageModels" | "embeddings";
+
+type PendingDeleteEntity = {
+  id: string;
+  message: string;
+  type: "provider" | ModelFormKind;
+} | null;
 
 type ExperienceSettingsDialogProps = {
   onUserChange?: (user: CurrentUser | null) => void;
@@ -172,6 +179,9 @@ export function ExperienceSettingsDialog({
     useState<string | null>(null);
   const [isFetchingProviderModels, setIsFetchingProviderModels] =
     useState(false);
+  const [pendingDeleteEntity, setPendingDeleteEntity] =
+    useState<PendingDeleteEntity>(null);
+  const [deletingEntityId, setDeletingEntityId] = useState<string | null>(null);
   const errorMessages = useMemo<SettingsErrorMessages>(() => ({
     databaseMigrationRequired: t("errors.databaseMigrationRequired"),
     duplicate: t("errors.duplicate"),
@@ -584,29 +594,33 @@ export function ExperienceSettingsDialog({
     });
   }
 
-  async function deleteEntity(
-    type: "provider" | ModelFormKind,
-    id: string
-  ) {
-    const confirmed = window.confirm(
-      type === "provider"
-        ? t("providers.confirmDelete")
-        : type === "imageModels"
-          ? t("imageModels.confirmDelete")
-          : type === "embeddings"
-            ? t("embeddings.confirmDelete")
-            : t("models.confirmDelete")
-    );
+  function requestDeleteEntity(type: "provider" | ModelFormKind, id: string) {
+    setPendingDeleteEntity({
+      id,
+      message:
+        type === "provider"
+          ? t("providers.confirmDelete")
+          : type === "imageModels"
+            ? t("imageModels.confirmDelete")
+            : type === "embeddings"
+              ? t("embeddings.confirmDelete")
+              : t("models.confirmDelete"),
+      type
+    });
+  }
 
-    if (!confirmed) {
+  async function deleteEntity() {
+    if (!pendingDeleteEntity) {
       return;
     }
 
+    setDeletingEntityId(pendingDeleteEntity.id);
+
     try {
       const response = await fetch(
-        type === "provider"
-          ? `/api/ai/providers/${id}`
-          : `${getModelEndpoint(type)}/${id}`,
+        pendingDeleteEntity.type === "provider"
+          ? `/api/ai/providers/${pendingDeleteEntity.id}`
+          : `${getModelEndpoint(pendingDeleteEntity.type)}/${pendingDeleteEntity.id}`,
         {
           method: "DELETE"
         }
@@ -617,11 +631,14 @@ export function ExperienceSettingsDialog({
       }
 
       toast.success(t("toast.deleted"));
+      setPendingDeleteEntity(null);
       await loadAiConfig();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : t("toast.deleteFailed");
       toast.error(message);
+    } finally {
+      setDeletingEntityId(null);
     }
   }
 
@@ -720,7 +737,7 @@ export function ExperienceSettingsDialog({
           {activeTab === "providers" ? (
             <ProvidersPane
               isLoading={isAiConfigLoading}
-              onDelete={(id) => void deleteEntity("provider", id)}
+              onDelete={(id) => requestDeleteEntity("provider", id)}
               onEdit={openEditProvider}
               onNew={openNewProvider}
               providers={providers}
@@ -731,7 +748,7 @@ export function ExperienceSettingsDialog({
               kind="models"
               isLoading={isAiConfigLoading}
               models={models}
-              onDelete={(id) => void deleteEntity("models", id)}
+              onDelete={(id) => requestDeleteEntity("models", id)}
               onEdit={(model) => openEditModel(model, "models")}
               onMakeDefault={(id) => void makeDefault("models", id)}
               onNew={() => openNewModel("models")}
@@ -743,7 +760,7 @@ export function ExperienceSettingsDialog({
               kind="imageModels"
               isLoading={isAiConfigLoading}
               models={imageModels}
-              onDelete={(id) => void deleteEntity("imageModels", id)}
+              onDelete={(id) => requestDeleteEntity("imageModels", id)}
               onEdit={(model) => openEditModel(model, "imageModels")}
               onMakeDefault={(id) => void makeDefault("imageModels", id)}
               onNew={() => openNewModel("imageModels")}
@@ -755,7 +772,7 @@ export function ExperienceSettingsDialog({
               kind="embeddings"
               isLoading={isAiConfigLoading}
               models={embeddingModels}
-              onDelete={(id) => void deleteEntity("embeddings", id)}
+              onDelete={(id) => requestDeleteEntity("embeddings", id)}
               onEdit={(model) => openEditModel(model, "embeddings")}
               onMakeDefault={(id) => void makeDefault("embeddings", id)}
               onNew={() => openNewModel("embeddings")}
@@ -983,6 +1000,20 @@ export function ExperienceSettingsDialog({
             </form>
           </div>
         ) : null}
+        <AlertDialog
+          actionLabel={t("actions.delete")}
+          cancelLabel={t("actions.cancel")}
+          description={pendingDeleteEntity?.message ?? ""}
+          loading={deletingEntityId !== null}
+          onAction={() => void deleteEntity()}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen && deletingEntityId === null) {
+              setPendingDeleteEntity(null);
+            }
+          }}
+          open={pendingDeleteEntity !== null}
+          title={t("confirm.deleteTitle")}
+        />
       </section>
     </div>,
     document.body

@@ -224,3 +224,21 @@ model ReusableImageAsset {
   @@unique([userId, cacheKey])
   @@index([userId, status])
 }
+
+model PptTemplate {
+  id                 String   @id @default(cuid())
+  category           String   @db.VarChar(80)
+  customCategoryKey  String?  @db.VarChar(80)
+  customCategoryName String?  @db.VarChar(120)
+  name               String   @db.VarChar(120)
+  description        String?  @db.VarChar(500)
+  tags               Json
+  sortOrder          Int      @default(0)
+  isEnabled          Boolean  @default(true)
+  slide              Json
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([category, sortOrder])
+  @@index([isEnabled])
+}

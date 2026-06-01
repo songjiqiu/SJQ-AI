@@ -28,7 +28,7 @@ NEXT_ALLOWED_DEV_ORIGINS=192.168.0.117
 pnpm test
 ```
 
-当前测试使用 Vitest 和 React Testing Library，覆盖中英文资源 key、角色入口分流、认证跳转、管理端入口、创作表单 schema、异步预览 PPT 生成管线、Next.js deck API、图片素材缓存和工作台基础交互。默认测试不包含生产打包。
+当前测试使用 Vitest 和 React Testing Library，覆盖中英文资源 key、角色入口分流、认证跳转、管理端入口、用户管理、PPT 模板库管理、创作表单 schema、异步预览 PPT 生成管线、Next.js deck API、图片素材缓存和工作台基础交互。默认测试不包含生产打包。
 
 ## 静态检查
 
@@ -55,7 +55,7 @@ pnpm exec prisma migrate status
 pnpm db:migrate
 ```
 
-这些配置接口依赖 Prisma 迁移创建的 `AiProvider` 和 `AiModelConfig` 表；数据库 schema 落后于代码时，界面会尽量保留已成功读取的配置，但仍需要补齐迁移后才能完整新增和查询。保存接口遇到缺表或缺字段时会返回 `DATABASE_MIGRATION_REQUIRED`，设置页会提示先运行 `pnpm db:migrate`。旧 `ImageModelConfig` 数据不会自动迁移，升级后需要重新新增图片模型配置。
+这些配置接口依赖 Prisma 迁移创建的 `AiProvider` 和 `AiModelConfig` 表；模板库依赖 `PptTemplate` 表。数据库 schema 落后于代码时，界面会尽量保留已成功读取的配置，但仍需要补齐迁移后才能完整新增和查询。保存接口遇到缺表或缺字段时会返回 `DATABASE_MIGRATION_REQUIRED`，设置页会提示先运行 `pnpm db:migrate`。旧 `ImageModelConfig` 数据不会自动迁移，升级后需要重新新增图片模型配置。
 
 ## 文档
 

@@ -10,6 +10,7 @@ const auth = vi.hoisted(() => ({
 
 const deckService = vi.hoisted(() => ({
   DeckProjectNotFoundError: class DeckProjectNotFoundError extends Error {},
+  DeckSlideFileValidationError: class DeckSlideFileValidationError extends Error {},
   createDeckGenerationTaskForUser: vi.fn(),
   deleteDeckProjectForUser: vi.fn(),
   generateDeckFromOutlineDraftSchema: {
@@ -24,6 +25,7 @@ const deckService = vi.hoisted(() => ({
   listDeckProjects: vi.fn(),
   regenerateDeckSlideForUser: vi.fn(),
   startDeckGenerationTaskForUser: vi.fn(),
+  uploadDeckSlideElementFileForUser: vi.fn(),
   updateDeckSlideForUser: vi.fn()
 }));
 
@@ -58,6 +60,7 @@ import {
 import { GET as GET_STATUS } from "@/app/api/decks/[id]/status/route";
 import { GET as GET_PPTX } from "@/app/api/decks/[id]/pptx/route";
 import { GET as GET_ASSET } from "@/app/api/decks/[id]/assets/[assetId]/route";
+import { POST as POST_ELEMENT_FILE } from "@/app/api/decks/[id]/slides/[slideId]/elements/[elementId]/file/route";
 import { ActiveGenerationExistsError } from "@/lib/decks/errors";
 
 const generatedDeck = {
@@ -75,6 +78,7 @@ describe("deck routes", () => {
   it("starts an async deck generation task for the current user", async () => {
     deckService.createDeckGenerationTaskForUser.mockResolvedValue({
       id: "deck-1",
+      previewReady: false,
       progress: {
         current: 0,
         message: "queued",
@@ -110,6 +114,7 @@ describe("deck routes", () => {
   it("does not start a duplicate runner when reusing an active generation task", async () => {
     deckService.createDeckGenerationTaskForUser.mockResolvedValue({
       id: "deck-1",
+      previewReady: false,
       progress: {
         current: 1,
         message: "images",
@@ -147,6 +152,7 @@ describe("deck routes", () => {
       },
       error: null,
       id: "deck-1",
+      previewReady: true,
       previewUrl: "/workbench/preview/deck-1",
       progress: {
         current: 3,
@@ -169,6 +175,7 @@ describe("deck routes", () => {
 
     expect(response.status).toBe(200);
     expect(payload.status).toBe("READY");
+    expect(payload.previewReady).toBe(true);
     expect(payload.details).toEqual({
       current: 3,
       error: null,
@@ -193,6 +200,7 @@ describe("deck routes", () => {
       },
       error: "AI_JSON_GENERATION_FAILED: SlideCompositionPlan validation failed",
       id: "deck-1",
+      previewReady: false,
       progress: {
         current: 0,
         message: "AI_JSON_GENERATION_FAILED: SlideCompositionPlan validation failed",
@@ -354,5 +362,56 @@ describe("deck routes", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("image/svg+xml");
     expect(await response.text()).toBe("<svg />");
+  });
+
+  it("uploads a replacement file for a slide element", async () => {
+    deckService.uploadDeckSlideElementFileForUser.mockResolvedValue({
+      assetId: "asset-upload",
+      elementId: "element-1",
+      height: 1,
+      id: "request-1-uploaded-layer",
+      mimeType: "image/png",
+      prompt: "User uploaded replacement file: hero.png",
+      provider: "user-upload",
+      requestId: "request-1",
+      transparentBackground: true,
+      url: "/api/decks/deck-1/assets/asset-upload",
+      visualNotes: "hero.png",
+      width: 1
+    });
+    const file = {
+      arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
+      name: "hero.png",
+      type: "image/png"
+    };
+
+    const response = await POST_ELEMENT_FILE(
+      {
+        formData: async () => ({
+          get: (key: string) => (key === "file" ? file : null)
+        })
+      } as unknown as Request,
+      {
+        params: Promise.resolve({
+          elementId: "element-1",
+          id: "deck-1",
+          slideId: "slide-1"
+        })
+      }
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.layer.provider).toBe("user-upload");
+    expect(deckService.uploadDeckSlideElementFileForUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        elementId: "element-1",
+        filename: "hero.png",
+        mimeType: "image/png",
+        projectId: "deck-1",
+        slideId: "slide-1",
+        userId: "user-1"
+      })
+    );
   });
 });

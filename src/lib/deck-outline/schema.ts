@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import {
   analyzeDeckRequestSchema,
-  confirmedDeckIntentSchema,
   deckIntentAnalysisResultSchema,
   deckOutlineFileSummarySchema,
   deckOutlineIntentInputSchema,
@@ -13,23 +12,39 @@ import {
 
 export const createDeckOutlineDraftSchema = deckOutlineIntentInputSchema
   .extend({
-    confirmedIntent: confirmedDeckIntentSchema
+    confirmedPlan: deckIntentAnalysisResultSchema
   })
-  .strict()
+  .strip()
   .superRefine((input, ctx) => {
-    if (input.confirmedIntent.deckType !== input.deckType) {
+    if (input.confirmedPlan.deckType !== input.deckType) {
       ctx.addIssue({
         code: "custom",
-        message: "confirmedIntent.deckType must match deckType",
-        path: ["confirmedIntent", "deckType"]
+        message: "confirmedPlan.deckType must match deckType",
+        path: ["confirmedPlan", "deckType"]
       });
     }
 
-    if (input.confirmedIntent.style !== input.style) {
+    if (input.confirmedPlan.input.deckType !== input.deckType) {
       ctx.addIssue({
         code: "custom",
-        message: "confirmedIntent.style must match style",
-        path: ["confirmedIntent", "style"]
+        message: "confirmedPlan.input.deckType must match deckType",
+        path: ["confirmedPlan", "input", "deckType"]
+      });
+    }
+
+    if (input.confirmedPlan.input.locale !== input.locale) {
+      ctx.addIssue({
+        code: "custom",
+        message: "confirmedPlan.input.locale must match locale",
+        path: ["confirmedPlan", "input", "locale"]
+      });
+    }
+
+    if (input.confirmedPlan.input.palette !== input.palette) {
+      ctx.addIssue({
+        code: "custom",
+        message: "confirmedPlan.input.palette must match palette",
+        path: ["confirmedPlan", "input", "palette"]
       });
     }
   });

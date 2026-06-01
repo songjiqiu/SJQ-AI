@@ -4,12 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import JSZip from "jszip";
 import {
   BadgeDollarSign,
-  BookOpenText,
   BriefcaseBusiness,
   CalendarCheck,
   ChartColumnIncreasing,
-  ChartNoAxesCombined,
-  ChartPie,
   ClipboardList,
   Compass,
   FileChartColumn,
@@ -17,14 +14,11 @@ import {
   GraduationCap,
   Handshake,
   History,
-  Layers3,
   Lightbulb,
   Megaphone,
   MonitorPlay,
   PanelsTopLeft,
-  PenTool,
   Presentation,
-  Puzzle,
   RotateCcw,
   Rocket,
   ScrollText,
@@ -45,14 +39,10 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 import { usePalettePreset } from "@/components/theme/palette-provider";
+import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
-import {
-  deckStyleIds,
-  deckTypeGroups,
-  type DeckStyleId,
-  type DeckTypeId
-} from "@/lib/create-deck/options";
+import { deckTypeGroups, type DeckTypeId } from "@/lib/create-deck/options";
 import {
   deckInputFileAccept,
   deckInputMaxFileCharacters,
@@ -82,6 +72,11 @@ export const intentAnalysisStorageKey = "pptcm_intent_analysis";
 export const generatePayloadStorageKey = "pptcm_generate_payload";
 const creationFormId = "pptcm-creation-form";
 
+type PendingDelete =
+  | { item: DeckOutlineDraftListItem; kind: "draft" }
+  | { item: DeckHistoryItem; kind: "history" }
+  | null;
+
 const deckTypeIcons: Record<DeckTypeId, LucideIcon> = {
   "brand-marketing": Megaphone,
   "business-report": BriefcaseBusiness,
@@ -105,17 +100,6 @@ const deckTypeIcons: Record<DeckTypeId, LucideIcon> = {
   "training-course": GraduationCap
 };
 
-const styleIcons: Record<DeckStyleId, LucideIcon> = {
-  data: ChartNoAxesCombined,
-  minimal: ChartPie,
-  "problem-solution": Puzzle,
-  retrospective: ScrollText,
-  story: PenTool,
-  strategic: Layers3,
-  teaching: BookOpenText,
-  "visual-proposal": Sparkles
-};
-
 export function CreationWorkbench() {
   const t = useTranslations("workbench");
   const optionT = useTranslations("options");
@@ -130,6 +114,7 @@ export function CreationWorkbench() {
   const [isDraftsLoading, setIsDraftsLoading] = useState(false);
   const [deletingDraftId, setDeletingDraftId] = useState<string | null>(null);
   const [deletingHistoryId, setDeletingHistoryId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [textFiles, setTextFiles] = useState<File[]>([]);
 
@@ -145,8 +130,6 @@ export function CreationWorkbench() {
     mode: "onBlur"
   });
 
-  const selectedStyle =
-    useWatch({ control, name: "style" }) ?? createDeckFormDefaults.style;
   const selectedDeckType =
     useWatch({ control, name: "deckType" }) ??
     createDeckFormDefaults.deckType;
@@ -208,8 +191,8 @@ export function CreationWorkbench() {
         idea: values.idea,
         sourceText: "",
         textFiles: await readTextFiles(textFiles),
+        ...(values.pageCount ? { pageCount: values.pageCount } : {}),
         deckType: values.deckType,
-        style: values.style,
         palette: selectedPalette,
         locale
       };
@@ -233,10 +216,6 @@ export function CreationWorkbench() {
   };
 
   const deleteOutlineDraft = async (item: DeckOutlineDraftListItem) => {
-    if (!window.confirm(t("drafts.confirmDelete", { title: item.deckTitle }))) {
-      return;
-    }
-
     setDeletingDraftId(item.id);
 
     try {
@@ -256,14 +235,11 @@ export function CreationWorkbench() {
       toast.error(message);
     } finally {
       setDeletingDraftId(null);
+      setPendingDelete(null);
     }
   };
 
   const deleteHistoryItem = async (item: DeckHistoryItem) => {
-    if (!window.confirm(t("history.confirmDelete", { title: item.deckTitle }))) {
-      return;
-    }
-
     setDeletingHistoryId(item.id);
 
     try {
@@ -281,7 +257,21 @@ export function CreationWorkbench() {
       toast.error(message);
     } finally {
       setDeletingHistoryId(null);
+      setPendingDelete(null);
     }
+  };
+
+  const confirmPendingDelete = () => {
+    if (!pendingDelete) {
+      return;
+    }
+
+    if (pendingDelete.kind === "draft") {
+      void deleteOutlineDraft(pendingDelete.item);
+      return;
+    }
+
+    void deleteHistoryItem(pendingDelete.item);
   };
 
   const handleTextFilesChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -298,97 +288,141 @@ export function CreationWorkbench() {
     event.target.value = "";
   };
 
+  const isPendingDeleteLoading =
+    pendingDelete?.kind === "draft"
+      ? deletingDraftId === pendingDelete.item.id
+      : pendingDelete?.kind === "history"
+        ? deletingHistoryId === pendingDelete.item.id
+        : false;
+  const pendingDeleteDescription =
+    pendingDelete?.kind === "draft"
+      ? t("drafts.confirmDelete", { title: pendingDelete.item.deckTitle })
+      : pendingDelete?.kind === "history"
+        ? t("history.confirmDelete", { title: pendingDelete.item.deckTitle })
+        : "";
+
   return (
     <main className="min-h-[calc(100vh-4rem)]">
       <WorkbenchStepNav current={1} />
-      <div className="mx-auto grid max-w-6xl gap-3 px-4 py-3 lg:py-4">
+      <div className="mx-auto grid max-w-6xl gap-5 px-4 py-6 lg:py-7">
         <section className="mx-auto w-full max-w-3xl text-center">
-          <div className="mb-1 flex items-center justify-center gap-2 sm:mb-2">
+          <div className="mb-2 flex items-center justify-center gap-3 sm:mb-3">
             <WandSparkles
-              className="size-6 text-accent sm:size-7"
+              className="size-7 text-accent sm:size-8"
               aria-hidden="true"
             />
-            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-4xl">
+            <h1 className="text-3xl font-semibold tracking-normal text-foreground sm:text-5xl">
               {t("hero.title")}
             </h1>
           </div>
         </section>
 
-        <div className="grid w-full gap-3 lg:grid-cols-[minmax(0,1fr)_336px] lg:items-stretch">
+        <div className="grid w-full gap-4 lg:grid-cols-[minmax(0,1fr)_336px] lg:items-stretch">
           <form
             aria-label={t("form.aria")}
             className="overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
             id={creationFormId}
             onSubmit={onSubmit}
           >
-            <div className="grid gap-4 p-4 sm:p-5">
+            <div className="grid gap-5 p-5 sm:p-6">
               <Field
                 error={errors.idea ? t("validation.idea") : undefined}
                 label={t("fields.idea.label")}
               >
                 <textarea
                   {...register("idea")}
-                  className="min-h-44 w-full resize-y border-0 bg-transparent px-0 py-0 text-lg leading-8 text-foreground outline-none placeholder:text-muted focus:ring-0"
+                  className="min-h-52 w-full resize-y border-0 bg-transparent px-0 py-0 text-xl leading-9 text-foreground outline-none placeholder:text-muted focus:ring-0"
                   placeholder={t("fields.idea.placeholder")}
                 />
               </Field>
 
-              <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
-                <label className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-accent/50 bg-background px-3 text-sm font-medium text-accent-strong transition hover:border-accent">
-                  <UploadCloud className="size-4" aria-hidden="true" />
-                  {t("fields.textFiles.action")}
-                  <input
-                    accept={deckInputFileAccept}
-                    className="sr-only"
-                    multiple
-                    onChange={handleTextFilesChange}
-                    type="file"
-                  />
-                </label>
-                <span className="text-xs text-muted">
-                  {t("fields.textFiles.limit")}
-                </span>
-                {textFiles.length > 0 ? (
-                  <div className="flex min-w-0 flex-1 flex-wrap gap-1">
-                    {textFiles.map((file) => (
-                      <div
-                        key={`${file.name}-${file.size}`}
-                        className="flex max-w-56 items-center gap-2 rounded-md bg-background px-2 py-1 text-xs text-muted"
-                      >
-                        <FileText className="size-3.5" aria-hidden="true" />
-                        <span className="min-w-0 flex-1 truncate">
-                          {file.name}
-                        </span>
-                        <span>{formatFileSize(file.size)}</span>
-                      </div>
-                    ))}
+              <div className="grid gap-4 border-t border-border pt-5 md:grid-cols-[minmax(0,1fr)_14rem] md:items-end">
+                <div className="flex min-w-0 flex-wrap items-end gap-4">
+                  <div className="grid gap-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-accent/50 bg-background px-4 text-base font-medium text-accent-strong transition hover:border-accent">
+                        <UploadCloud className="size-4" aria-hidden="true" />
+                        {t("fields.textFiles.action")}
+                        <input
+                          accept={deckInputFileAccept}
+                          className="sr-only"
+                          multiple
+                          onChange={handleTextFilesChange}
+                          type="file"
+                        />
+                      </label>
+                      <span className="text-sm leading-6 text-muted">
+                        {t("fields.textFiles.limit")}
+                      </span>
+                    </div>
+                    <span className="text-sm leading-6 text-muted">
+                      {t("fields.textFiles.formats")}
+                    </span>
                   </div>
-                ) : null}
+                  {textFiles.length > 0 ? (
+                    <div className="flex min-w-0 flex-1 flex-wrap gap-2">
+                      {textFiles.map((file) => (
+                        <div
+                          key={`${file.name}-${file.size}`}
+                          className="flex max-w-56 items-center gap-2 rounded-md bg-background px-2.5 py-1.5 text-sm text-muted"
+                        >
+                          <FileText className="size-3.5" aria-hidden="true" />
+                          <span className="min-w-0 flex-1 truncate">
+                            {file.name}
+                          </span>
+                          <span>{formatFileSize(file.size)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+
+                <label className="grid gap-1.5">
+                  <input
+                    {...register("pageCount", {
+                      setValueAs: (value) =>
+                        value === "" ? undefined : Number(value)
+                    })}
+                    className="h-12 w-full rounded-lg border border-border bg-surface px-4 text-base text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
+                    max={18}
+                    min={3}
+                    placeholder={t("fields.pageCount.placeholder")}
+                    type="number"
+                  />
+                  <span className="text-sm leading-6 text-muted">
+                    {t("fields.pageCount.label")}
+                  </span>
+                  {errors.pageCount ? (
+                    <span className="text-sm text-warning">
+                      {t("validation.pageCount")}
+                    </span>
+                  ) : null}
+                </label>
               </div>
             </div>
 
-            <div className="grid gap-4 border-t border-border bg-background/70 p-4">
-              <div className="grid gap-2">
-                <span className="text-sm font-medium text-foreground">
+            <div className="grid gap-5 border-t border-border bg-background/70 p-5">
+              <div className="grid gap-3">
+                <span className="text-base font-semibold text-foreground">
                   {t("fields.deckType.label")}
                 </span>
-                <div className="grid gap-2">
+                <div className="grid gap-3">
                   {deckTypeGroups.map((group) => (
                     <fieldset
-                      className="grid gap-1.5 rounded-lg border border-border bg-surface px-2.5 pb-2.5 pt-1.5"
+                      className="grid gap-2 rounded-lg border border-border bg-surface px-3 pb-3 pt-2"
                       key={group.id}
                     >
-                      <legend className="px-1 text-xs font-medium text-muted">
+                      <legend className="px-1 text-sm font-medium text-muted">
                         {optionT(`typeGroups.${group.id}`)}
                       </legend>
-                      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         {group.types.map((deckType) => {
                           const Icon = deckTypeIcons[deckType];
 
                           return (
                             <label
                               className={cn(
-                                "flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-2.5 py-2 text-left text-sm transition hover:border-accent",
+                                "flex min-h-12 cursor-pointer items-center gap-2.5 rounded-md border border-border bg-background px-3 py-2.5 text-left text-base transition hover:border-accent",
                                 selectedDeckType === deckType &&
                                   "border-accent bg-accent-soft text-accent-strong"
                               )}
@@ -400,8 +434,8 @@ export function CreationWorkbench() {
                                 type="radio"
                                 value={deckType}
                               />
-                              <Icon className="size-4 shrink-0" aria-hidden="true" />
-                              <span className="min-w-0 break-words font-medium leading-4">
+                              <Icon className="size-5 shrink-0" aria-hidden="true" />
+                              <span className="min-w-0 break-words font-medium leading-5">
                                 {optionT(`deckTypes.${deckType}`)}
                               </span>
                             </label>
@@ -413,52 +447,20 @@ export function CreationWorkbench() {
                 </div>
               </div>
 
-              <div className="grid gap-2">
-                <span className="text-sm font-medium text-foreground">
-                  {t("fields.style.label")}
-                </span>
-                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-                  {deckStyleIds.map((style) => {
-                    const Icon = styleIcons[style];
-
-                    return (
-                      <label
-                        className={cn(
-                          "flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-border bg-surface px-2.5 py-2 text-left text-sm transition hover:border-accent",
-                          selectedStyle === style &&
-                            "border-accent bg-accent-soft text-accent-strong"
-                        )}
-                        key={style}
-                      >
-                        <input
-                          {...register("style")}
-                          className="sr-only"
-                          type="radio"
-                          value={style}
-                        />
-                        <Icon className="size-4 shrink-0" aria-hidden="true" />
-                        <span className="min-w-0 break-words font-medium leading-4">
-                          {optionT(`styles.${style}`)}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
             </div>
           </form>
 
           <aside className="flex flex-col gap-4 lg:self-stretch">
             <section
               aria-label={t("drafts.aria")}
-              className="rounded-lg border border-border bg-surface p-4 shadow-sm"
+              className="rounded-lg border border-border bg-surface p-5 shadow-sm"
             >
               <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <div className="flex items-center gap-2 text-base font-semibold text-foreground">
                   <ClipboardList className="size-4 text-accent" aria-hidden="true" />
                   {t("drafts.title")}
                 </div>
-                <span className="text-xs text-muted">
+                <span className="text-sm text-muted">
                   {isDraftsLoading ? t("drafts.loading") : outlineDrafts.length}
                 </span>
               </div>
@@ -490,7 +492,7 @@ export function CreationWorkbench() {
                         })}
                         className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted outline-none transition hover:bg-surface-muted hover:text-warning focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
                         disabled={deletingDraftId === item.id}
-                        onClick={() => void deleteOutlineDraft(item)}
+                        onClick={() => setPendingDelete({ item, kind: "draft" })}
                         title={t("actions.delete")}
                         type="button"
                       >
@@ -499,7 +501,7 @@ export function CreationWorkbench() {
                     </div>
                   ))
                 ) : (
-                  <p className="rounded-lg border border-dashed border-border bg-background p-3 text-sm leading-6 text-muted">
+                  <p className="rounded-lg border border-dashed border-border bg-background p-4 text-base leading-7 text-muted">
                     {t("drafts.empty")}
                   </p>
                 )}
@@ -508,14 +510,14 @@ export function CreationWorkbench() {
 
             <section
               aria-label={t("history.aria")}
-              className="rounded-lg border border-border bg-surface p-4 shadow-sm"
+              className="rounded-lg border border-border bg-surface p-5 shadow-sm"
             >
               <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <div className="flex items-center gap-2 text-base font-semibold text-foreground">
                   <History className="size-4 text-accent" aria-hidden="true" />
                   {t("history.title")}
                 </div>
-                <span className="text-xs text-muted">
+                <span className="text-sm text-muted">
                   {isHistoryLoading ? t("history.loading") : history.length}
                 </span>
               </div>
@@ -548,7 +550,7 @@ export function CreationWorkbench() {
                         })}
                         className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted outline-none transition hover:bg-surface-muted hover:text-warning focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
                         disabled={deletingHistoryId === item.id}
-                        onClick={() => void deleteHistoryItem(item)}
+                        onClick={() => setPendingDelete({ item, kind: "history" })}
                         title={t("actions.delete")}
                         type="button"
                       >
@@ -557,15 +559,15 @@ export function CreationWorkbench() {
                     </div>
                   ))
                 ) : (
-                  <p className="rounded-lg border border-dashed border-border bg-background p-3 text-sm leading-6 text-muted">
+                  <p className="rounded-lg border border-dashed border-border bg-background p-4 text-base leading-7 text-muted">
                     {t("history.empty")}
                   </p>
                 )}
               </div>
             </section>
 
-            <div className="rounded-lg border border-border bg-surface p-4 shadow-sm lg:mt-auto">
-              <div className="grid gap-2">
+            <div className="rounded-lg border border-border bg-surface p-5 shadow-sm lg:mt-auto">
+              <div className="grid gap-3">
                 <Button onClick={resetForm} type="button" variant="secondary">
                   <RotateCcw className="size-4" aria-hidden="true" />
                   {t("actions.reset")}
@@ -592,6 +594,21 @@ export function CreationWorkbench() {
           </aside>
         </div>
       </div>
+      <AlertDialog
+        actionLabel={t("actions.delete")}
+        actionLoadingLabel={t("actions.deleting")}
+        cancelLabel={t("actions.cancel")}
+        description={pendingDeleteDescription}
+        loading={isPendingDeleteLoading}
+        onAction={confirmPendingDelete}
+        onOpenChange={(open) => {
+          if (!open && !isPendingDeleteLoading) {
+            setPendingDelete(null);
+          }
+        }}
+        open={pendingDelete !== null}
+        title={t("confirm.deleteTitle")}
+      />
     </main>
   );
 }

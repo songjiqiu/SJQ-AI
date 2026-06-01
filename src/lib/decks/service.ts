@@ -6,7 +6,10 @@ import { z } from "zod";
 import {
   analyzeDeck,
   composeDeckFromOutline,
+  composeDeckSlidesFromOutline,
   composeSingleSlideFromOutline,
+  normalizeSlideContent,
+  normalizeUnifiedVisualSpec,
   type AnalyzeDeckOptions
 } from "@/lib/ai-deck/analyzer";
 import {
@@ -14,11 +17,16 @@ import {
   type ImageLayerGenerator
 } from "@/lib/ai-deck/image-generator";
 import {
+  buildSlideDesignQualityScore,
   buildContentReview,
   buildConsistencyReport,
   buildSlideMotionPlan,
   normalizeSlideCompositionPlan
 } from "@/lib/ai-deck/postprocess";
+import {
+  buildDefaultDesignConstraints,
+  buildDefaultLayoutSelection
+} from "@/lib/ai-deck/semantic-layout";
 import {
   createImageQualityReviewer,
   materializeImageLayer,
@@ -26,14 +34,26 @@ import {
 } from "@/lib/ai-deck/image-assets";
 import {
   analyzeDeckRequestSchema,
+  slideDesignConstraintsSchema,
+  slideDesignQualityScoreSchema,
+  slideLayoutSelectionSchema,
+  slidePageIntentSchema,
+  slideContentHierarchySchema,
+  slideLayoutDiagnosticsSchema,
+  slidePageDesignSchema,
+  generatedImageLayerSchema,
   generatedDeckResultSchema,
   type AnalyzeDeckRequest,
   type AnalyzedDeckResult,
   type GeneratedDeckResult,
   type GeneratedImageLayer,
   type GeneratedSlideResult,
+  type SemanticSlideElement,
   type SlideCompositionPlan,
   type SlideContent,
+  type SlideDesignConstraints,
+  type SlideDesignQualityScore,
+  type SlideLayoutSelection,
   type UnifiedVisualSpec
 } from "@/lib/ai-deck/schema";
 import { prisma } from "@/lib/db/prisma";
@@ -46,6 +66,20 @@ import {
   readStorageFile,
   writeDeckFile
 } from "./storage";
+
+function toSlidePageDesignJson(slide: SlideCompositionPlan) {
+  return {
+    constraints: slide.constraints,
+    contentHierarchy: slide.contentHierarchy,
+    designPlan: slide.designPlan,
+    designQualityScore: slide.designQualityScore,
+    expressionIntent: slide.expressionIntent,
+    layoutDiagnostics: slide.layoutDiagnostics,
+    layoutSelection: slide.layoutSelection,
+    pageIntent: slide.pageIntent,
+    semanticElements: slide.semanticElements
+  };
+}
 
 export const generateDeckFromOutlineDraftSchema = z
   .object({
@@ -92,6 +126,7 @@ export type DeckGenerationTask = {
   details?: DeckGenerationStatusDetails;
   error?: string | null;
   id: string;
+  previewReady: boolean;
   previewUrl?: string;
   progress: DeckGenerationProgress;
   reused?: boolean;
@@ -108,11 +143,21 @@ export type GenerateDeckOptions = {
 const activeDeckGenerationTaskMs = 30 * 60 * 1000;
 const deckGenerationTimeoutMessage = "生成任务超时，请重新生成。";
 const deckGenerationReadyMessage = "预览 PPT 已生成。";
+const deckGenerationConcurrency = 3;
+const previewReadyMinSlides = 3;
+const previewReadyMaxSlides = 5;
 
 export class DeckProjectNotFoundError extends Error {
   constructor() {
     super("Deck project not found");
     this.name = "DeckProjectNotFoundError";
+  }
+}
+
+export class DeckSlideFileValidationError extends Error {
+  constructor() {
+    super("Deck slide element file must be an image");
+    this.name = "DeckSlideFileValidationError";
   }
 }
 
@@ -123,8 +168,17 @@ export async function generateDeckFromOutlineDraftForUser(
 ): Promise<GeneratedDeckResult> {
   const draft = await getDeckOutlineDraftForUser(userId, outlineDraftId);
   const input = analyzeDeckRequestSchema.parse(draft.input);
-  const slides = draft.slides as SlideContent[];
-  const unifiedVisualSpec = draft.unifiedVisualSpec as UnifiedVisualSpec;
+  const slides = draft.slides.map((slide, index) =>
+    normalizeSlideContent(slide, input, {
+      slideCount: draft.slides.length || input.pageCount,
+      nextTitle: draft.slides[index + 1]?.title,
+      previousTitle: draft.slides[index - 1]?.title
+    })
+  );
+  const unifiedVisualSpec = normalizeUnifiedVisualSpec(
+    draft.unifiedVisualSpec,
+    input
+  );
   const compositionSlides = await composeDeckFromOutline(
     input,
     slides,
@@ -188,6 +242,7 @@ export async function createDeckGenerationTaskForUser(
 
   return {
     id: project.id,
+    previewReady: false,
     progress: initialProgress,
     status: project.status
   };
@@ -238,14 +293,12 @@ export async function runDeckGenerationTaskForUser(
       total
     });
 
-    return await generateDeckFromOutlineDraftForUser(
-      userId,
-      project.sourceOutlineDraftId,
-      {
-        ...options,
-        existingProjectId: projectId
-      }
-    );
+    return await generatePreviewDeckFromOutlineDraftForUser({
+      options,
+      outlineDraftId: project.sourceOutlineDraftId,
+      projectId,
+      userId
+    });
   } catch (error) {
     await recordDeckGenerationFailureForUser({
       error,
@@ -268,6 +321,10 @@ type DeckProjectWithSlides = Prisma.DeckProjectGetPayload<{
   };
 }>;
 
+type DeckSlideWithProjectInput = DeckProjectWithSlides["slides"][number] & {
+  projectInput?: AnalyzeDeckRequest;
+};
+
 export async function generateDeckForUser(
   userId: string,
   rawInput: unknown,
@@ -286,6 +343,255 @@ export async function generateDeckForUser(
     input,
     userId
   });
+}
+
+async function generatePreviewDeckFromOutlineDraftForUser({
+  options,
+  outlineDraftId,
+  projectId,
+  userId
+}: {
+  options: GenerateDeckOptions;
+  outlineDraftId: string;
+  projectId: string;
+  userId: string;
+}) {
+  const draft = await getDeckOutlineDraftForUser(userId, outlineDraftId);
+  const input = analyzeDeckRequestSchema.parse(draft.input);
+  const outlineSlides = draft.slides.map((slide, index) =>
+    normalizeSlideContent(slide, input, {
+      slideCount: draft.slides.length || input.pageCount,
+      nextTitle: draft.slides[index + 1]?.title,
+      previousTitle: draft.slides[index - 1]?.title
+    })
+  );
+  const unifiedVisualSpec = normalizeUnifiedVisualSpec(
+    draft.unifiedVisualSpec,
+    input
+  );
+  const generator = options.imageGenerator ?? createImageLayerGenerator();
+  const qualityReviewer =
+    options.imageQualityReviewer ?? createImageQualityReviewer(undefined);
+  const placeholderGenerator = createImageLayerGenerator({
+    AI_IMAGE_MODEL: "mock-svg"
+  });
+  await prisma.deckProject.update({
+    where: {
+      id: projectId
+    },
+    data: {
+      generationError: null,
+      input: toInputJson(input),
+      mode: draft.mode,
+      status: "GENERATING",
+      summary: draft.deckSummary,
+      title: draft.deckTitle,
+      unifiedVisualSpec: toInputJson(unifiedVisualSpec)
+    }
+  });
+
+  const compositionSlides = sortSlideCompositionPlansByIndex(
+    (await composeDeckSlidesFromOutline(
+      input,
+      outlineSlides,
+      unifiedVisualSpec,
+      options.analyzerOptions
+    )).map((slide) => normalizeSlideCompositionPlan(slide))
+  );
+  const previewSlideCount = getPreviewReadySlideCount(outlineSlides.length);
+  const reportPreviewProgress = createGenerationProgressReporter({
+    buildMessage: (current, total) =>
+      `正在生成页面 JSON 和预览占位图，已完成 ${current}/${total} 页。`,
+    initialCurrent: 0,
+    projectId,
+    stage: "composing",
+    total: outlineSlides.length,
+    userId
+  });
+  const previewSlides = await storePreviewSlidesWithPlaceholders({
+    placeholderGenerator,
+    projectId,
+    reportProgress: reportPreviewProgress,
+    slides: compositionSlides.slice(0, previewSlideCount),
+    unifiedVisualSpec,
+    userId
+  });
+
+  await updateDeckProjectReviewFromSlides({
+    deckSummary: draft.deckSummary,
+    deckTitle: draft.deckTitle,
+    input,
+    mode: draft.mode,
+    projectId,
+    slides: previewSlides,
+    unifiedVisualSpec
+  });
+
+  const remainingSlides = await storePreviewSlidesWithPlaceholders({
+    placeholderGenerator,
+    projectId,
+    reportProgress: reportPreviewProgress,
+    slides: compositionSlides.slice(previewSlideCount),
+    unifiedVisualSpec,
+    userId
+  });
+  const generatedSlides = sortGeneratedSlidesByIndex([
+    ...previewSlides,
+    ...remainingSlides
+  ]);
+
+  await updateDeckProjectReviewFromSlides({
+    deckSummary: draft.deckSummary,
+    deckTitle: draft.deckTitle,
+    input,
+    mode: draft.mode,
+    projectId,
+    slides: generatedSlides,
+    unifiedVisualSpec
+  });
+
+  const finalSlides = await replacePreviewPlaceholdersWithGeneratedImages({
+    generator,
+    imageQualityReviewer: qualityReviewer,
+    projectId,
+    slides: generatedSlides,
+    unifiedVisualSpec,
+    userId
+  });
+
+  await updateGenerationProgress(projectId, userId, {
+    current: finalSlides.length,
+    message: "正在合成 PPTX 文件。",
+    stage: "pptx",
+    total: finalSlides.length
+  });
+
+  const readyProject = await finalizeGeneratedDeckProject({
+    input,
+    projectId,
+    slides: await readGeneratedSlidesForPptx(projectId, finalSlides, input),
+    unifiedVisualSpec,
+    userId
+  });
+
+  return serializeDeckProject(readyProject);
+}
+
+async function storePreviewSlidesWithPlaceholders({
+  placeholderGenerator,
+  projectId,
+  reportProgress,
+  slides,
+  unifiedVisualSpec,
+  userId
+}: {
+  placeholderGenerator: ImageLayerGenerator;
+  projectId: string;
+  reportProgress: () => Promise<number>;
+  slides: SlideCompositionPlan[];
+  unifiedVisualSpec: UnifiedVisualSpec;
+  userId: string;
+}) {
+  const generatedSlides = await mapWithConcurrency(
+    slides,
+    deckGenerationConcurrency,
+    async (slide) => {
+      const generatedSlide = await createPreviewSlideWithPlaceholders({
+        placeholderGenerator,
+        projectId,
+        slide,
+        unifiedVisualSpec,
+        userId
+      });
+
+      await reportProgress();
+
+      return generatedSlide;
+    }
+  );
+
+  return sortGeneratedSlidesByIndex(generatedSlides);
+}
+
+async function createPreviewSlideWithPlaceholders({
+  placeholderGenerator,
+  projectId,
+  slide,
+  unifiedVisualSpec,
+  userId
+}: {
+  placeholderGenerator: ImageLayerGenerator;
+  projectId: string;
+  slide: SlideCompositionPlan;
+  unifiedVisualSpec: UnifiedVisualSpec;
+  userId: string;
+}) {
+  const motionPlan = buildSlideMotionPlan(slide);
+  const deckSlide = await prisma.deckSlide.create({
+    data: {
+      projectId,
+      slideId: slide.slideId,
+      index: slide.index,
+      content: toInputJson(slide.content),
+      pageDesign: toInputJson(toSlidePageDesignJson(slide)),
+      elements: toInputJson(slide.elements),
+      imageLayerRequests: toInputJson(slide.imageLayerRequests),
+      generatedImageLayers: toInputJson([]),
+      motionPlan: toInputJson(motionPlan),
+      canvas: toInputJson(slide.canvas)
+    }
+  });
+  const placeholderLayers = await mapWithConcurrency(
+    slide.imageLayerRequests,
+    deckGenerationConcurrency,
+    async (request) => {
+      const materialized = await materializeImageLayer({
+        generator: placeholderGenerator,
+        projectId,
+        request,
+        slide,
+        qualityReviewer: undefined,
+        unifiedVisualSpec,
+        userId
+      });
+
+      await prisma.deckAsset.update({
+        where: {
+          id: materialized.assetId
+        },
+        data: {
+          slideId: deckSlide.id
+        }
+      });
+
+      return {
+        ...materialized.generatedImageLayer,
+        provider: `${materialized.generatedImageLayer.provider}-preview-placeholder`,
+        qualityReview: {
+          method: "rules-only-fallback",
+          passed: true,
+          score: 80,
+          summary: "预览阶段使用占位图，真实图片正在后台生成。",
+          warnings: ["placeholder-preview"]
+        }
+      } satisfies GeneratedImageLayer;
+    }
+  );
+
+  await prisma.deckSlide.update({
+    where: {
+      id: deckSlide.id
+    },
+    data: {
+      generatedImageLayers: toInputJson(placeholderLayers)
+    }
+  });
+
+  return {
+    ...slide,
+    generatedImageLayers: placeholderLayers,
+    motionPlan
+  } satisfies GeneratedSlideResult;
 }
 
 async function persistGeneratedDeckForUser({
@@ -360,12 +666,7 @@ async function persistGeneratedDeckForUser({
           slideId: slide.slideId,
           index: slide.index,
           content: toInputJson(slide.content),
-          pageDesign: toInputJson({
-            contentHierarchy: slide.contentHierarchy,
-            designPlan: slide.designPlan,
-            expressionIntent: slide.expressionIntent,
-            layoutDiagnostics: slide.layoutDiagnostics
-          }),
+          pageDesign: toInputJson(toSlidePageDesignJson(slide)),
           elements: toInputJson(slide.elements),
           imageLayerRequests: toInputJson(slide.imageLayerRequests),
           generatedImageLayers: toInputJson([]),
@@ -498,6 +799,380 @@ async function persistGeneratedDeckForUser({
   }
 }
 
+async function replacePreviewPlaceholdersWithGeneratedImages({
+  generator,
+  imageQualityReviewer,
+  projectId,
+  slides,
+  unifiedVisualSpec,
+  userId
+}: {
+  generator: ImageLayerGenerator;
+  imageQualityReviewer?: ImageQualityReviewer;
+  projectId: string;
+  slides: GeneratedSlideResult[];
+  unifiedVisualSpec: UnifiedVisualSpec;
+  userId: string;
+}) {
+  const reportProgress = createGenerationProgressReporter({
+    buildMessage: (current, total) =>
+      `正在精修图片素材，已完成 ${current}/${total} 页。`,
+    initialCurrent: 0,
+    projectId,
+    stage: "images",
+    total: slides.length,
+    userId
+  });
+  const updatedSlides = await mapWithConcurrency(
+    slides,
+    deckGenerationConcurrency,
+    async (slide) => {
+      const updated = slide.imageLayerRequests.length
+        ? await replaceSlidePreviewPlaceholdersWithGeneratedImages({
+            generator,
+            imageQualityReviewer,
+            projectId,
+            slide,
+            unifiedVisualSpec,
+            userId
+          })
+        : slide;
+
+      await reportProgress();
+
+      return updated;
+    }
+  );
+
+  return sortGeneratedSlidesByIndex(updatedSlides);
+}
+
+async function replaceSlidePreviewPlaceholdersWithGeneratedImages({
+  generator,
+  imageQualityReviewer,
+  projectId,
+  slide,
+  unifiedVisualSpec,
+  userId
+}: {
+  generator: ImageLayerGenerator;
+  imageQualityReviewer?: ImageQualityReviewer;
+  projectId: string;
+  slide: GeneratedSlideResult;
+  unifiedVisualSpec: UnifiedVisualSpec;
+  userId: string;
+}) {
+  const deckSlide = await prisma.deckSlide.findFirst({
+    where: {
+      index: slide.index,
+      projectId
+    }
+  });
+
+  if (!deckSlide) {
+    return slide;
+  }
+
+  const generatedImageLayers = await mapWithConcurrency(
+    slide.imageLayerRequests,
+    deckGenerationConcurrency,
+    async (request) => {
+      const materialized = await materializeImageLayer({
+        generator,
+        projectId,
+        request,
+        slide,
+        qualityReviewer: imageQualityReviewer,
+        unifiedVisualSpec,
+        userId
+      });
+
+      await prisma.deckAsset.update({
+        where: {
+          id: materialized.assetId
+        },
+        data: {
+          slideId: deckSlide.id
+        }
+      });
+
+      return materialized.generatedImageLayer;
+    }
+  );
+
+  await prisma.deckSlide.update({
+    where: {
+      id: deckSlide.id
+    },
+    data: {
+      generatedImageLayers: toInputJson(generatedImageLayers)
+    }
+  });
+
+  return {
+    ...slide,
+    generatedImageLayers
+  } satisfies GeneratedSlideResult;
+}
+
+async function readGeneratedSlidesForPptx(
+  projectId: string,
+  fallbackSlides: GeneratedSlideResult[],
+  input: AnalyzeDeckRequest
+) {
+  const storedSlides = await prisma.deckSlide.findMany({
+    where: {
+      projectId
+    },
+    orderBy: {
+      index: "asc"
+    }
+  });
+
+  if (storedSlides.length === 0) {
+    return fallbackSlides;
+  }
+
+  return storedSlides.map((slide) => ({
+    ...slideFromStored({
+      ...slide,
+      projectInput: input
+    }),
+    generatedImageLayers: slide.generatedImageLayers as GeneratedImageLayer[],
+    motionPlan: slide.motionPlan as GeneratedSlideResult["motionPlan"]
+  }));
+}
+
+async function finalizeGeneratedDeckProject({
+  input,
+  projectId,
+  slides,
+  unifiedVisualSpec,
+  userId
+}: {
+  input: AnalyzeDeckRequest;
+  projectId: string;
+  slides: GeneratedSlideResult[];
+  unifiedVisualSpec: UnifiedVisualSpec;
+  userId: string;
+}) {
+  const project = await prisma.deckProject.findFirst({
+    where: {
+      id: projectId,
+      userId
+    },
+    include: {
+      assets: true,
+      slides: {
+        orderBy: {
+          index: "asc"
+        }
+      }
+    }
+  });
+
+  if (!project) {
+    throw new DeckProjectNotFoundError();
+  }
+
+  const imageAssets: PptxImageAsset[] = [];
+
+  for (const layer of slides.flatMap((slide) => slide.generatedImageLayers)) {
+    const asset = project.assets.find((item) => item.id === layer.assetId);
+
+    if (!asset) {
+      continue;
+    }
+
+    const file = await readStorageFile(asset.relativePath);
+
+    if (file) {
+      imageAssets.push({
+        assetId: asset.id,
+        bytes: file.bytes,
+        mimeType: asset.mimeType
+      });
+    }
+  }
+
+  const pptxBuffer = await createDeckPptxBuffer({
+    deckSummary: project.summary,
+    deckTitle: project.title,
+    imageAssets,
+    slides,
+    unifiedVisualSpec
+  });
+  const pptxAssetId = randomUUID();
+  const pptxStored = await writeDeckFile({
+    bytes: pptxBuffer,
+    filename: `${safeFilename(project.title)}-${pptxAssetId}.pptx`,
+    projectId
+  });
+  const pptxUrl = `/api/decks/${projectId}/pptx`;
+  const deckForReview = {
+    deckSummary: project.summary,
+    deckTitle: project.title,
+    mode: parseMode(project.mode),
+    slides,
+    unifiedVisualSpec
+  } satisfies AnalyzedDeckResult;
+
+  await prisma.deckAsset.create({
+    data: {
+      id: pptxAssetId,
+      projectId,
+      kind: "PPTX",
+      provider: "pptxgenjs",
+      mimeType:
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      filename: pptxStored.filename,
+      relativePath: pptxStored.relativePath,
+      publicUrl: pptxUrl,
+      sizeBytes: pptxStored.sizeBytes,
+      metadata: toInputJson({
+        slideCount: slides.length,
+        motionMetadataIncluded: true
+      })
+    }
+  });
+
+  return prisma.deckProject.update({
+    where: {
+      id: projectId
+    },
+    data: {
+      consistencyReport: toInputJson(buildConsistencyReport(input, deckForReview)),
+      contentReview: toInputJson(buildContentReview(input, deckForReview)),
+      generationError: null,
+      generationProgress: toInputJson({
+        current: slides.length,
+        message: deckGenerationReadyMessage,
+        stage: "ready",
+        total: slides.length
+      } satisfies DeckGenerationProgress),
+      pptxAssetId,
+      status: "READY"
+    },
+    include: {
+      assets: true,
+      slides: {
+        orderBy: {
+          index: "asc"
+        }
+      }
+    }
+  });
+}
+
+async function updateDeckProjectReviewFromSlides({
+  deckSummary,
+  deckTitle,
+  input,
+  mode,
+  projectId,
+  slides,
+  unifiedVisualSpec
+}: {
+  deckSummary: string;
+  deckTitle: string;
+  input: AnalyzeDeckRequest;
+  mode: string;
+  projectId: string;
+  slides: GeneratedSlideResult[];
+  unifiedVisualSpec: UnifiedVisualSpec;
+}) {
+  if (slides.length === 0) {
+    return;
+  }
+
+  const deck = {
+    deckSummary,
+    deckTitle,
+    mode: parseMode(mode),
+    slides: sortGeneratedSlidesByIndex(slides),
+    unifiedVisualSpec
+  } satisfies AnalyzedDeckResult;
+
+  await prisma.deckProject.update({
+    where: {
+      id: projectId
+    },
+    data: {
+      contentReview: toInputJson(buildContentReview(input, deck)),
+      consistencyReport: toInputJson(buildConsistencyReport(input, deck))
+    }
+  });
+}
+
+function createGenerationProgressReporter({
+  buildMessage,
+  initialCurrent,
+  projectId,
+  stage,
+  total,
+  userId
+}: {
+  buildMessage: (current: number, total: number) => string;
+  initialCurrent: number;
+  projectId: string;
+  stage: DeckGenerationProgress["stage"];
+  total: number;
+  userId: string;
+}) {
+  let current = initialCurrent;
+  let updateQueue = Promise.resolve();
+
+  return async () => {
+    current += 1;
+
+    const nextProgress = {
+      current,
+      message: buildMessage(current, total),
+      stage,
+      total
+    } satisfies DeckGenerationProgress;
+
+    updateQueue = updateQueue.then(() =>
+      updateGenerationProgress(projectId, userId, nextProgress)
+    );
+
+    await updateQueue;
+
+    return current;
+  };
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T, index: number) => Promise<R>
+) {
+  const results = new Array<R>(items.length);
+  const workerCount = Math.min(Math.max(1, concurrency), items.length);
+  let nextIndex = 0;
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (nextIndex < items.length) {
+        const index = nextIndex;
+
+        nextIndex += 1;
+        results[index] = await mapper(items[index], index);
+      }
+    })
+  );
+
+  return results;
+}
+
+function sortSlideCompositionPlansByIndex(slides: SlideCompositionPlan[]) {
+  return [...slides].sort((current, next) => current.index - next.index);
+}
+
+function sortGeneratedSlidesByIndex(slides: GeneratedSlideResult[]) {
+  return [...slides].sort((current, next) => current.index - next.index);
+}
+
 export async function listDeckProjects(userId: string) {
   const projects = await prisma.deckProject.findMany({
     where: {
@@ -568,10 +1243,11 @@ export async function getDeckProjectForUser(userId: string, projectId: string) {
     throw new DeckProjectNotFoundError();
   }
 
-  const readyProject = await normalizeReadyDeckProjectForPreview(
-    project,
-    userId
-  );
+  if (isPreviewableDeckProject(project)) {
+    return serializeDeckProject(project);
+  }
+
+  const readyProject = await normalizeReadyDeckProjectForPreview(project, userId);
 
   if (
     readyProject.status !== "READY" ||
@@ -664,6 +1340,7 @@ export async function getDeckGenerationStatusForUser(
       },
       error: null,
       id: project.id,
+      previewReady: true,
       previewUrl: `/workbench/preview/${project.id}`,
       progress: readyProgress,
       status: "READY"
@@ -677,6 +1354,7 @@ export async function getDeckGenerationStatusForUser(
   const storedError = project.generationError?.trim();
   const error =
     storedError || (project.status === "FAILED" ? progress.message : null);
+  const previewReady = isPreviewableDeckProject(project);
 
   return {
     details: {
@@ -688,8 +1366,11 @@ export async function getDeckGenerationStatusForUser(
     },
     id: project.id,
     error,
+    previewReady,
     previewUrl:
-      project.status === "READY" ? `/workbench/preview/${project.id}` : undefined,
+      project.status === "READY" || previewReady
+        ? `/workbench/preview/${project.id}`
+        : undefined,
     progress,
     status: project.status
   };
@@ -698,7 +1379,9 @@ export async function getDeckGenerationStatusForUser(
 export const updateDeckSlideSchema = z
   .object({
     content: z.unknown().optional(),
-    elements: z.array(z.unknown()).optional()
+    elements: z.array(z.unknown()).optional(),
+    generatedImageLayers: z.array(generatedImageLayerSchema).optional(),
+    imageLayerRequests: z.array(z.unknown()).optional()
   })
   .strict();
 
@@ -721,12 +1404,26 @@ export async function updateDeckSlideForUser({
     throw new DeckProjectNotFoundError();
   }
 
-  const currentPlan = slideFromStored(target);
+  const projectInput = analyzeDeckRequestSchema.parse(project.input);
+  const currentPlan = slideFromStored({
+    ...target,
+    projectInput
+  });
   const nextPlan = normalizeSlideCompositionPlan({
     ...currentPlan,
-    content: input.content ? (input.content as SlideCompositionPlan["content"]) : currentPlan.content,
-    elements: input.elements ? (input.elements as SlideCompositionPlan["elements"]) : currentPlan.elements
+    content: input.content
+      ? normalizeSlideContent(input.content, projectInput, {
+          slideCount: project.slides.length || projectInput.pageCount
+        })
+      : currentPlan.content,
+    elements: input.elements ? (input.elements as SlideCompositionPlan["elements"]) : currentPlan.elements,
+    imageLayerRequests: input.imageLayerRequests
+      ? (input.imageLayerRequests as SlideCompositionPlan["imageLayerRequests"])
+      : currentPlan.imageLayerRequests
   });
+  const generatedImageLayers = input.generatedImageLayers
+    ? (input.generatedImageLayers as GeneratedImageLayer[])
+    : (target.generatedImageLayers as GeneratedImageLayer[]);
 
   await prisma.deckSlide.update({
     where: {
@@ -735,18 +1432,99 @@ export async function updateDeckSlideForUser({
     data: {
       content: toInputJson(nextPlan.content),
       elements: toInputJson(nextPlan.elements),
-      pageDesign: toInputJson({
-        contentHierarchy: nextPlan.contentHierarchy,
-        designPlan: nextPlan.designPlan,
-        expressionIntent: nextPlan.expressionIntent,
-        layoutDiagnostics: nextPlan.layoutDiagnostics
-      })
+      generatedImageLayers: toInputJson(generatedImageLayers),
+      imageLayerRequests: toInputJson(nextPlan.imageLayerRequests),
+      pageDesign: toInputJson(toSlidePageDesignJson(nextPlan))
     }
   });
 
   await rebuildDeckPptxForProject(userId, projectId);
 
   return getDeckProjectForUser(userId, projectId);
+}
+
+export async function uploadDeckSlideElementFileForUser({
+  bytes,
+  elementId,
+  filename,
+  mimeType,
+  projectId,
+  slideId,
+  userId
+}: {
+  bytes: Buffer;
+  elementId: string;
+  filename: string;
+  mimeType: string;
+  projectId: string;
+  slideId: string;
+  userId: string;
+}) {
+  if (!mimeType.startsWith("image/")) {
+    throw new DeckSlideFileValidationError();
+  }
+
+  const project = await getRawDeckProjectForUser(userId, projectId);
+  const target = project.slides.find((slide) => slide.slideId === slideId || slide.id === slideId);
+
+  if (!target) {
+    throw new DeckProjectNotFoundError();
+  }
+
+  const currentPlan = slideFromStored({
+    ...target,
+    projectInput: analyzeDeckRequestSchema.parse(project.input)
+  });
+  const element = currentPlan.elements.find((item) => item.id === elementId);
+
+  if (!element || !isFileElementType(element.type)) {
+    throw new DeckProjectNotFoundError();
+  }
+
+  const requestId = element.imageRequestId ?? `${element.id}-upload`;
+  const assetId = randomUUID();
+  const stored = await writeDeckFile({
+    bytes,
+    filename: `${safeFilename(filename)}-${assetId}.${extensionFromMime(mimeType)}`,
+    projectId
+  });
+  const publicUrl = `/api/decks/${projectId}/assets/${assetId}`;
+
+  await prisma.deckAsset.create({
+    data: {
+      id: assetId,
+      projectId,
+      slideId: target.id,
+      elementId: element.id,
+      requestId,
+      kind: "IMAGE_LAYER",
+      provider: "user-upload",
+      mimeType,
+      filename: stored.filename,
+      relativePath: stored.relativePath,
+      publicUrl,
+      sizeBytes: stored.sizeBytes,
+      metadata: toInputJson({
+        originalFilename: filename,
+        uploadedAt: new Date().toISOString()
+      })
+    }
+  });
+
+  return {
+    id: `${requestId}-uploaded-layer`,
+    requestId,
+    elementId: element.id,
+    assetId,
+    provider: "user-upload",
+    mimeType,
+    url: publicUrl,
+    prompt: `User uploaded replacement file: ${filename}`,
+    width: 1,
+    height: 1,
+    transparentBackground: mimeType.includes("png"),
+    visualNotes: filename
+  } satisfies GeneratedImageLayer;
 }
 
 export async function regenerateDeckSlideForUser({
@@ -766,7 +1544,10 @@ export async function regenerateDeckSlideForUser({
 }) {
   const project = await getRawDeckProjectForUser(userId, projectId);
   const input = analyzeDeckRequestSchema.parse(project.input);
-  const unifiedVisualSpec = project.unifiedVisualSpec as UnifiedVisualSpec;
+  const unifiedVisualSpec = normalizeUnifiedVisualSpec(
+    project.unifiedVisualSpec,
+    input
+  );
   const target = project.slides.find((slide) => slide.slideId === slideId || slide.id === slideId);
 
   if (!target) {
@@ -775,7 +1556,9 @@ export async function regenerateDeckSlideForUser({
 
   const nextPlan = await composeSingleSlideFromOutline(
     input,
-    target.content as SlideContent,
+    normalizeSlideContent(target.content, input, {
+      slideCount: project.slides.length || input.pageCount
+    }),
     unifiedVisualSpec,
     analyzerOptions
   );
@@ -830,12 +1613,7 @@ export async function regenerateDeckSlideForUser({
       generatedImageLayers: toInputJson(generatedImageLayers),
       imageLayerRequests: toInputJson(normalized.imageLayerRequests),
       motionPlan: toInputJson(motionPlan),
-      pageDesign: toInputJson({
-        contentHierarchy: normalized.contentHierarchy,
-        designPlan: normalized.designPlan,
-        expressionIntent: normalized.expressionIntent,
-        layoutDiagnostics: normalized.layoutDiagnostics
-      })
+      pageDesign: toInputJson(toSlidePageDesignJson(normalized))
     }
   });
 
@@ -897,6 +1675,7 @@ export async function getDeckPptxAssetForUser({
 
 function serializeDeckProject(project: DeckProjectWithSlides): GeneratedDeckResult {
   const pptxAsset = project.assets.find((asset) => asset.kind === "PPTX");
+  const input = analyzeDeckRequestSchema.parse(project.input);
 
   return generatedDeckResultSchema.parse({
     id: project.id,
@@ -904,21 +1683,38 @@ function serializeDeckProject(project: DeckProjectWithSlides): GeneratedDeckResu
     status: project.status,
     deckTitle: project.title,
     deckSummary: project.summary,
-    input: project.input,
-    unifiedVisualSpec: project.unifiedVisualSpec,
+    input,
+    unifiedVisualSpec: normalizeUnifiedVisualSpec(project.unifiedVisualSpec, input),
     contentReview: project.contentReview,
     consistencyReport: project.consistencyReport,
-    slides: project.slides.map((slide) => ({
+    slides: project.slides.map((slide) => {
+      const content = normalizeSlideContent(slide.content, input, {
+        slideCount: project.slides.length || input.pageCount,
+        nextTitle: project.slides.find((item) => item.index === slide.index + 1)
+          ?.content && isRecord(project.slides.find((item) => item.index === slide.index + 1)?.content)
+          ? String((project.slides.find((item) => item.index === slide.index + 1)?.content as Record<string, unknown>).title ?? "")
+          : undefined,
+        previousTitle: project.slides.find((item) => item.index === slide.index - 1)
+          ?.content && isRecord(project.slides.find((item) => item.index === slide.index - 1)?.content)
+          ? String((project.slides.find((item) => item.index === slide.index - 1)?.content as Record<string, unknown>).title ?? "")
+          : undefined
+      });
+
+      return {
       slideId: slide.slideId,
       index: slide.index,
-      content: slide.content,
-      ...pageDesignFromStored(slide),
+      content,
+      ...pageDesignFromStored({
+        ...slide,
+        content
+      }),
       elements: slide.elements,
       imageLayerRequests: slide.imageLayerRequests,
       generatedImageLayers: slide.generatedImageLayers,
       motionPlan: slide.motionPlan,
       canvas: slide.canvas
-    })),
+      };
+    }),
     pptxUrl: pptxAsset?.publicUrl,
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString()
@@ -973,8 +1769,12 @@ async function findReusableDeckGenerationTaskForUser(
   );
 
   if (isActive) {
+    const previewReady = await hasPreviewableStoredSlides(userId, task.id);
+
     return {
       id: task.id,
+      previewReady,
+      previewUrl: previewReady ? `/workbench/preview/${task.id}` : undefined,
       progress,
       reused: true,
       status: "GENERATING"
@@ -988,6 +1788,24 @@ async function findReusableDeckGenerationTaskForUser(
   });
 
   return null;
+}
+
+async function hasPreviewableStoredSlides(userId: string, projectId: string) {
+  const project = await prisma.deckProject.findFirst({
+    where: {
+      id: projectId,
+      userId
+    },
+    include: {
+      _count: {
+        select: {
+          slides: true
+        }
+      }
+    }
+  });
+
+  return project ? isPreviewableDeckProject(project) : false;
 }
 
 async function markDeckProjectReadyForUser(
@@ -1141,6 +1959,32 @@ function isCompletedDeckProject(project: {
   );
 }
 
+function isPreviewableDeckProject(project: {
+  _count?: {
+    slides?: number;
+  };
+  input: unknown;
+  slides?: unknown[];
+  status?: string;
+}) {
+  if (project.status === "READY") {
+    return true;
+  }
+
+  if (project.status !== "GENERATING") {
+    return false;
+  }
+
+  const expectedSlideCount = parsePageCount(project.input);
+  const storedSlideCount = project._count?.slides ?? project.slides?.length ?? 0;
+
+  return storedSlideCount >= getPreviewReadySlideCount(expectedSlideCount);
+}
+
+function getPreviewReadySlideCount(total: number) {
+  return Math.min(previewReadyMaxSlides, Math.max(previewReadyMinSlides, total));
+}
+
 function buildReadyGenerationProgress(project: {
   _count?: {
     slides?: number;
@@ -1268,12 +2112,12 @@ async function getRawDeckProjectForUser(userId: string, projectId: string) {
 }
 
 function slideFromStored(
-  slide: DeckProjectWithSlides["slides"][number]
+  slide: DeckSlideWithProjectInput
 ): SlideCompositionPlan {
   return normalizeSlideCompositionPlan({
     slideId: slide.slideId,
     index: slide.index,
-    content: slide.content as SlideCompositionPlan["content"],
+    content: normalizeStoredSlideContent(slide),
     ...pageDesignFromStored(slide),
     elements: slide.elements as SlideCompositionPlan["elements"],
     imageLayerRequests: slide.imageLayerRequests as SlideCompositionPlan["imageLayerRequests"],
@@ -1281,57 +2125,383 @@ function slideFromStored(
   });
 }
 
+function normalizeStoredSlideContent(
+  slide: DeckSlideWithProjectInput
+): SlideContent {
+  if (slide.projectInput) {
+    return normalizeSlideContent(slide.content, slide.projectInput, {
+      slideCount: slide.projectInput.pageCount
+    });
+  }
+
+  return slide.content as SlideContent;
+}
+
+function isFileElementType(type: SlideCompositionPlan["elements"][number]["type"]) {
+  return type === "generatedImage" || type === "icon";
+}
+
 function pageDesignFromStored(slide: DeckProjectWithSlides["slides"][number]) {
   const pageDesign = isRecord(slide.pageDesign) ? slide.pageDesign : {};
   const content = slide.content as SlideContent;
-
-  return {
-    contentHierarchy:
-      isRecord(pageDesign.contentHierarchy)
-        ? pageDesign.contentHierarchy
-        : {
-            primaryMessage: content.bodyPoints[0] ?? content.title,
-            levels: [
-              {
-                label: content.title,
-                level: 1,
-                summary: content.speakerGoal
-              }
-            ]
-          },
-    designPlan:
-      isRecord(pageDesign.designPlan)
-        ? pageDesign.designPlan
-        : {
-            expressionIntent: content.speakerGoal,
-            layoutTemplate: "title-body-hero",
-            readingOrder: [slide.slideId],
-            visualStrategy: content.visualIntent
-          },
+  const pageIntent =
+    isRecord(pageDesign.pageIntent) &&
+    slidePageIntentSchema.safeParse(pageDesign.pageIntent).success
+      ? slidePageIntentSchema.parse(pageDesign.pageIntent)
+      : buildStoredFallbackPageIntent(slide, content);
+  const contentHierarchy =
+    isRecord(pageDesign.contentHierarchy) &&
+    slideContentHierarchySchema.safeParse(
+      ensureStoredContentHierarchyTiers(pageDesign.contentHierarchy, content)
+    ).success
+      ? slideContentHierarchySchema.parse(
+          ensureStoredContentHierarchyTiers(pageDesign.contentHierarchy, content)
+        )
+      : buildStoredFallbackContentHierarchy(content);
+  const fallbackLayoutSelection = buildStoredFallbackLayoutSelection(
+    slide,
+    content,
+    pageIntent
+  );
+  const layoutSelection =
+    isRecord(pageDesign.layoutSelection) &&
+    slideLayoutSelectionSchema.safeParse(pageDesign.layoutSelection).success
+      ? slideLayoutSelectionSchema.parse(pageDesign.layoutSelection)
+      : fallbackLayoutSelection;
+  const fallbackConstraints = buildStoredFallbackDesignConstraints(
+    content,
+    pageIntent
+  );
+  const constraints =
+    isRecord(pageDesign.constraints) &&
+    slideDesignConstraintsSchema.safeParse(pageDesign.constraints).success
+      ? slideDesignConstraintsSchema.parse(pageDesign.constraints)
+      : fallbackConstraints;
+  const designPlan =
+    isRecord(pageDesign.designPlan) &&
+    slidePageDesignSchema.safeParse(pageDesign.designPlan).success
+      ? slidePageDesignSchema.parse(pageDesign.designPlan)
+    : {
+        expressionIntent: content.speakerGoal,
+        layoutTemplate: layoutSelection.selectedLayoutType,
+        readingOrder: [slide.slideId],
+        visualStrategy: content.visualIntent
+      };
+  const layoutDiagnostics =
+    isRecord(pageDesign.layoutDiagnostics) &&
+    slideLayoutDiagnosticsSchema.safeParse(pageDesign.layoutDiagnostics).success
+      ? slideLayoutDiagnosticsSchema.parse(pageDesign.layoutDiagnostics)
+    : {
+        density: 0,
+        hasOverflow: false,
+        needsUserConfirmation: false,
+        overflowFixes: [],
+        warnings: []
+      };
+  const semanticElements = Array.isArray(pageDesign.semanticElements)
+    ? pageDesign.semanticElements
+    : buildStoredFallbackSemanticElements(slide, content);
+  const partialPlan = {
+    slideId: slide.slideId,
+    index: slide.index,
+    content,
+    pageIntent,
+    contentHierarchy,
+    layoutSelection,
+    constraints,
+    designQualityScore: isRecord(pageDesign.designQualityScore)
+      ? pageDesign.designQualityScore
+      : emptyStoredDesignQualityScore(),
     expressionIntent:
       typeof pageDesign.expressionIntent === "string"
         ? pageDesign.expressionIntent
         : content.speakerGoal,
-    layoutDiagnostics:
-      isRecord(pageDesign.layoutDiagnostics)
-        ? pageDesign.layoutDiagnostics
-        : {
-            density: 0,
-            hasOverflow: false,
-            needsUserConfirmation: false,
-            overflowFixes: [],
-            warnings: []
-          }
+    designPlan,
+    layoutDiagnostics,
+    semanticElements,
+    elements: slide.elements,
+    imageLayerRequests: slide.imageLayerRequests,
+    canvas: slide.canvas
+  } as SlideCompositionPlan;
+  const storedQuality =
+    isRecord(pageDesign.designQualityScore) &&
+    slideDesignQualityScoreSchema.safeParse(pageDesign.designQualityScore).success
+      ? slideDesignQualityScoreSchema.parse(pageDesign.designQualityScore)
+      : null;
+
+  return {
+    constraints,
+    contentHierarchy,
+    designPlan,
+    designQualityScore: storedQuality ?? buildSlideDesignQualityScore(partialPlan),
+    expressionIntent: partialPlan.expressionIntent,
+    layoutDiagnostics,
+    layoutSelection,
+    pageIntent,
+    semanticElements
   } as Pick<
     SlideCompositionPlan,
-    "contentHierarchy" | "designPlan" | "expressionIntent" | "layoutDiagnostics"
+    | "constraints"
+    | "contentHierarchy"
+    | "designPlan"
+    | "designQualityScore"
+    | "expressionIntent"
+    | "layoutDiagnostics"
+    | "layoutSelection"
+    | "pageIntent"
+    | "semanticElements"
   >;
+}
+
+function buildStoredFallbackPageIntent(
+  slide: DeckProjectWithSlides["slides"][number],
+  content: SlideContent
+): SlideCompositionPlan["pageIntent"] {
+  const corpus = `${content.title} ${content.subtitle ?? ""} ${content.bodyPoints.join(" ")} ${content.coreStatement} ${content.visualIntent}`;
+  const pageRole =
+    slide.index === 1
+      ? "cover"
+      : /数据|指标|趋势|%|data|metric/i.test(corpus)
+        ? "data"
+        : /对比|比较|差异|compare|vs/i.test(corpus)
+          ? "comparison"
+          : /流程|步骤|阶段|process|step/i.test(corpus)
+            ? "process"
+            : /总结|结论|summary|conclusion/i.test(corpus)
+              ? "summary"
+              : "content";
+
+  return {
+    audienceTakeaway: content.viewerObjective?.description ?? content.speakerGoal,
+    contentDensity:
+      content.bodyPoints.length >= 5 || content.bodyPoints.join("").length > 220
+        ? "high"
+        : content.bodyPoints.length <= 2
+          ? "low"
+          : "medium",
+    coreMessage: content.coreStatement || content.bodyPoints[0] || content.title,
+    pageRole,
+    primaryGoal:
+      pageRole === "comparison"
+        ? "compare"
+        : pageRole === "summary"
+          ? "summarize"
+          : pageRole === "process" || pageRole === "data"
+            ? "explain"
+            : pageRole === "cover"
+              ? "spark-interest"
+              : "inform"
+  };
+}
+
+function buildStoredFallbackContentHierarchy(
+  content: SlideContent
+): SlideCompositionPlan["contentHierarchy"] {
+  const supporting = content.contentLayers?.supporting ?? content.bodyPoints;
+
+  return {
+    primaryMessage: content.coreStatement || content.bodyPoints[0] || content.title,
+    levels: [
+      {
+        label: content.title,
+        level: 1,
+        summary: content.coreStatement || content.speakerGoal
+      },
+      ...supporting.slice(0, 5).map((point, index) => ({
+        label: `要点 ${index + 1}`,
+        level: 2,
+        summary: point
+      }))
+    ],
+    tiers: [
+      {
+        label: "一级信息",
+        level: 1,
+        items: [
+          {
+            content: content.title,
+            role: "主标题"
+          },
+          {
+            content: content.coreStatement || content.bodyPoints[0] || content.title,
+            role: "核心结论"
+          }
+        ]
+      },
+      {
+        label: "二级信息",
+        level: 2,
+        items: supporting.slice(0, 5).map((point, index) => ({
+          content: point,
+          role: `要点 ${index + 1}`
+        }))
+      },
+      {
+        label: "三级信息",
+        level: 3,
+        items: [
+          ...(content.subtitle
+            ? [
+                {
+                  content: content.subtitle,
+                  role: "副标题"
+                }
+              ]
+            : []),
+          {
+            content: content.sourceRequirement?.note ?? content.speakerGoal,
+            role: "来源/讲解要求"
+          }
+        ].slice(0, 4)
+      }
+    ]
+  };
+}
+
+function ensureStoredContentHierarchyTiers(
+  hierarchy: Record<string, unknown>,
+  content: SlideContent
+) {
+  if (Array.isArray(hierarchy.tiers) && hierarchy.tiers.length === 3) {
+    return hierarchy;
+  }
+
+  const fallback = buildStoredFallbackContentHierarchy(content);
+
+  return {
+    ...hierarchy,
+    primaryMessage:
+      typeof hierarchy.primaryMessage === "string"
+        ? hierarchy.primaryMessage
+        : fallback.primaryMessage,
+    levels: Array.isArray(hierarchy.levels) ? hierarchy.levels : fallback.levels,
+    tiers: fallback.tiers
+  };
+}
+
+function buildStoredFallbackLayoutSelection(
+  slide: DeckProjectWithSlides["slides"][number],
+  content: SlideContent,
+  pageIntent: SlideCompositionPlan["pageIntent"]
+): SlideLayoutSelection {
+  return buildDefaultLayoutSelection({
+    input: buildStoredFallbackInput(slide, content),
+    pageIntent,
+    slide: content
+  });
+}
+
+function buildStoredFallbackDesignConstraints(
+  content: SlideContent,
+  pageIntent: SlideCompositionPlan["pageIntent"]
+): SlideDesignConstraints {
+  return buildDefaultDesignConstraints({
+    input: buildStoredFallbackInput({ index: content.index, slideId: content.slideId }, content),
+    pageIntent,
+    slide: content
+  });
+}
+
+function buildStoredFallbackInput(
+  slide: Pick<DeckProjectWithSlides["slides"][number], "index" | "slideId">,
+  content: SlideContent
+): AnalyzeDeckRequest {
+  return {
+    audience: "通用受众",
+    coreMessage: content.coreStatement || content.bodyPoints[0] || content.title,
+    deckType: "business-report",
+    goal: content.speakerGoal,
+    locale: "zh-CN",
+    pageCount: Math.max(3, slide.index),
+    palette: "star-map",
+    sourceText: content.bodyPoints.join("\n")
+  };
+}
+
+function emptyStoredDesignQualityScore(): SlideDesignQualityScore {
+  const summary = "等待服务端质量评分。";
+
+  return {
+    dimensions: {
+      contentDensity: { score: 0, summary },
+      expressionCompleteness: { score: 0, summary },
+      informationHierarchy: { score: 0, summary },
+      renderability: { score: 0, summary },
+      visualConsistency: { score: 0, summary }
+    },
+    issues: [],
+    repairStatus: "not-needed",
+    suggestions: [],
+    totalScore: 0
+  };
+}
+
+function buildStoredFallbackSemanticElements(
+  slide: DeckProjectWithSlides["slides"][number],
+  content: SlideContent
+): SemanticSlideElement[] {
+  const elements: SemanticSlideElement[] = [
+    {
+      category: "text",
+      constraints: ["历史数据兼容生成的主标题语义"],
+      content: content.title,
+      elementType: "text",
+      hierarchyLevel: 1,
+      id: `${slide.slideId}-semantic-title`,
+      priority: 1,
+      role: "主标题",
+      semanticType: "title"
+    },
+    {
+      category: "text",
+      constraints: ["历史数据兼容生成的核心信息语义"],
+      content: content.coreStatement || content.bodyPoints[0] || content.title,
+      elementType: "text",
+      hierarchyLevel: 1,
+      id: `${slide.slideId}-semantic-key-message`,
+      priority: 2,
+      role: "核心信息",
+      semanticType: "subtitle"
+    },
+    {
+      category: "visual",
+      constraints: ["历史数据兼容生成的视觉语义"],
+      content: content.visualIntent,
+      elementType: "generatedImage",
+      hierarchyLevel: 2,
+      id: `${slide.slideId}-semantic-visual`,
+      priority: 3,
+      role: "主视觉",
+      semanticType: "heroVisual"
+    },
+    ...content.bodyPoints.slice(0, 5).map((point, index): SemanticSlideElement => ({
+      category: "text",
+      constraints: ["历史数据兼容生成的正文语义"],
+      content: point,
+      elementType: "text",
+      hierarchyLevel: 2,
+      id: `${slide.slideId}-semantic-point-${index + 1}`,
+      priority: Math.min(5, 3 + index),
+      role: `正文要点 ${index + 1}`,
+      semanticType: "body"
+    }))
+  ];
+
+  return elements.slice(0, 14);
 }
 
 async function rebuildDeckPptxForProject(userId: string, projectId: string) {
   const project = await getRawDeckProjectForUser(userId, projectId);
+  const input = analyzeDeckRequestSchema.parse(project.input);
+  const unifiedVisualSpec = normalizeUnifiedVisualSpec(
+    project.unifiedVisualSpec,
+    input
+  );
   const slides = project.slides.map((slide) => ({
-    ...slideFromStored(slide),
+    ...slideFromStored({
+      ...slide,
+      projectInput: input
+    }),
     generatedImageLayers: slide.generatedImageLayers as GeneratedImageLayer[],
     motionPlan: slide.motionPlan as GeneratedSlideResult["motionPlan"]
   }));
@@ -1360,7 +2530,7 @@ async function rebuildDeckPptxForProject(userId: string, projectId: string) {
     deckTitle: project.title,
     imageAssets,
     slides,
-    unifiedVisualSpec: project.unifiedVisualSpec as UnifiedVisualSpec
+    unifiedVisualSpec
   });
   const pptxAssetId = randomUUID();
   const pptxStored = await writeDeckFile({
@@ -1401,13 +2571,13 @@ async function rebuildDeckPptxForProject(userId: string, projectId: string) {
     data: {
       consistencyReport: toInputJson(
         buildConsistencyReport(
-          analyzeDeckRequestSchema.parse(project.input),
+          input,
           {
             deckSummary: project.summary,
             deckTitle: project.title,
             mode: parseMode(project.mode),
             slides,
-            unifiedVisualSpec: project.unifiedVisualSpec as UnifiedVisualSpec
+            unifiedVisualSpec
           }
         )
       ),
@@ -1427,6 +2597,22 @@ function safeFilename(value: string) {
     .slice(0, 80);
 
   return sanitized || "deck";
+}
+
+function extensionFromMime(mimeType: string) {
+  if (mimeType.includes("svg")) {
+    return "svg";
+  }
+
+  if (mimeType.includes("jpeg")) {
+    return "jpg";
+  }
+
+  if (mimeType.includes("webp")) {
+    return "webp";
+  }
+
+  return "png";
 }
 
 function toInputJson(value: unknown) {

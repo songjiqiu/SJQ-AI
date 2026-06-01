@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
 import type { DeckOutlineDraft } from "@/lib/deck-outline/schema";
@@ -34,6 +35,7 @@ export function OutlineReviewPage({
   const [isSaving, setIsSaving] = useState(false);
   const [isContinuing, setIsContinuing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const visibleDraft = isEditing ? draft : savedDraft;
   const selectedSlide = draft.slides[selectedSlideIndex] ?? draft.slides[0];
   const getOutlineErrorMessage = (code?: string) =>
@@ -107,16 +109,6 @@ export function OutlineReviewPage({
   };
 
   const deleteDraft = async () => {
-    if (
-      !window.confirm(
-        t("drafts.confirmDelete", {
-          title: savedDraft.deckTitle
-        })
-      )
-    ) {
-      return;
-    }
-
     setIsDeleting(true);
 
     try {
@@ -133,6 +125,7 @@ export function OutlineReviewPage({
 
       toast.error(message);
       setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
     }
   };
 
@@ -191,7 +184,7 @@ export function OutlineReviewPage({
           <div className="flex flex-wrap gap-2 lg:justify-end">
             <Button
               disabled={isSaving || isContinuing || isDeleting}
-              onClick={() => void deleteDraft()}
+              onClick={() => setIsDeleteDialogOpen(true)}
               type="button"
               variant="secondary"
             >
@@ -220,6 +213,23 @@ export function OutlineReviewPage({
           </div>
         </div>
       </footer>
+      <AlertDialog
+        actionLabel={t("actions.delete")}
+        actionLoadingLabel={t("actions.deleting")}
+        cancelLabel={t("actions.cancel")}
+        description={t("drafts.confirmDelete", {
+          title: savedDraft.deckTitle
+        })}
+        loading={isDeleting}
+        onAction={() => void deleteDraft()}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setIsDeleteDialogOpen(false);
+          }
+        }}
+        open={isDeleteDialogOpen}
+        title={t("confirm.deleteTitle")}
+      />
     </main>
   );
 }

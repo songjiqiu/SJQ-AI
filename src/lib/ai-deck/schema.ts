@@ -1,10 +1,6 @@
 import { z } from "zod";
 
-import {
-  deckStyleSchemaIds,
-  deckTypeIds,
-  paletteIds
-} from "@/lib/create-deck/options";
+import { deckTypeIds, paletteIds } from "@/lib/create-deck/options";
 import {
   deckInputMaxFileCharacters,
   deckInputMaxFileCount,
@@ -30,7 +26,13 @@ export const deckOutlineFileSummarySchema = z
   .object({
     name: z.string().min(1).max(255),
     size: z.number().int().min(0).max(deckInputMaxFileSize),
-    characterCount: z.number().int().min(0).max(deckInputMaxFileCharacters)
+    characterCount: z.number().int().min(0).max(deckInputMaxFileCharacters),
+    summary: z.string().max(500).optional().default(""),
+    snippets: z
+      .array(z.string().min(1).max(1200))
+      .max(4)
+      .optional()
+      .default([])
   })
   .strict();
 
@@ -43,30 +45,22 @@ export const deckOutlineIntentInputSchema = z
       .max(deckInputMaxFileCount)
       .optional()
       .default([]),
+    pageCount: z.coerce.number().int().min(3).max(18).optional(),
     deckType: z.enum(deckTypeIds).default("business-report"),
-    style: z.enum(deckStyleSchemaIds).default("strategic"),
     palette: z.enum(paletteIds),
     locale: z.enum(["zh-CN", "en-US"])
   })
-  .strict();
+  .strip();
 
 export const confirmedDeckIntentSchema = z
   .object({
     deckType: z.enum(deckTypeIds),
-    style: z.enum(deckStyleSchemaIds),
     audience: z.string().trim().min(2).max(120),
     goal: z.string().trim().min(2).max(160),
     coreMessage: z.string().trim().min(2).max(300),
     recommendedPageCount: z.number().int().min(3).max(18)
   })
-  .strict();
-
-export const deckIntentAnalysisResultSchema = confirmedDeckIntentSchema
-  .extend({
-    input: deckOutlineIntentInputSchema,
-    fileSummaries: z.array(deckOutlineFileSummarySchema).max(deckInputMaxFileCount)
-  })
-  .strict();
+  .strip();
 
 export const analyzeDeckRequestSchema = z
   .object({
@@ -81,11 +75,10 @@ export const analyzeDeckRequestSchema = z
       .default("围绕输入内容提炼核心信息"),
     pageCount: z.coerce.number().int().min(3).max(18),
     deckType: z.enum(deckTypeIds).default("business-report"),
-    style: z.enum(deckStyleSchemaIds).default("strategic"),
     palette: z.enum(paletteIds),
     locale: z.enum(["zh-CN", "en-US"])
   })
-  .strict();
+  .strip();
 
 export const unifiedVisualSpecSchema = z
   .object({
@@ -96,9 +89,168 @@ export const unifiedVisualSpecSchema = z
     imageStyle: z.string().min(6).max(240),
     layoutRules: z.array(z.string().min(4).max(160)).min(2).max(6),
     consistencyRules: z.array(z.string().min(4).max(180)).min(2).max(8),
-    forbiddenRules: z.array(z.string().min(4).max(160)).min(1).max(6)
+    forbiddenRules: z.array(z.string().min(4).max(160)).min(1).max(6),
+    pageSpec: z
+      .object({
+        aspectRatio: z.literal(canvasAspectRatio),
+        gridColumns: z.literal(12),
+        height: z.literal(slideCanvasHeight),
+        layoutInstruction: z.string().min(8).max(240),
+        safeMargin: z.literal(slideCanvasSafeMargin),
+        unit: z.literal(slideCanvasUnit),
+        width: z.literal(slideCanvasWidth)
+      })
+      .strict(),
+    typographyRules: z
+      .object({
+        defaultFontSize: z.number().min(8).max(40),
+        fontFallback: z.array(z.string().min(1).max(80)).min(2).max(6),
+        lineHeight: z.number().min(1).max(1.8),
+        maxLines: z.number().int().min(1).max(9),
+        minFontSize: z.number().min(8).max(18),
+        scale: z
+          .object({
+            coverTitle: typographyRuleScaleItemSchema(),
+            pageTitle: typographyRuleScaleItemSchema(),
+            body: typographyRuleScaleItemSchema(),
+            annotation: typographyRuleScaleItemSchema(),
+            chartLabel: typographyRuleScaleItemSchema()
+          })
+          .strict()
+      })
+      .strict(),
+    colorRoles: z
+      .object({
+        accent: z.string().min(3).max(180),
+        background: z.string().min(3).max(180),
+        bodyText: z.string().min(3).max(180),
+        chart: z.string().min(3).max(180),
+        contrastRequirement: z.string().min(6).max(180),
+        decorative: z.string().min(3).max(180),
+        highlight: z.string().min(3).max(180),
+        surface: z.string().min(3).max(180),
+        titleText: z.string().min(3).max(180)
+      })
+      .strict(),
+    imageRules: z
+      .object({
+        backgroundAvoidsHighContrastTextArea: z.boolean(),
+        subjectAvoidsTitleArea: z.boolean(),
+        usageNotes: z.array(z.string().min(4).max(180)).min(2).max(6)
+      })
+      .strict(),
+    pptTypeVisualTone: z
+      .object({
+        deckType: z.enum(deckTypeIds),
+        deckTypeName: z.string().min(2).max(80),
+        recommendedTone: z.string().min(2).max(120),
+        visualKeywords: z.array(z.string().min(1).max(60)).min(2).max(8)
+      })
+      .strict(),
+    informationDensityRules: z
+      .object({
+        defaultLevel: z.enum(["low", "medium", "high"]),
+        businessReport: z.string().min(6).max(220),
+        trainingCourse: z.string().min(6).max(220),
+        brandMarketing: z.string().min(6).max(220),
+        researchReport: z.string().min(6).max(220)
+      })
+      .strict(),
+    spacingRules: z
+      .object({
+        pageMargin: z.string().min(4).max(180),
+        sectionGap: z.string().min(4).max(180),
+        elementGap: z.string().min(4).max(180),
+        whitespace: z.string().min(4).max(220)
+      })
+      .strict(),
+    chartVisualRules: z
+      .object({
+        chartTypes: z.string().min(4).max(220),
+        axisAndGrid: z.string().min(4).max(220),
+        labelRules: z.string().min(4).max(220),
+        colorUsage: z.string().min(4).max(220),
+        sourceNotes: z.string().min(4).max(220)
+      })
+      .strict(),
+    imageIllustrationRules: z
+      .object({
+        style: z.string().min(4).max(220),
+        composition: z.string().min(4).max(220),
+        background: z.string().min(4).max(220),
+        consistency: z.string().min(4).max(220)
+      })
+      .strict(),
+    iconStyleRules: z
+      .object({
+        style: z.enum(["line", "filled", "duotone", "monochrome"]),
+        stroke: z.string().min(2).max(160),
+        usage: z.string().min(4).max(220),
+        consistency: z.string().min(4).max(220)
+      })
+      .strict(),
+    emphasisRules: z
+      .object({
+        highlight: z.string().min(4).max(220),
+        keyNumbers: z.string().min(4).max(220),
+        keywords: z.string().min(4).max(220),
+        conclusion: z.string().min(4).max(220)
+      })
+      .strict(),
+    forbiddenVisualRules: z.array(z.string().min(4).max(180)).min(3).max(10)
   })
   .strict();
+
+function typographyRuleScaleItemSchema() {
+  return z
+    .object({
+      fontSize: z.number().min(6).max(60),
+      fontWeight: z.enum(["regular", "medium", "semibold", "bold"]),
+      lineHeight: z.number().min(1).max(1.8),
+      usage: z.string().min(4).max(180)
+    })
+    .strict();
+}
+
+export const slideNarrativeRoleSchema = z.enum([
+  "setup",
+  "argument",
+  "turning-point",
+  "climax",
+  "summary",
+  "call-to-action"
+]);
+
+export const slideExplanationDepthSchema = z.enum([
+  "focus",
+  "transition",
+  "summary",
+  "supporting"
+]);
+
+export const slideSourceRequirementCategorySchema = z.enum([
+  "data",
+  "case",
+  "quote",
+  "course-material",
+  "user-input",
+  "none"
+]);
+
+export const slideAudienceFocusLensSchema = z.enum([
+  "business-conclusion",
+  "teaching-understanding",
+  "sales-value",
+  "research-evidence",
+  "general"
+]);
+
+export const slideViewerObjectiveTypeSchema = z.enum([
+  "understand",
+  "believe",
+  "remember",
+  "act"
+]);
 
 export const slideContentSchema = z
   .object({
@@ -108,7 +260,59 @@ export const slideContentSchema = z
     subtitle: z.string().max(120).optional(),
     bodyPoints: z.array(z.string().min(2).max(120)).min(2).max(5),
     speakerGoal: z.string().min(6).max(180),
-    visualIntent: z.string().min(6).max(220)
+    visualIntent: z.string().min(6).max(220),
+    coreStatement: z.string().min(4).max(220),
+    narrativeRole: slideNarrativeRoleSchema,
+    contentLayers: z
+      .object({
+        primary: z.array(z.string().min(2).max(160)).min(1).max(4),
+        supporting: z.array(z.string().min(2).max(160)).min(1).max(6),
+        supplementary: z.array(z.string().min(2).max(160)).max(5)
+      })
+      .strict(),
+    slideTransition: z
+      .object({
+        fromPrevious: z.string().min(4).max(220),
+        toNext: z.string().min(4).max(220)
+      })
+      .strict(),
+    explanationDepth: slideExplanationDepthSchema,
+    sourceRequirement: z
+      .object({
+        required: z.boolean(),
+        categories: z
+          .array(slideSourceRequirementCategorySchema)
+          .min(1)
+          .max(5),
+        note: z.string().min(4).max(220)
+      })
+      .strict(),
+    adaptationRules: z
+      .object({
+        splitWhen: z.string().min(4).max(220),
+        splitCandidates: z.array(z.string().min(2).max(120)).min(1).max(5),
+        mergeWhen: z.string().min(4).max(220),
+        mergeWith: z.string().min(2).max(120)
+      })
+      .strict(),
+    audienceFocus: z
+      .object({
+        lens: slideAudienceFocusLensSchema,
+        focus: z.string().min(4).max(220)
+      })
+      .strict(),
+    viewerObjective: z
+      .object({
+        type: slideViewerObjectiveTypeSchema,
+        description: z.string().min(4).max(220)
+      })
+      .strict(),
+    contentBoundary: z
+      .object({
+        inScope: z.string().min(4).max(220),
+        outOfScope: z.array(z.string().min(2).max(160)).min(1).max(6)
+      })
+      .strict()
   })
   .strict();
 
@@ -171,6 +375,134 @@ export const slideElementSemanticTypeSchema = z.enum([
   "footer"
 ]);
 
+export const slidePageRoleSchema = z.enum([
+  "cover",
+  "agenda",
+  "section",
+  "content",
+  "data",
+  "comparison",
+  "process",
+  "summary"
+]);
+
+export const slidePrimaryGoalSchema = z.enum([
+  "inform",
+  "explain",
+  "persuade",
+  "compare",
+  "summarize",
+  "spark-interest"
+]);
+
+export const slideContentDensitySchema = z.enum(["low", "medium", "high"]);
+
+export const slidePageIntentSchema = z
+  .object({
+    audienceTakeaway: z.string().min(4).max(220),
+    contentDensity: slideContentDensitySchema,
+    coreMessage: z.string().min(2).max(180),
+    pageRole: slidePageRoleSchema,
+    primaryGoal: slidePrimaryGoalSchema
+  })
+  .strict();
+
+export const slideLayoutTypeIds = [
+  "chapter",
+  "cover-title",
+  "title-body-points",
+  "big-image-background",
+  "left-image-right-text",
+  "left-text-right-image",
+  "left-text-right-chart",
+  "big-chart",
+  "two-column-compare",
+  "quote",
+  "time-axis",
+  "process-steps",
+  "key-metrics",
+  "quadrant-matrix",
+  "ending"
+] as const;
+
+export const slideLayoutTypeSchema = z.enum(slideLayoutTypeIds);
+
+export const slideLayoutSelectionSchema = z
+  .object({
+    candidates: z
+      .array(
+        z
+          .object({
+            fitReason: z.string().min(4).max(220),
+            layoutType: slideLayoutTypeSchema,
+            risk: z.string().min(2).max(180),
+            score: z.number().int().min(0).max(100)
+          })
+          .strict()
+      )
+      .min(2)
+      .max(3),
+    selectedLayoutType: slideLayoutTypeSchema,
+    selectionReason: z.string().min(4).max(240)
+  })
+  .strict()
+  .superRefine((selection, ctx) => {
+    if (
+      !selection.candidates.some(
+        (candidate) => candidate.layoutType === selection.selectedLayoutType
+      )
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "selectedLayoutType must be included in layout candidates",
+        path: ["selectedLayoutType"]
+      });
+    }
+  });
+
+export const slideDesignConstraintsSchema = z
+  .object({
+    coreMessagePresent: z.boolean(),
+    densityLimit: slideContentDensitySchema,
+    maxHeroVisuals: z.literal(1),
+    renderNotes: z.array(z.string().min(2).max(180)).min(1).max(8),
+    safeMargin: z
+      .object({
+        appliesTo: z.array(z.string().min(2).max(80)).min(1).max(6),
+        unit: z.literal(slideCanvasUnit),
+        value: z.literal(slideCanvasSafeMargin)
+      })
+      .strict(),
+    subjectAvoidsTitleArea: z.boolean(),
+    titleUnique: z.boolean()
+  })
+  .strict();
+
+const designQualityDimensionSchema = z
+  .object({
+    score: z.number().int().min(0).max(100),
+    summary: z.string().min(2).max(180)
+  })
+  .strict();
+
+export const slideDesignQualityScoreSchema = z
+  .object({
+    dimensions: z
+      .object({
+        contentDensity: designQualityDimensionSchema,
+        expressionCompleteness: designQualityDimensionSchema,
+        informationHierarchy: designQualityDimensionSchema,
+        renderability: designQualityDimensionSchema,
+        visualConsistency: designQualityDimensionSchema
+      })
+      .strict(),
+    issues: z.array(z.string().min(2).max(180)).max(10),
+    repairStatus: z.enum(["not-needed", "repaired", "failed", "still-low"]),
+    suggestions: z.array(z.string().min(2).max(180)).max(10),
+    totalScore: z.number().int().min(0).max(100)
+  })
+  .strict();
+
 export const slideElementTextStyleSchema = z
   .object({
     align: z.enum(["left", "center", "right"]).default("left"),
@@ -178,7 +510,7 @@ export const slideElementTextStyleSchema = z
     fontSize: z.number().min(8).max(40).default(14),
     fontWeight: z.enum(["regular", "medium", "semibold", "bold"]).default("regular"),
     lineHeight: z.number().min(1).max(1.8).default(1.25),
-    maxLines: z.number().int().min(1).max(8).optional()
+    maxLines: z.number().int().min(1).max(9).optional()
   })
   .strict();
 
@@ -276,7 +608,63 @@ export const slideContentHierarchySchema = z
           .strict()
       )
       .min(1)
-      .max(8)
+      .max(8),
+    tiers: z
+      .array(
+        z
+          .object({
+            items: z
+              .array(
+                z
+                  .object({
+                    content: z.string().min(1).max(220),
+                    role: z.string().min(1).max(80)
+                  })
+                  .strict()
+              )
+              .min(1)
+              .max(8),
+            label: z.string().min(1).max(80),
+            level: z.number().int().min(1).max(3)
+          })
+          .strict()
+      )
+      .length(3)
+  })
+  .strict()
+  .superRefine((hierarchy, ctx) => {
+    const levels = hierarchy.tiers.map((tier) => tier.level);
+
+    for (const expected of [1, 2, 3]) {
+      if (!levels.includes(expected)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `contentHierarchy.tiers must include level ${expected}`,
+          path: ["tiers"]
+        });
+      }
+    }
+  });
+
+export const semanticElementCategorySchema = z.enum([
+  "text",
+  "visual",
+  "infographic",
+  "navigation",
+  "container"
+]);
+
+export const semanticSlideElementSchema = z
+  .object({
+    category: semanticElementCategorySchema,
+    constraints: z.array(z.string().min(2).max(160)).max(6).default([]),
+    content: z.string().max(500).optional(),
+    elementType: slideElementTypeSchema,
+    hierarchyLevel: z.number().int().min(1).max(3),
+    id: z.string().min(3).max(80),
+    priority: z.number().int().min(1).max(5),
+    role: z.string().min(2).max(100),
+    semanticType: slideElementSemanticTypeSchema
   })
   .strict();
 
@@ -383,24 +771,58 @@ export const deckStructureSlideSchema = z
   })
   .strict();
 
-export const deckStructureOutlineResultSchema = z
+export const deckStructureOutlineSchema = z
   .object({
-    deckType: z.enum(deckTypeIds),
-    style: z.enum(deckStyleSchemaIds),
     deckTitle: z.string().min(2).max(100),
     deckSummary: z.string().min(8).max(300),
-    unifiedVisualSpec: unifiedVisualSpecSchema,
     slides: z.array(deckStructureSlideSchema).min(3).max(18)
   })
   .strict();
 
+export const deckStructureOutlineResultSchema = z
+  .object({
+    deckType: z.enum(deckTypeIds),
+    deckTitle: z.string().min(2).max(100),
+    deckSummary: z.string().min(8).max(300),
+    slides: z.array(deckStructureSlideSchema).min(3).max(18)
+  })
+  .strip();
+
+export const deckIntentAnalysisResultSchema = confirmedDeckIntentSchema
+  .extend({
+    input: deckOutlineIntentInputSchema,
+    fileSummaries: z.array(deckOutlineFileSummarySchema).max(deckInputMaxFileCount),
+    structureOutline: deckStructureOutlineSchema
+  })
+  .strip()
+  .superRefine((result, ctx) => {
+    if (
+      result.input.pageCount !== undefined &&
+      result.recommendedPageCount !== result.input.pageCount
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "recommendedPageCount must match the user-specified pageCount",
+        path: ["recommendedPageCount"]
+      });
+    }
+
+    if (result.structureOutline.slides.length !== result.recommendedPageCount) {
+      ctx.addIssue({
+        code: "custom",
+        message: "structureOutline.slides length must match recommendedPageCount",
+        path: ["structureOutline", "slides"]
+      });
+    }
+  });
+
 export const deckPageCopyResultSchema = z
   .object({
     deckType: z.enum(deckTypeIds),
-    style: z.enum(deckStyleSchemaIds),
+    unifiedVisualSpec: unifiedVisualSpecSchema,
     slides: z.array(slideContentSchema).min(3).max(18)
   })
-  .strict();
+  .strip();
 
 export const deckOutlineResultSchema = deckAnalysisResultSchema
   .extend({
@@ -413,10 +835,15 @@ export const slideCompositionPlanSchema = z
     slideId: z.string().min(3).max(60),
     index: z.number().int().min(1).max(18),
     content: slideContentSchema,
+    pageIntent: slidePageIntentSchema,
     contentHierarchy: slideContentHierarchySchema,
+    layoutSelection: slideLayoutSelectionSchema,
+    constraints: slideDesignConstraintsSchema,
+    designQualityScore: slideDesignQualityScoreSchema,
     expressionIntent: z.string().min(4).max(240),
     designPlan: slidePageDesignSchema,
     layoutDiagnostics: slideLayoutDiagnosticsSchema,
+    semanticElements: z.array(semanticSlideElementSchema).min(3).max(14),
     elements: z.array(slideElementSchema).min(3).max(10),
     imageLayerRequests: z.array(imageLayerRequestSchema).max(5),
     canvas: slideCanvasSchema
@@ -440,7 +867,71 @@ export const slideCompositionPlanSchema = z
         });
       }
     }
+
+    const titleElements = plan.elements.filter(
+      (element) => element.type === "text" && element.semanticType === "title"
+    );
+
+    if (titleElements.length !== 1) {
+      ctx.addIssue({
+        code: "custom",
+        message: "slide must contain exactly one primary title text element",
+        path: ["elements"]
+      });
+    }
+
+    if (!plan.constraints.titleUnique) {
+      ctx.addIssue({
+        code: "custom",
+        message: "constraints.titleUnique must be true",
+        path: ["constraints", "titleUnique"]
+      });
+    }
+
+    if (!plan.constraints.coreMessagePresent) {
+      ctx.addIssue({
+        code: "custom",
+        message: "constraints.coreMessagePresent must be true",
+        path: ["constraints", "coreMessagePresent"]
+      });
+    }
+
+    if (!plan.contentHierarchy.tiers.some((tier) => tier.level === 1 && tier.items.length > 0)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "contentHierarchy must include a non-empty level 1 tier",
+        path: ["contentHierarchy", "tiers"]
+      });
+    }
+
+    const elementIds = new Set(plan.elements.map((element) => element.id));
+
+    for (const request of plan.imageLayerRequests) {
+      if (!elementIds.has(request.elementId)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "image request elementId must reference an existing element",
+          path: ["imageLayerRequests", plan.imageLayerRequests.indexOf(request), "elementId"]
+        });
+      }
+    }
   });
+
+export const semanticSlidePlanSchema = z
+  .object({
+    slideId: z.string().min(3).max(60),
+    index: z.number().int().min(1).max(18),
+    content: slideContentSchema,
+    pageIntent: slidePageIntentSchema,
+    contentHierarchy: slideContentHierarchySchema,
+    layoutSelection: slideLayoutSelectionSchema,
+    constraints: slideDesignConstraintsSchema,
+    expressionIntent: z.string().min(4).max(240),
+    designPlan: slidePageDesignSchema,
+    layoutDiagnostics: slideLayoutDiagnosticsSchema,
+    semanticElements: z.array(semanticSlideElementSchema).min(3).max(14)
+  })
+  .strict();
 
 export const analyzedDeckResultSchema = z
   .object({
@@ -490,6 +981,12 @@ export type AnalyzeDeckRequest = z.infer<typeof analyzeDeckRequestSchema>;
 export type UnifiedVisualSpec = z.infer<typeof unifiedVisualSpecSchema>;
 export type SlideContent = z.infer<typeof slideContentSchema>;
 export type SlideElement = z.infer<typeof slideElementSchema>;
+export type SlidePageIntent = z.infer<typeof slidePageIntentSchema>;
+export type SlideLayoutType = z.infer<typeof slideLayoutTypeSchema>;
+export type SlideLayoutSelection = z.infer<typeof slideLayoutSelectionSchema>;
+export type SlideDesignConstraints = z.infer<typeof slideDesignConstraintsSchema>;
+export type SlideDesignQualityScore = z.infer<typeof slideDesignQualityScoreSchema>;
+export type SemanticSlideElement = z.infer<typeof semanticSlideElementSchema>;
 export type ImageLayerRequest = z.infer<typeof imageLayerRequestSchema>;
 export type GeneratedImageLayer = z.infer<typeof generatedImageLayerSchema>;
 export type SlideMotionPlan = z.infer<typeof slideMotionPlanSchema>;
@@ -497,12 +994,16 @@ export type ContentReview = z.infer<typeof contentReviewSchema>;
 export type ConsistencyReport = z.infer<typeof consistencyReportSchema>;
 export type DeckAnalysisResult = z.infer<typeof deckAnalysisResultSchema>;
 export type DeckStructureSlide = z.infer<typeof deckStructureSlideSchema>;
+export type DeckStructureOutline = z.infer<
+  typeof deckStructureOutlineSchema
+>;
 export type DeckStructureOutlineResult = z.infer<
   typeof deckStructureOutlineResultSchema
 >;
 export type DeckPageCopyResult = z.infer<typeof deckPageCopyResultSchema>;
 export type DeckOutlineResult = z.infer<typeof deckOutlineResultSchema>;
 export type SlideCompositionPlan = z.infer<typeof slideCompositionPlanSchema>;
+export type SemanticSlidePlan = z.infer<typeof semanticSlidePlanSchema>;
 export type AnalyzedDeckResult = z.infer<typeof analyzedDeckResultSchema>;
 export type GeneratedSlideResult = z.infer<typeof generatedSlideResultSchema>;
 export type GeneratedDeckResult = z.infer<typeof generatedDeckResultSchema>;

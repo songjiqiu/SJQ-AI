@@ -7,7 +7,7 @@ import {
 import type { CreateDeckForm } from "@/lib/create-deck/schema";
 
 const copy: MockDeckCopy = {
-  titlePattern: "{idea}｜{deckType}｜{style}",
+  titlePattern: "{idea}｜{deckType}",
   summaryPattern: "{audience}｜{goal}｜{count}｜{deckType}｜{palette}",
   slideTemplates: [
     {
@@ -45,17 +45,6 @@ const copy: MockDeckCopy = {
     "teaching-deck": "教学课件",
     "training-course": "课程培训"
   },
-  styleNames: {
-    data: "数据论证",
-    minimal: "极简商务",
-    "problem-solution": "问题方案",
-    product: "产品发布",
-    retrospective: "复盘总结",
-    story: "故事叙事",
-    strategic: "战略叙事",
-    teaching: "教学讲解",
-    "visual-proposal": "视觉提案"
-  },
   paletteNames: {
     "star-map": "星图",
     matrix: "矩阵",
@@ -70,7 +59,6 @@ const form: CreateDeckForm = {
   goal: "获得合作意向",
   pageCount: 4,
   deckType: "fundraising-pitch",
-  style: "strategic",
   palette: "star-map"
 };
 
@@ -81,7 +69,7 @@ describe("generateMockDeckDraft", () => {
 
     expect(draft).toEqual(secondDraft);
     expect(draft.mode).toBe("mock");
-    expect(draft.title).toBe("新能源融资路演｜融资路演｜战略叙事");
+    expect(draft.title).toBe("新能源融资路演｜融资路演");
     expect(draft.slides).toHaveLength(4);
     expect(draft.slides.map((slide) => slide.id)).toEqual([
       "slide-1",

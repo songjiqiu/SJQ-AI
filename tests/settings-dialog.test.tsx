@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within
+} from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -302,6 +308,40 @@ describe("ExperienceSettingsDialog", () => {
       screen.getByRole("heading", { name: "新增供应商" })
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Base URL")).toBeInTheDocument();
+  });
+
+  it("deletes AI providers through a styled confirmation dialog", async () => {
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (String(url) === "/api/ai/providers/provider-1" && init?.method === "DELETE") {
+        return jsonResponse({
+          ok: true
+        });
+      }
+
+      return settingsFetchResponse(url);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderDialog();
+    fireEvent.click(await screen.findByRole("button", { name: "AI 供应商" }));
+    expect(await screen.findByText("密钥未配置")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "删除" }));
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "确认删除配置"
+    });
+
+    expect(
+      within(dialog).getByText("删除供应商会同时删除关联模型，确定继续吗？")
+    ).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "删除" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/ai/providers/provider-1", {
+        method: "DELETE"
+      });
+    });
+    expect(toast.success).toHaveBeenCalledWith("配置已删除");
   });
 
   it("keeps provider settings visible when another AI config endpoint fails", async () => {

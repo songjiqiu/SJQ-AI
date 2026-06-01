@@ -3,10 +3,13 @@ import { Prisma } from "@prisma/client";
 import {
   analyzeDeckIntent,
   createDeckOutline,
+  normalizeSlideContent,
+  normalizeUnifiedVisualSpec,
   type AnalyzeDeckOptions
 } from "@/lib/ai-deck/analyzer";
 import {
   deckOutlineIntentInputSchema,
+  deckStructureSlideSchema,
   type AnalyzeDeckRequest,
   type DeckOutlineIntentInput,
   type DeckIntentAnalysisResult
@@ -54,7 +57,12 @@ export async function createDeckOutlineDraftForUser(
 
   const intentAnalysis = buildConfirmedIntentAnalysis(input);
   const outlineInput = buildAnalyzeDeckRequest(input);
-  const outline = await createDeckOutline(outlineInput, options.analyzerOptions);
+  const outline = await createDeckOutline(
+    outlineInput,
+    intentAnalysis.structureOutline,
+    intentAnalysis.fileSummaries,
+    options.analyzerOptions
+  );
   const draft = await prisma.deckOutlineDraft.create({
     data: {
       userId,
@@ -230,12 +238,11 @@ function buildAnalyzeDeckRequest(
 ): AnalyzeDeckRequest {
   return {
     sourceText: mergeSourceText(input),
-    audience: input.confirmedIntent.audience,
-    goal: input.confirmedIntent.goal,
-    coreMessage: input.confirmedIntent.coreMessage,
-    pageCount: input.confirmedIntent.recommendedPageCount,
+    audience: input.confirmedPlan.audience,
+    goal: input.confirmedPlan.goal,
+    coreMessage: input.confirmedPlan.coreMessage,
+    pageCount: input.confirmedPlan.recommendedPageCount,
     deckType: input.deckType,
-    style: input.style,
     palette: input.palette,
     locale: input.locale
   };
@@ -245,22 +252,44 @@ function buildConfirmedIntentAnalysis(
   input: CreateDeckOutlineDraftInput
 ): DeckIntentAnalysisResult {
   return {
-    ...input.confirmedIntent,
-    fileSummaries: input.textFiles.map((file) => ({
-      characterCount: file.content.length,
-      name: file.name,
-      size: file.size
-    })),
+    ...input.confirmedPlan,
+    fileSummaries: buildFileSummaries(input.textFiles),
     input: {
       idea: input.idea,
       sourceText: input.sourceText,
       textFiles: input.textFiles,
+      ...(input.pageCount ? { pageCount: input.pageCount } : {}),
       deckType: input.deckType,
-      style: input.style,
       palette: input.palette,
       locale: input.locale
     }
   };
+}
+
+function buildFileSummaries(files: CreateDeckOutlineDraftInput["textFiles"]) {
+  return files.map((file) => ({
+    characterCount: file.content.length,
+    name: file.name,
+    size: file.size,
+    summary: compactText(file.content, 500),
+    snippets: buildFileSnippets(file.content)
+  }));
+}
+
+function compactText(text: string, maxLength: number) {
+  const normalized = text.replace(/\s+/g, " ").trim();
+
+  return normalized.length > maxLength
+    ? `${normalized.slice(0, maxLength - 1)}...`
+    : normalized;
+}
+
+function buildFileSnippets(content: string) {
+  return content
+    .split(/\n{2,}|(?<=[。！？.!?])\s+/)
+    .map((item) => compactText(item, 1200))
+    .filter((item) => item.length > 0)
+    .slice(0, 4);
 }
 
 function mergeSourceText(input: CreateDeckOutlineDraftInput) {
@@ -302,6 +331,24 @@ function getExtension(filename: string) {
 function serializeDeckOutlineDraft(
   draft: Prisma.DeckOutlineDraftGetPayload<Record<string, never>>
 ): DeckOutlineDraft {
+  const input = draft.input as AnalyzeDeckRequest;
+  const intentAnalysis = readIntentAnalysis(draft);
+  const structureSlides =
+    intentAnalysis &&
+    typeof intentAnalysis === "object" &&
+    "structureOutline" in intentAnalysis &&
+    intentAnalysis.structureOutline &&
+    typeof intentAnalysis.structureOutline === "object" &&
+    "slides" in intentAnalysis.structureOutline &&
+    Array.isArray(intentAnalysis.structureOutline.slides)
+      ? intentAnalysis.structureOutline.slides.flatMap((slide) => {
+          const parsed = deckStructureSlideSchema.safeParse(slide);
+
+          return parsed.success ? [parsed.data] : [];
+        })
+      : [];
+  const rawSlides = Array.isArray(draft.slides) ? draft.slides : [];
+
   return deckOutlineDraftSchema.parse({
     id: draft.id,
     mode: parseMode(draft.mode),
@@ -309,9 +356,16 @@ function serializeDeckOutlineDraft(
     deckSummary: draft.summary,
     input: draft.input,
     fileSummaries: draft.fileSummaries,
-    intentAnalysis: readIntentAnalysis(draft),
-    unifiedVisualSpec: draft.unifiedVisualSpec,
-    slides: draft.slides,
+    intentAnalysis,
+    unifiedVisualSpec: normalizeUnifiedVisualSpec(draft.unifiedVisualSpec, input),
+    slides: rawSlides.map((slide, index) =>
+      normalizeSlideContent(slide, input, {
+        expected: structureSlides[index],
+        nextTitle: structureSlides[index + 1]?.title,
+        previousTitle: structureSlides[index - 1]?.title,
+        slideCount: rawSlides.length || input.pageCount
+      })
+    ),
     createdAt: draft.createdAt.toISOString(),
     updatedAt: draft.updatedAt.toISOString()
   });

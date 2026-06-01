@@ -3,10 +3,16 @@ import { describe, expect, it } from "vitest";
 import {
   analyzedDeckResultSchema,
   confirmedDeckIntentSchema,
+  deckIntentAnalysisResultSchema,
+  deckPageCopyResultSchema,
   deckOutlineIntentInputSchema,
   deckOutlineResultSchema,
+  deckStructureOutlineResultSchema,
   generatedDeckResultSchema,
   imageLayerRequestSchema,
+  semanticSlidePlanSchema,
+  slideLayoutTypeSchema,
+  slideCompositionPlanSchema,
   slideElementSchema
 } from "@/lib/ai-deck/schema";
 import { buildMockAnalyzedDeck } from "@/lib/ai-deck/fallback";
@@ -24,7 +30,6 @@ const input: AnalyzeDeckRequest = {
   coreMessage: "用市场机会与试点成果证明合作价值。",
   pageCount: 3,
   deckType: "business-report",
-  style: "strategic",
   palette: "star-map",
   locale: "zh-CN"
 };
@@ -41,6 +46,21 @@ describe("ai deck schemas", () => {
 
     expect(parsed.textFiles).toEqual([]);
     expect(parsed.deckType).toBe("fundraising-pitch");
+    expect(parsed).not.toHaveProperty("style");
+  });
+
+  it("accepts optional user-specified page count in initial outline input", () => {
+    const parsed = deckOutlineIntentInputSchema.parse({
+      idea: "为新能源初创公司准备融资路演，重点说明市场机会和合作路径。",
+      deckType: "fundraising-pitch",
+      style: "data",
+      palette: "star-map",
+      locale: "zh-CN",
+      pageCount: 8
+    });
+
+    expect(parsed.pageCount).toBe(8);
+    expect(parsed).not.toHaveProperty("style");
   });
 
   it("requires confirmed intent page count to stay within 3 through 18", () => {
@@ -76,11 +96,344 @@ describe("ai deck schemas", () => {
     ).toBe(false);
   });
 
+  it("requires first-round structure outline to match recommended page count", () => {
+    const analysis = {
+      input: {
+        idea: "为新能源初创公司准备融资路演，重点说明市场机会和合作路径。",
+        sourceText: "",
+        textFiles: [],
+        deckType: "fundraising-pitch",
+        style: "data",
+        palette: "star-map",
+        locale: "zh-CN",
+        pageCount: 3
+      },
+      fileSummaries: [],
+      deckType: "fundraising-pitch",
+      audience: "投资人",
+      goal: "获得试点合作意向",
+      coreMessage: "用市场机会与试点成果证明合作价值。",
+      recommendedPageCount: 3,
+      structureOutline: {
+        deckTitle: "新能源融资路演",
+        deckSummary: "这是一份用于确认结构的大纲草稿。",
+        slides: [1, 2, 3].map((index) => ({
+          slideId: `slide-${index}`,
+          index,
+          title: `第 ${index} 页`,
+          purpose: `说明第 ${index} 页的表达目的。`,
+          keyMessage: `第 ${index} 页核心观点。`,
+          visualDirection: "使用清晰主视觉配合文字信息。"
+        }))
+      }
+    };
+
+    expect(deckIntentAnalysisResultSchema.parse(analysis).recommendedPageCount).toBe(3);
+    expect(deckIntentAnalysisResultSchema.parse(analysis)).not.toHaveProperty("style");
+    expect(deckIntentAnalysisResultSchema.parse(analysis).input).not.toHaveProperty("style");
+    expect(
+      deckIntentAnalysisResultSchema.safeParse({
+        ...analysis,
+        recommendedPageCount: 4
+      }).success
+    ).toBe(false);
+  });
+
   it("accepts the local fallback deck result", () => {
     const result = buildMockAnalyzedDeck(input);
 
     expect(analyzedDeckResultSchema.parse(result).slides).toHaveLength(3);
     expect(result.deckTitle).toContain("商务汇报");
+    expect(result.slides[0].pageIntent).toMatchObject({
+      contentDensity: expect.any(String),
+      pageRole: expect.any(String),
+      primaryGoal: expect.any(String)
+    });
+    expect(result.slides[0].contentHierarchy.tiers.map((tier) => tier.level)).toEqual([
+      1,
+      2,
+      3
+    ]);
+    expect(result.slides[0].layoutSelection.candidates).toHaveLength(3);
+    expect(result.slides[0].layoutSelection.selectedLayoutType).toBe(
+      "cover-title"
+    );
+    expect(result.slides[0].constraints).toMatchObject({
+      coreMessagePresent: true,
+      maxHeroVisuals: 1,
+      safeMargin: {
+        unit: "inch",
+        value: 0.5
+      },
+      titleUnique: true
+    });
+    expect(result.slides[0].designQualityScore.totalScore).toBeGreaterThan(0);
+    expect(result.slides[0].semanticElements.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("keeps the fixed preview layout type contract", () => {
+    const layoutTypes = [
+      "chapter",
+      "cover-title",
+      "title-body-points",
+      "big-image-background",
+      "left-image-right-text",
+      "left-text-right-image",
+      "left-text-right-chart",
+      "big-chart",
+      "two-column-compare",
+      "quote",
+      "time-axis",
+      "process-steps",
+      "key-metrics",
+      "quadrant-matrix",
+      "ending"
+    ];
+
+    for (const layoutType of layoutTypes) {
+      expect(slideLayoutTypeSchema.safeParse(layoutType).success).toBe(true);
+    }
+
+    expect(slideLayoutTypeSchema.safeParse("unknown-template").success).toBe(false);
+  });
+
+  it("requires semantic slide plans to include page intent and three content tiers", () => {
+    const analyzed = buildMockAnalyzedDeck(input);
+    const slide = analyzed.slides[0];
+    const semanticPlan = {
+      slideId: slide.slideId,
+      index: slide.index,
+      content: slide.content,
+      pageIntent: slide.pageIntent,
+      contentHierarchy: slide.contentHierarchy,
+      layoutSelection: slide.layoutSelection,
+      constraints: slide.constraints,
+      expressionIntent: slide.expressionIntent,
+      designPlan: slide.designPlan,
+      layoutDiagnostics: slide.layoutDiagnostics,
+      semanticElements: slide.semanticElements
+    };
+
+    expect(semanticSlidePlanSchema.parse(semanticPlan).pageIntent).toMatchObject({
+      contentDensity: slide.pageIntent.contentDensity,
+      pageRole: slide.pageIntent.pageRole
+    });
+    expect(
+      semanticSlidePlanSchema.safeParse({
+        ...semanticPlan,
+        contentHierarchy: {
+          ...slide.contentHierarchy,
+          tiers: slide.contentHierarchy.tiers.slice(0, 2)
+        }
+      }).success
+    ).toBe(false);
+  });
+
+  it("rejects semantic elements that include coordinates", () => {
+    const analyzed = buildMockAnalyzedDeck(input);
+    const slide = analyzed.slides[0];
+    const semanticPlan = {
+      slideId: slide.slideId,
+      index: slide.index,
+      content: slide.content,
+      pageIntent: slide.pageIntent,
+      contentHierarchy: slide.contentHierarchy,
+      layoutSelection: slide.layoutSelection,
+      constraints: slide.constraints,
+      expressionIntent: slide.expressionIntent,
+      designPlan: slide.designPlan,
+      layoutDiagnostics: slide.layoutDiagnostics,
+      semanticElements: [
+        {
+          ...slide.semanticElements[0],
+          bounds: { x: 0, y: 0, width: 1, height: 1 }
+        },
+        ...slide.semanticElements.slice(1)
+      ]
+    };
+
+    expect(semanticSlidePlanSchema.safeParse(semanticPlan).success).toBe(false);
+  });
+
+  it("requires final slide composition plans to keep semantic metadata", () => {
+    const analyzed = buildMockAnalyzedDeck(input);
+
+    expect(slideCompositionPlanSchema.parse(analyzed.slides[0]).pageIntent).toEqual(
+      analyzed.slides[0].pageIntent
+    );
+    expect(
+      slideCompositionPlanSchema.safeParse({
+        ...analyzed.slides[0],
+        constraints: {
+          ...analyzed.slides[0].constraints,
+          titleUnique: false
+        }
+      }).success
+    ).toBe(false);
+    expect(
+      slideCompositionPlanSchema.safeParse({
+        ...analyzed.slides[0],
+        elements: analyzed.slides[0].elements.filter(
+          (element) => element.semanticType !== "title"
+        )
+      }).success
+    ).toBe(false);
+  });
+
+  it("keeps structure outline and page copy visual spec responsibilities separate", () => {
+    const analyzed = buildMockAnalyzedDeck(input);
+    const structure = {
+      deckType: input.deckType,
+      deckTitle: analyzed.deckTitle,
+      deckSummary: analyzed.deckSummary,
+      slides: analyzed.slides.map((slide) => ({
+        slideId: slide.slideId,
+        index: slide.index,
+        title: slide.content.title,
+        purpose: slide.content.speakerGoal,
+        keyMessage: slide.content.bodyPoints[0],
+        visualDirection: slide.content.visualIntent
+      }))
+    };
+    const pageCopy = {
+      deckType: input.deckType,
+      unifiedVisualSpec: analyzed.unifiedVisualSpec,
+      slides: analyzed.slides.map((slide) => slide.content)
+    };
+
+    expect(deckStructureOutlineResultSchema.parse(structure).slides).toHaveLength(3);
+    expect(deckStructureOutlineResultSchema.parse({
+      ...structure,
+      style: "legacy"
+    })).not.toHaveProperty("style");
+    expect(
+      deckStructureOutlineResultSchema.parse({
+        ...structure,
+        unifiedVisualSpec: analyzed.unifiedVisualSpec
+      })
+    ).not.toHaveProperty("unifiedVisualSpec");
+    expect(deckPageCopyResultSchema.parse(pageCopy).unifiedVisualSpec).toEqual(
+      analyzed.unifiedVisualSpec
+    );
+    expect(
+      deckPageCopyResultSchema.safeParse({
+        deckType: input.deckType,
+        slides: analyzed.slides.map((slide) => slide.content)
+      }).success
+    ).toBe(false);
+  });
+
+  it("requires unified visual specs to include structured page, typography, color, and image rules", () => {
+    const analyzed = buildMockAnalyzedDeck(input);
+    const parsed = deckPageCopyResultSchema.parse({
+      deckType: input.deckType,
+      unifiedVisualSpec: analyzed.unifiedVisualSpec,
+      slides: analyzed.slides.map((slide) => slide.content)
+    });
+
+    expect(parsed.unifiedVisualSpec.colorPalette).toEqual(
+      analyzed.unifiedVisualSpec.colorPalette
+    );
+    expect(parsed.unifiedVisualSpec.themeName).not.toMatch(/星图|Star Map/i);
+    expect(parsed.unifiedVisualSpec.pageSpec).toMatchObject({
+      aspectRatio: "16:9",
+      gridColumns: 12,
+      height: 7.5,
+      safeMargin: 0.5,
+      unit: "inch",
+      width: 13.333
+    });
+    expect(parsed.unifiedVisualSpec.typographyRules).toMatchObject({
+      defaultFontSize: 15,
+      lineHeight: 1.25,
+      maxLines: 8,
+      minFontSize: 8
+    });
+    expect(parsed.unifiedVisualSpec.typographyRules.scale.coverTitle).toMatchObject({
+      fontSize: 36,
+      fontWeight: "bold"
+    });
+    expect(parsed.unifiedVisualSpec.colorRoles.contrastRequirement).toContain(
+      "4.5:1"
+    );
+    expect(parsed.unifiedVisualSpec.colorRoles.chart).toContain("#");
+    expect(parsed.unifiedVisualSpec.colorRoles.surface).toContain("#");
+    expect(parsed.unifiedVisualSpec.colorRoles.titleText).toContain("#");
+    expect(parsed.unifiedVisualSpec.imageRules).toMatchObject({
+      backgroundAvoidsHighContrastTextArea: true,
+      subjectAvoidsTitleArea: true
+    });
+    expect(parsed.unifiedVisualSpec.pptTypeVisualTone).toMatchObject({
+      deckType: "business-report",
+      deckTypeName: "商务汇报",
+      recommendedTone: "克制、可信、有层级"
+    });
+    expect(parsed.unifiedVisualSpec.pptTypeVisualTone.visualKeywords).toEqual(
+      expect.arrayContaining(["数据图表", "结论先行"])
+    );
+    expect(parsed.unifiedVisualSpec).not.toHaveProperty("colorRoleDefinitions");
+    expect(parsed.unifiedVisualSpec).not.toHaveProperty("typographyScale");
+    expect(parsed.unifiedVisualSpec.informationDensityRules.defaultLevel).toBe(
+      "medium"
+    );
+    expect(parsed.unifiedVisualSpec.chartVisualRules.sourceNotes).toContain(
+      "来源"
+    );
+    expect(parsed.unifiedVisualSpec.iconStyleRules.style).toBe("line");
+    expect(parsed.unifiedVisualSpec.forbiddenVisualRules.join(" ")).toContain(
+      "高饱和"
+    );
+  });
+
+  it("requires slide copy to include structured narrative metadata", () => {
+    const analyzed = buildMockAnalyzedDeck(input);
+    const slide = analyzed.slides[0].content;
+
+    expect(deckPageCopyResultSchema.parse({
+      deckType: input.deckType,
+      style: "legacy",
+      unifiedVisualSpec: analyzed.unifiedVisualSpec,
+      slides: analyzed.slides.map((item) => item.content)
+    })).not.toHaveProperty("style");
+    expect(deckPageCopyResultSchema.parse({
+      deckType: input.deckType,
+      unifiedVisualSpec: analyzed.unifiedVisualSpec,
+      slides: analyzed.slides.map((item) => item.content)
+    }).slides[0]).toMatchObject({
+      coreStatement: expect.any(String),
+      narrativeRole: "setup",
+      contentLayers: expect.objectContaining({
+        primary: expect.any(Array),
+        supporting: expect.any(Array)
+      }),
+      slideTransition: expect.objectContaining({
+        fromPrevious: expect.any(String),
+        toNext: expect.any(String)
+      }),
+      sourceRequirement: expect.objectContaining({
+        categories: expect.arrayContaining(["user-input"])
+      }),
+      contentBoundary: expect.objectContaining({
+        outOfScope: expect.any(Array)
+      })
+    });
+    expect(
+      deckPageCopyResultSchema.safeParse({
+        deckType: input.deckType,
+        unifiedVisualSpec: analyzed.unifiedVisualSpec,
+        slides: [
+          {
+            slideId: slide.slideId,
+            index: slide.index,
+            title: slide.title,
+            bodyPoints: slide.bodyPoints,
+            speakerGoal: slide.speakerGoal,
+            visualIntent: slide.visualIntent
+          },
+          ...analyzed.slides.slice(1).map((item) => item.content)
+        ]
+      }).success
+    ).toBe(false);
   });
 
   it("rejects elements that overflow the 0-100 canvas", () => {
@@ -163,6 +516,47 @@ describe("ai deck schemas", () => {
     };
 
     expect(generatedDeckResultSchema.parse(result).slides).toHaveLength(3);
+  });
+
+  it("accepts generated text elements with nine max lines", () => {
+    const analyzed = buildMockAnalyzedDeck(input);
+    const result = {
+      id: "deck-max-lines-9",
+      mode: analyzed.mode,
+      status: "READY",
+      deckTitle: analyzed.deckTitle,
+      deckSummary: analyzed.deckSummary,
+      input,
+      unifiedVisualSpec: analyzed.unifiedVisualSpec,
+      contentReview: buildContentReview(input, analyzed),
+      consistencyReport: buildConsistencyReport(input, analyzed),
+      slides: analyzed.slides.map((slide, slideIndex) => ({
+        ...slide,
+        elements: slide.elements.map((element, elementIndex) =>
+          slideIndex === 0 &&
+          elementIndex === 0 &&
+          element.type === "text" &&
+          element.textStyle
+            ? {
+                ...element,
+                textStyle: {
+                  ...element.textStyle,
+                  maxLines: 9
+                }
+              }
+            : element
+        ),
+        generatedImageLayers: [],
+        motionPlan: buildSlideMotionPlan(slide)
+      })),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    expect(
+      generatedDeckResultSchema.parse(result).slides[0].elements[0].textStyle
+        ?.maxLines
+    ).toBe(9);
   });
 
   it("accepts 18-slide outline and generated deck results", () => {

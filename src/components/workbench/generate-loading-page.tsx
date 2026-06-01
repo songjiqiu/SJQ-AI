@@ -19,6 +19,7 @@ type DeckGenerationTaskPayload = {
   error?: string;
   details?: unknown;
   id: string;
+  previewReady?: boolean;
   previewUrl?: string;
   progress?: {
     current: number;
@@ -37,6 +38,7 @@ export function GenerateLoadingPage() {
     useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<unknown>(null);
+  const [progressLabel, setProgressLabel] = useState<string | null>(null);
 
   useEffect(() => {
     if (startedRef.current) {
@@ -91,6 +93,10 @@ export function GenerateLoadingPage() {
           throw createWorkbenchApiError(payload, t);
         }
 
+        if (payload.progress?.message) {
+          setProgressLabel(payload.progress.message);
+        }
+
         if (payload.status === "FAILED") {
           const message =
             payload.error ??
@@ -104,9 +110,13 @@ export function GenerateLoadingPage() {
           });
         }
 
-        if (payload.status === "READY") {
+        if (payload.status === "READY" || payload.previewReady) {
           window.sessionStorage.removeItem(generatePayloadStorageKey);
-          toast.success(t("toast.generated"));
+          toast.success(
+            payload.status === "READY"
+              ? t("toast.generated")
+              : t("toast.previewReady")
+          );
           router.replace(`/workbench/preview/${payload.id}`);
           return;
         }
@@ -136,9 +146,10 @@ export function GenerateLoadingPage() {
         icon={errorMessage ? <AlertCircle /> : <Layers3 />}
         onAction={() => router.replace("/workbench")}
         progressLabel={
-          isContinuingInBackground
+          progressLabel ??
+          (isContinuingInBackground
             ? t("loading.generateBackgroundProgress")
-            : t("loading.generateProgress")
+            : t("loading.generateProgress"))
         }
         title={
           errorMessage

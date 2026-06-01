@@ -78,6 +78,10 @@
         "title": "User Management",
         "body": "Review accounts, roles, active status, and account-scoped data, then adjust user access when needed."
       },
+      "templates": {
+        "title": "Template Workspace",
+        "body": "Manage the PPT template library, page categories, and reusable page JSON assets for future generation workflows."
+      },
       "workbench": {
         "title": "Creation Workbench",
         "body": "Enter the regular creation flow for PPT slide splitting, visual specs, and page element planning."
@@ -166,9 +170,13 @@
     },
     "actions": {
       "close": "Close",
+      "cancel": "Cancel",
       "edit": "Edit",
       "delete": "Delete",
       "save": "Save Configuration"
+    },
+    "confirm": {
+      "deleteTitle": "Confirm Deletion"
     },
     "common": {
       "enabled": "Enabled",
@@ -339,6 +347,7 @@
     },
     "actions": {
       "back": "Back to Admin Console",
+      "cancel": "Cancel",
       "refresh": "Refresh",
       "setAdmin": "Make Admin",
       "setUser": "Make User",
@@ -347,6 +356,7 @@
       "selfDisabled": "You cannot change your own admin access or active status"
     },
     "confirm": {
+      "disableTitle": "Confirm Account Disable",
       "disable": "Disabling this account will immediately clear all of its login sessions. Continue?"
     },
     "toast": {
@@ -361,6 +371,185 @@
       "validation": "The user update is invalid.",
       "notFound": "The user does not exist or has been deleted.",
       "generic": "User management failed. Please try again later."
+    }
+  },
+  "adminTemplates": {
+    "title": "PPT Template Library Management",
+    "subtitle": "Manage reusable PPT templates by page type. Each template stores a complete page JSON and can be adjusted in the visual designer.",
+    "categoriesAria": "PPT template categories",
+    "listAria": "PPT template list",
+    "searchPlaceholder": "Search template names, descriptions, or tags",
+    "loading": "Loading templates",
+    "empty": "No templates in this category yet",
+    "categories": {
+      "chapter": "Chapter Page",
+      "cover-title": "Cover Title",
+      "title-body-points": "Title + Body/Key Points",
+      "big-image-background": "Large Image Background",
+      "left-image-right-text": "Left Image, Right Text",
+      "left-text-right-image": "Left Text, Right Image",
+      "left-text-right-chart": "Left Text, Right Chart",
+      "big-chart": "Large Chart",
+      "two-column-compare": "Two-Column Compare",
+      "quote": "Quote Page",
+      "time-axis": "Time Axis",
+      "process-steps": "Process/Steps",
+      "key-metrics": "Key Metrics",
+      "quadrant-matrix": "Quadrant/Matrix",
+      "ending": "Ending Page"
+    },
+    "defaults": {
+      "name": "{category} Template {count}",
+      "description": "Created from the default {category} pattern and ready for further designer edits."
+    },
+    "createPanel": {
+      "title": "New Template",
+      "description": "Create a template for the current {category} category from the default pattern or a JSON import.",
+      "defaultHint": "Copy the current category's default page JSON, then continue editing in the designer.",
+      "fileLabel": "Choose JSON template file",
+      "fileHint": "Supports the full import format and raw SlideCompositionPlan JSON."
+    },
+    "status": {
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "actions": {
+      "back": "Back to Admin Console",
+      "backToTemplates": "Back to Templates",
+      "refresh": "Refresh",
+      "downloadJsonFormat": "Download JSON Format",
+      "newTemplate": "New Template",
+      "createFromDefault": "Create from Default Pattern",
+      "importJson": "Import from JSON",
+      "createInCategory": "New {category}",
+      "edit": "Edit",
+      "enable": "Enable",
+      "disable": "Disable",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "undo": "Undo",
+      "redo": "Redo",
+      "save": "Save Template",
+      "saving": "Saving",
+      "add": "Add",
+      "duplicate": "Duplicate",
+      "bringToFront": "Bring Front",
+      "sendToBack": "Send Back",
+      "alignCenterX": "Center X",
+      "alignCenterY": "Center Y"
+    },
+    "confirm": {
+      "deleteTitle": "Confirm Template Deletion",
+      "delete": "Delete template \"{name}\"? This cannot be undone."
+    },
+    "toast": {
+      "created": "Template created",
+      "imported": "JSON import succeeded",
+      "saved": "Template saved",
+      "deleted": "Template deleted"
+    },
+    "errors": {
+      "unauthorized": "Your session has expired. Please log in again.",
+      "forbidden": "Only administrators can manage templates.",
+      "accountDisabled": "This account has been disabled.",
+      "validation": "The template is invalid. Check the page JSON, required fields, and bounds.",
+      "invalidJson": "Invalid JSON format. Check the file and try again.",
+      "notFound": "The template does not exist or has been deleted.",
+      "generic": "Template management failed. Please try again later."
+    },
+    "designer": {
+      "meta": "{category} · {elements} elements",
+      "layers": "Layers",
+      "layerMeta": "{type} · layer {zIndex}",
+      "templateInfo": "Template Info",
+      "elementInfo": "Element Info",
+      "textStyle": "Text Style",
+      "imageRequest": "Image Request",
+      "noElementSelected": "Select an element on the canvas or in the layer list to edit content, position, style, and image request settings.",
+      "newTextContent": "New text",
+      "newElementNotes": "New element. Adjust its style and position as needed.",
+      "defaultImagePurpose": "Generate template image layer",
+      "defaultImagePrompt": "Generate a professional, clean, text-free image layer for a PPT template.",
+      "defaultNegativePrompt": "No text, no watermark, no complex background, no low-resolution artifacts",
+      "defaultImageNotes": "Keep it presentation-ready, clean-edged, and suitable for page layering.",
+      "missingImageRequest": "This image element is not bound to an image request. Change its type or recreate the image element."
+    },
+    "fields": {
+      "name": "Template Name",
+      "category": "Category",
+      "description": "Description",
+      "tags": "Tags (one per line)",
+      "sortOrder": "Sort Order",
+      "isEnabled": "Enable Template",
+      "elementType": "Element Type",
+      "semanticType": "Semantic Type",
+      "role": "Role",
+      "content": "Content",
+      "styleNotes": "Style Notes",
+      "zIndex": "Layer",
+      "hierarchyLevel": "Hierarchy",
+      "editable": "Editable",
+      "requiresImageGeneration": "Requires Image Generation",
+      "fontSize": "Font Size",
+      "lineHeight": "Line Height",
+      "fontWeight": "Weight",
+      "align": "Align",
+      "textColor": "Text Color",
+      "imagePurpose": "Purpose",
+      "imageType": "Image Type",
+      "aspectRatio": "Aspect Ratio",
+      "keywords": "Keywords (one per line)",
+      "prompt": "Prompt",
+      "negativePrompt": "Negative Prompt",
+      "visualNotes": "Visual Notes",
+      "transparentBackground": "Transparent Background"
+    },
+    "bounds": {
+      "x": "X",
+      "y": "Y",
+      "width": "Width",
+      "height": "Height"
+    },
+    "elementTypes": {
+      "text": "Text",
+      "generatedImage": "Generated Image",
+      "shape": "Shape",
+      "icon": "Icon",
+      "chartPlaceholder": "Chart Placeholder"
+    },
+    "semanticTypes": {
+      "title": "Title",
+      "subtitle": "Subtitle",
+      "body": "Body",
+      "heroVisual": "Hero Visual",
+      "supportingVisual": "Supporting Visual",
+      "accentShape": "Accent Shape",
+      "icon": "Icon",
+      "chart": "Chart",
+      "card": "Card",
+      "badge": "Badge",
+      "background": "Background",
+      "footer": "Footer"
+    },
+    "fontWeights": {
+      "regular": "Regular",
+      "medium": "Medium",
+      "semibold": "Semibold",
+      "bold": "Bold"
+    },
+    "align": {
+      "left": "Left",
+      "center": "Center",
+      "right": "Right"
+    },
+    "imageTypes": {
+      "photo": "Photo",
+      "illustration": "Illustration",
+      "icon": "Icon",
+      "diagram": "Diagram",
+      "texture": "Texture",
+      "background": "Background",
+      "cutout": "Cutout"
     }
   },
   "options": {
@@ -391,19 +580,7 @@
       "salesMarketing": "Sales & Marketing",
       "education": "Education",
       "research": "Research",
-      "operations": "Operations",
       "personal": "Personal"
-    },
-    "styles": {
-      "data": "Data Argument",
-      "minimal": "Minimal Business",
-      "problem-solution": "Problem Solution",
-      "strategic": "Strategic Story",
-      "product": "Product Launch",
-      "retrospective": "Retrospective Summary",
-      "story": "Story Narrative",
-      "teaching": "Teaching Flow",
-      "visual-proposal": "Visual Proposal"
     },
     "palettes": {
       "star-map": "Star Map",
@@ -425,22 +602,25 @@
       },
       "textFiles": {
         "label": "Text Files",
-        "action": "Add txt / md / csv / json / docx files",
+        "action": "Add files",
+        "formats": "Supports txt / md / csv / json / docx files",
         "limit": "Each file up to 10 MB",
         "tooLarge": "Files larger than 10 MB were ignored"
       },
       "deckType": {
         "label": "PPT Type"
       },
-      "style": {
-        "label": "Narrative Style"
-      },
       "palette": {
         "label": "Color Palette"
+      },
+      "pageCount": {
+        "label": "Slide count (optional)",
+        "placeholder": "AI recommended"
       }
     },
     "validation": {
-      "idea": "Enter source text or an idea with at least 10 characters."
+      "idea": "Enter source text or an idea with at least 10 characters.",
+      "pageCount": "Slide count must be an integer from 3 to 18."
     },
     "actions": {
       "reset": "Reset",
@@ -455,13 +635,19 @@
       "savingOutline": "Saving",
       "delete": "Delete",
       "deleting": "Deleting",
+      "cancel": "Cancel",
       "download": "Download PPTX",
       "playMotion": "Play Motion",
       "pauseMotion": "Pause Motion",
-      "backToInput": "Back to Input"
+      "backToInput": "Back to Input",
+      "uploadNewFile": "Upload New File"
+    },
+    "confirm": {
+      "deleteTitle": "Confirm Deletion"
     },
     "toast": {
       "generated": "The PPT has been generated and saved to history",
+      "previewReady": "The first slides are ready to preview while the rest continues in the background",
       "intentAnalyzed": "Input analysis generated",
       "intentInvalid": "Check the audience, goal, core message, and slide count.",
       "outlineGenerated": "Outline draft generated",
@@ -494,6 +680,10 @@
       },
       "generatedMeta": "{mode} · {count} slides",
       "outlineMeta": "Outline draft · {mode} · {count} slides",
+      "lightweightReady": "The first slides are ready. Remaining slides and images are still generating.",
+      "downloadPending": "Download after ready",
+      "progressAria": "PPT generation progress",
+      "progressCount": "{current}/{total} slides",
       "statuses": {
         "GENERATING": "Generating",
         "READY": "Ready",
@@ -537,7 +727,7 @@
       "intentDescription": "AI is identifying the audience, goal, core message, and recommended slide count.",
       "intentFailed": "Input analysis failed",
       "outlineTitle": "Generating outline draft",
-      "outlineDescription": "AI is organizing the idea, text, and files into slide copy and a unified visual spec.",
+      "outlineDescription": "AI is expanding the confirmed structure outline into per-slide copy JSON and a unified global visual spec.",
       "outlineFailed": "Outline generation failed",
       "generateTitle": "Generating preview PPT",
       "generateDescription": "AI is composing page layers, image requests, review notes, consistency checks, and the PPTX from the confirmed outline.",
@@ -548,24 +738,30 @@
       "missingGeneratePayload": "No draft information was found. Return to the input page and choose an outline again.",
       "backToInput": "Back to Input",
       "intentProgress": "Generating audience, goal, core message, and recommended slide count.",
-      "outlineProgress": "Generating the structure outline, unified visual spec, and per-slide copy JSON.",
+      "outlineProgress": "Generating the structure outline, per-slide copy JSON, and unified global visual spec.",
       "generateProgress": "Composing layers, generating images, reviewing content, and building the PPTX.",
       "generateBackgroundProgress": "This task is taking longer than usual, but it has not failed. Stay here to open the preview automatically, or return to input and find it in history after it completes."
     },
     "intent": {
       "title": "Confirm Input Analysis",
-      "subtitle": "Review the AI analysis of audience, goal, core message, and slide count. PPT type and narrative style stay immutable references for later generation.",
+      "subtitle": "Review the AI analysis of audience, goal, core message, and slide count. PPT type remains the scene structure reference for later generation.",
       "loading": "Loading input analysis...",
       "analysisTitle": "Input Analysis",
+      "structureTitle": "Structure Outline",
+      "sourceTitle": "Source Input Summary",
       "filesTitle": "Added Files",
       "fileMeta": "{characters} chars · {size} B",
       "pageCountBadge": "{count} slides recommended",
-      "footerMeta": "After confirmation, the structure outline, unified visual spec, and per-slide copy JSON will be generated.",
+      "footerMeta": "After confirmation, this structure outline will be expanded into per-slide copy JSON and a unified global visual spec.",
       "fields": {
         "audience": "Audience",
         "goal": "Goal",
         "coreMessage": "Core Message",
-        "recommendedPageCount": "Recommended Slides"
+        "recommendedPageCount": "Recommended Slides",
+        "structureTitle": "Slide Title",
+        "purpose": "Purpose",
+        "keyMessage": "Key Message",
+        "visualDirection": "Visual Direction"
       }
     },
     "outline": {
@@ -590,11 +786,169 @@
         "layoutRules": "Layout Rules (one per line)",
         "consistencyRules": "Consistency Rules (one per line)",
         "forbiddenRules": "Forbidden Rules (one per line)",
+        "pageSpec": "Page Specification",
+        "aspectRatio": "Aspect Ratio",
+        "width": "Width",
+        "height": "Height",
+        "unit": "Unit",
+        "safeMargin": "Safe Margin",
+        "gridColumns": "Grid Columns",
+        "layoutInstruction": "Layout Instruction",
+        "typographyRules": "Typography Rules",
+        "defaultFontSize": "Default Font Size",
+        "minFontSize": "Minimum Font Size",
+        "maxLines": "Maximum Lines",
+        "lineHeight": "Line Height",
+        "fontFallback": "Font Fallback (one per line)",
+        "colorRoles": "Color Roles",
+        "background": "Background Role",
+        "bodyText": "Body Text Role",
+        "accent": "Accent Role",
+        "decorative": "Decorative Role",
+        "highlight": "Highlight Role",
+        "chart": "Chart Role",
+        "contrastRequirement": "Contrast Requirement",
+        "imageRules": "Image Generation/Usage Rules",
+        "backgroundAvoidsHighContrastTextArea": "Background avoids high-contrast text areas",
+        "subjectAvoidsTitleArea": "Subject avoids the title area",
+        "usageNotes": "Usage Notes (one per line)",
+        "basicInfo": "Basic Info",
+        "colorSystem": "Color System",
+        "layoutTypography": "Layout & Typography",
+        "rulesList": "Rule Lists",
         "slideTitle": "Slide Title",
         "subtitle": "Subtitle",
         "bodyPoints": "Body Points (one per line)",
         "speakerGoal": "Speaker Goal",
-        "visualIntent": "Visual Intent"
+        "visualIntent": "Visual Intent",
+        "advancedSlideInfo": "Advanced Slide Info",
+        "coreStatement": "Core Statement",
+        "narrativeRole": "Narrative Role",
+        "explanationDepth": "Explanation Depth",
+        "contentLayersPrimary": "Primary Information (one per line)",
+        "contentLayersSupporting": "Supporting Information (one per line)",
+        "contentLayersSupplementary": "Supplementary Information (one per line)",
+        "transitionFromPrevious": "From Previous Slide",
+        "transitionToNext": "To Next Slide",
+        "sourceRequirement": "Source Requirement",
+        "sourceRequired": "Source Required",
+        "sourceCategories": "Source Categories (one enum per line)",
+        "sourceNote": "Source Note",
+        "adaptationRules": "Expansion/Compression Rules",
+        "splitWhen": "Split When",
+        "splitCandidates": "Split Candidates (one per line)",
+        "mergeWhen": "Merge When",
+        "mergeWith": "Merge With",
+        "audienceFocus": "Audience Focus",
+        "audienceFocusLens": "Audience Lens",
+        "viewerObjective": "Action or Cognition Goal",
+        "viewerObjectiveType": "Objective Type",
+        "contentBoundary": "Content Boundary",
+        "inScope": "In Scope",
+        "outOfScope": "Out of Scope (one per line)",
+        "advancedVisualSpec": "Advanced Visual Spec",
+        "pptTypeVisualTone": "Visual Tone by PPT Type",
+        "deckType": "PPT Type",
+        "recommendedTone": "Recommended Visual Tone",
+        "visualKeywords": "Visual Keywords (one per line)",
+        "businessReport": "Business Report",
+        "trainingCourse": "Training Course",
+        "brandMarketing": "Brand Marketing",
+        "researchReport": "Research Report",
+        "surface": "Surface Role",
+        "titleText": "Title Text Role",
+        "coverTitle": "Cover Title",
+        "pageTitle": "Page Title",
+        "body": "Body",
+        "annotation": "Annotation",
+        "chartLabel": "Chart Label",
+        "fontSize": "Font Size",
+        "fontWeight": "Font Weight",
+        "usage": "Usage",
+        "advancedRules": "Advanced Rules",
+        "informationDensityRules": "Information Density Rules",
+        "defaultLevel": "Default Density",
+        "spacingRules": "Spacing and Whitespace Rules",
+        "pageMargin": "Page Margin",
+        "sectionGap": "Section Gap",
+        "elementGap": "Element Gap",
+        "whitespace": "Whitespace",
+        "chartVisualRules": "Chart Visual Rules",
+        "chartTypes": "Chart Types",
+        "axisAndGrid": "Axes and Grid",
+        "labelRules": "Label Rules",
+        "colorUsage": "Color Usage",
+        "sourceNotes": "Source Notes",
+        "imageIllustrationRules": "Image/Illustration Style Rules",
+        "style": "Style",
+        "composition": "Composition",
+        "consistency": "Consistency",
+        "iconStyleRules": "Icon Style Rules",
+        "iconStyle": "Icon Style",
+        "stroke": "Stroke",
+        "emphasisRules": "Emphasis Rules",
+        "keyNumbers": "Key Numbers",
+        "keywords": "Keywords",
+        "conclusion": "Conclusion Sentence",
+        "forbiddenVisualRules": "Forbidden Visual Rules (one per line)"
+      },
+      "values": {
+        "yes": "Yes",
+        "no": "No",
+        "required": "Required",
+        "notRequired": "Not required",
+        "narrativeRole": {
+          "setup": "Setup",
+          "argument": "Argument",
+          "turning-point": "Turning Point",
+          "climax": "Climax",
+          "summary": "Summary",
+          "call-to-action": "Call to Action"
+        },
+        "explanationDepth": {
+          "focus": "Focus Slide",
+          "transition": "Transition Slide",
+          "summary": "Summary Slide",
+          "supporting": "Supporting Slide"
+        },
+        "sourceCategory": {
+          "data": "Data",
+          "case": "Case",
+          "quote": "Quote",
+          "course-material": "Course Material",
+          "user-input": "User Input",
+          "none": "No Source"
+        },
+        "audienceFocus": {
+          "business-conclusion": "Business: conclusion",
+          "teaching-understanding": "Teaching: understanding",
+          "sales-value": "Sales: value",
+          "research-evidence": "Research: evidence",
+          "general": "General focus"
+        },
+        "viewerObjective": {
+          "understand": "Understand",
+          "believe": "Believe",
+          "remember": "Remember",
+          "act": "Act"
+        },
+        "fontWeight": {
+          "regular": "Regular",
+          "medium": "Medium",
+          "semibold": "Semibold",
+          "bold": "Bold"
+        },
+        "density": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High"
+        },
+        "iconStyle": {
+          "line": "Line",
+          "filled": "Filled",
+          "duotone": "Duotone",
+          "monochrome": "Monochrome"
+        }
       },
       "footerMeta": "{count} cards · {title}",
       "cover": "Cover",
@@ -605,11 +959,30 @@
     },
     "elements": {
       "title": "Page Element Plan",
+      "layer": "Layer {zIndex}",
       "bounds": "Position x:{x}% y:{y}%, size {width}% × {height}%, layer {zIndex}"
     },
     "imageLayers": {
       "title": "Image Layer Requests",
       "empty": "This slide does not need generated image layers yet."
+    },
+    "designQuality": {
+      "title": "Design Quality Score",
+      "repairStatus": "Auto Repair",
+      "layoutCandidates": "Layout Candidates",
+      "dimensions": {
+        "informationHierarchy": "Hierarchy",
+        "visualConsistency": "Visual Consistency",
+        "contentDensity": "Density",
+        "renderability": "Renderability",
+        "expressionCompleteness": "Completeness"
+      },
+      "repair": {
+        "not-needed": "Not needed",
+        "repaired": "Auto repaired",
+        "failed": "Repair failed, best version kept",
+        "still-low": "Repaired but still needs review"
+      }
     },
     "elementTypes": {
       "text": "Text",
@@ -619,8 +992,8 @@
       "chartPlaceholder": "Chart Placeholder"
     },
     "mock": {
-      "titlePattern": "{idea} | {deckType} | {style}",
-      "summaryPattern": "A {count}-slide {deckType} deck for {audience}, organized around \"{goal}\" with a {style} structure and {palette} visual direction.",
+      "titlePattern": "{idea} | {deckType}",
+      "summaryPattern": "A {count}-slide {deckType} deck for {audience}, organized around \"{goal}\" with a {palette} visual direction.",
       "slideTemplates": [
         {
           "title": "Opening Frame",

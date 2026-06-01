@@ -1,8 +1,8 @@
-import type { ButtonHTMLAttributes } from "react";
+import { forwardRef, type ButtonHTMLAttributes } from "react";
 
 import { cn } from "@/lib/utils";
 
-type ButtonVariant = "primary" | "secondary" | "ghost";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
 type ButtonSize = "sm" | "md" | "icon";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -15,6 +15,8 @@ const variantClassNames: Record<ButtonVariant, string> = {
     "bg-accent text-white hover:bg-accent-strong disabled:bg-accent/55 disabled:text-white/80",
   secondary:
     "border border-border bg-surface text-foreground hover:bg-surface-muted disabled:text-muted",
+  destructive:
+    "bg-warning text-white hover:bg-warning/90 disabled:bg-warning/55 disabled:text-white/80",
   ghost: "text-muted hover:bg-surface-muted hover:text-foreground disabled:text-muted"
 };
 
@@ -24,13 +26,16 @@ const sizeClassNames: Record<ButtonSize, string> = {
   icon: "size-10 p-0"
 };
 
-export function Button({
-  className,
-  variant = "primary",
-  size = "md",
-  type = "button",
-  ...props
-}: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  {
+    className,
+    variant = "primary",
+    size = "md",
+    type = "button",
+    ...props
+  },
+  ref
+) {
   return (
     <button
       className={cn(
@@ -39,8 +44,9 @@ export function Button({
         sizeClassNames[size],
         className
       )}
+      ref={ref}
       type={type}
       {...props}
     />
   );
-}
+});

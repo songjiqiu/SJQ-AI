@@ -1,5 +1,5 @@
 import type { CreateDeckForm } from "./schema";
-import type { DeckStyleSchemaId, DeckTypeId, PaletteId } from "./options";
+import type { DeckTypeId, PaletteId } from "./options";
 
 export type GeneratedSlide = {
   id: string;
@@ -25,7 +25,6 @@ export type MockDeckCopy = {
   summaryPattern: string;
   slideTemplates: MockSlideTemplate[];
   deckTypeNames: Record<DeckTypeId, string>;
-  styleNames: Record<DeckStyleSchemaId, string>;
   paletteNames: Record<PaletteId, string>;
 };
 
@@ -41,20 +40,19 @@ export function generateMockDeckDraft(
   input: CreateDeckForm,
   copy: MockDeckCopy
 ): GeneratedDeckDraft {
-  const style = copy.styleNames[input.style];
   const deckType = copy.deckTypeNames[input.deckType];
   const palette = copy.paletteNames[input.palette];
+  const pageCount = input.pageCount ?? 6;
   const baseValues = {
     idea: input.idea.trim(),
     audience: input.audience.trim(),
     goal: input.goal.trim(),
-    count: input.pageCount,
+    count: pageCount,
     deckType,
-    style,
     palette
   };
 
-  const slides = Array.from({ length: input.pageCount }, (_, slideIndex) => {
+  const slides = Array.from({ length: pageCount }, (_, slideIndex) => {
     const index = slideIndex + 1;
     const template =
       copy.slideTemplates[slideIndex] ??

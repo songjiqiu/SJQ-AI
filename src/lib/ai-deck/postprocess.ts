@@ -3,6 +3,7 @@ import type {
   AnalyzeDeckRequest,
   ConsistencyReport,
   ContentReview,
+  SlideDesignQualityScore,
   SlideCompositionPlan,
   SlideElement,
   SlideMotionPlan
@@ -222,14 +223,21 @@ export function normalizeSlideCompositionPlan(
   const diagnostics = analyzeSlideLayout({
     elements: convertedElements
   });
-
-  return {
+  const normalizedSlide = {
     ...slide,
     canvas: normalizedCanvas(),
     elements: convertedElements.map((element) =>
       fitTextElementWithinBounds(element, diagnostics.hasOverflow)
     ),
     layoutDiagnostics: mergeLayoutDiagnostics(slide.layoutDiagnostics, diagnostics)
+  };
+
+  return {
+    ...normalizedSlide,
+    designQualityScore: buildSlideDesignQualityScore(
+      normalizedSlide,
+      slide.designQualityScore?.repairStatus ?? "not-needed"
+    )
   };
 }
 
@@ -336,6 +344,125 @@ function scoreSlideLayout(slide: SlideCompositionPlan) {
   ).length;
 
   return Math.max(60, 98 - overflowCount * 20 - crowdedCount * 4);
+}
+
+export function buildSlideDesignQualityScore(
+  slide: SlideCompositionPlan,
+  repairStatus: SlideDesignQualityScore["repairStatus"] = "not-needed"
+): SlideDesignQualityScore {
+  const diagnostics = analyzeSlideLayout(slide);
+  const titleCount = slide.elements.filter(
+    (element) => element.type === "text" && element.semanticType === "title"
+  ).length;
+  const hasCoreMessage = Boolean(
+    slide.pageIntent.coreMessage.trim() &&
+      slide.contentHierarchy.tiers.some(
+        (tier) =>
+          tier.level === 1 &&
+          tier.items.some((item) =>
+            normalizedIncludes(
+              `${item.content} ${item.role}`,
+              slide.pageIntent.coreMessage
+            )
+          )
+      )
+  );
+  const hasVisualAnchor = slide.elements.some((element) =>
+    ["generatedImage", "chartPlaceholder", "shape"].includes(element.type)
+  );
+  const bodyLength = slide.content.bodyPoints.join("").length;
+  const densityPenalty =
+    slide.pageIntent.contentDensity === "high"
+      ? Math.max(0, bodyLength - 320) / 8
+      : slide.pageIntent.contentDensity === "low"
+        ? Math.max(0, bodyLength - 180) / 10
+        : Math.max(0, bodyLength - 240) / 10;
+  const renderPenalty =
+    (diagnostics.hasOverflow || slide.layoutDiagnostics.hasOverflow ? 18 : 0) +
+    diagnostics.warnings.filter((warning) => warning.includes("重叠")).length * 10 +
+    diagnostics.warnings.filter((warning) => warning.includes("溢出")).length * 10 +
+    slide.layoutDiagnostics.warnings.filter((warning) => warning.includes("溢出")).length * 10;
+  const hierarchyScore = clampScore(
+    96 -
+      (titleCount === 1 ? 0 : 22) -
+      (hasCoreMessage ? 0 : 18) -
+      Math.max(0, slide.contentHierarchy.tiers[0]?.items.length ? 0 : 14)
+  );
+  const visualConsistencyScore = clampScore(
+    94 -
+      (hasVisualAnchor ? 0 : 14) -
+      (slide.layoutSelection.candidates.length >= 2 ? 0 : 10) -
+      (slide.constraints.subjectAvoidsTitleArea ? 0 : 12)
+  );
+  const contentDensityScore = clampScore(
+    94 - densityPenalty - (diagnostics.density > 0.82 ? 20 : diagnostics.density > 0.72 ? 8 : 0)
+  );
+  const renderabilityScore = clampScore(96 - renderPenalty);
+  const expressionScore = clampScore(
+    94 -
+      (slide.content.bodyPoints.length >= 2 ? 0 : 14) -
+      (slide.pageIntent.audienceTakeaway.trim().length >= 4 ? 0 : 12) -
+      (slide.content.viewerObjective.description.trim().length >= 4 ? 0 : 10)
+  );
+  const issues = [
+    ...(titleCount === 1 ? [] : ["主标题数量不是唯一。"]),
+    ...(hasCoreMessage ? [] : ["核心信息未稳定进入一级信息层级。"]),
+    ...(hasVisualAnchor ? [] : ["页面缺少明确视觉锚点。"]),
+    ...diagnostics.warnings,
+    ...slide.layoutDiagnostics.warnings
+  ].slice(0, 10);
+  const suggestions = [
+    ...(hierarchyScore < 80 ? ["强化主标题、核心结论和二级支撑的层级关系。"] : []),
+    ...(visualConsistencyScore < 80 ? ["统一视觉锚点、图片避让和版式候选理由。"] : []),
+    ...(contentDensityScore < 80 ? ["压缩正文或改用更紧凑的信息图结构。"] : []),
+    ...(renderabilityScore < 80 ? ["调整元素位置、字号或卡片宽度，避免溢出和重叠。"] : []),
+    ...(expressionScore < 80 ? ["补足观众记忆点和表达完整性。"] : [])
+  ].slice(0, 10);
+  const dimensions = {
+    contentDensity: {
+      score: contentDensityScore,
+      summary: contentDensityScore >= 80 ? "内容密度可控。" : "内容密度需要收敛。"
+    },
+    expressionCompleteness: {
+      score: expressionScore,
+      summary: expressionScore >= 80 ? "表达链路完整。" : "表达目标或观众记忆点不够完整。"
+    },
+    informationHierarchy: {
+      score: hierarchyScore,
+      summary: hierarchyScore >= 80 ? "信息层级清晰。" : "主标题、核心信息和支撑层级需要强化。"
+    },
+    renderability: {
+      score: renderabilityScore,
+      summary: renderabilityScore >= 80 ? "页面可渲染性稳定。" : "页面存在溢出、重叠或边界风险。"
+    },
+    visualConsistency: {
+      score: visualConsistencyScore,
+      summary: visualConsistencyScore >= 80 ? "视觉约束一致。" : "视觉锚点或版式约束需要统一。"
+    }
+  };
+  const totalScore = Math.round(
+    (dimensions.informationHierarchy.score +
+      dimensions.visualConsistency.score +
+      dimensions.contentDensity.score +
+      dimensions.renderability.score +
+      dimensions.expressionCompleteness.score) /
+      5
+  );
+
+  return {
+    dimensions,
+    issues,
+    repairStatus,
+    suggestions,
+    totalScore
+  };
+}
+
+export function needsSlideDesignRepair(score: SlideDesignQualityScore) {
+  return (
+    score.totalScore < 78 ||
+    Object.values(score.dimensions).some((dimension) => dimension.score < 65)
+  );
 }
 
 function normalizedCanvas() {
@@ -452,4 +579,18 @@ function clamp(value: number, min: number, max: number) {
 
 function round(value: number) {
   return Math.round(value * 1000) / 1000;
+}
+
+function clampScore(value: number) {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function normalizedIncludes(text: string, query: string) {
+  const normalizedText = text.replace(/\s+/g, "").toLowerCase();
+  const normalizedQuery = query.replace(/\s+/g, "").toLowerCase();
+
+  return (
+    normalizedText.includes(normalizedQuery) ||
+    normalizedQuery.includes(normalizedText.slice(0, Math.min(12, normalizedText.length)))
+  );
 }

@@ -9,7 +9,7 @@
 | 应用框架 | Next.js App Router | `16.2.6` | 页面路由、服务端渲染、应用组织 |
 | UI 开发 | React | `19.2.6` | 组件开发 |
 | 类型系统 | TypeScript | `6.0.3` | 静态类型约束 |
-| 样式 | Tailwind CSS、shadcn/ui 约定 | `4.3.0` | 原子化样式、设计 token、基础组件组织 |
+| 样式 | Tailwind CSS、shadcn/ui 约定 | `4.3.0` | 原子化样式、设计 token、基础组件组织；删除与禁用等高风险确认使用项目内 `AlertDialog` 风格弹窗 |
 | 国际化 | next-intl | `4.12.0` | `zh-CN` / `en-US` 语言切换 |
 | 主题 | 本地主题 Provider | 项目内实现 | 浅色、深色、跟随系统，避免运行时内联脚本 |
 | 表单 | react-hook-form | `7.76.0` | 前端表单状态 |
@@ -28,4 +28,4 @@
 
 ## 暂缓引入
 
-当前已接入 OpenAI-compatible 文本模型，用于拆页文案、统一视觉说明和页面元素编排 JSON；也已接入统一模型配置表，用于按账号维护 LLM、图片和向量模型，三类模型都复用 AI 供应商的 Base URL 与 API Key。图片生成可通过 `gpt-image-2` 等图片模型生成 PPT 图片图层，未配置或失败时回退 Mock SVG。Prisma + MySQL 已用于邮箱密码账号、会话、管理员权限、用户启用状态、AI 供应商、统一模型配置、PPT 生成历史、页面 JSON 和产物索引。Next.js API 是当前唯一后端入口；`storage/uploads/avatars` 保存头像，`storage/decks` 保存图片图层和 PPTX 产物。Next.js 16 使用 `src/proxy.ts` 承载 next-intl 路由代理逻辑，不再使用已弃用的 `middleware.ts` 文件约定。仍暂缓接入异步队列、对象存储、观测、向量库、图库或 Docker Compose。后续引入 Redis、BullMQ、Qdrant、Neo4j、Cloudflare R2、Langfuse、LangGraph 等能力时，需要同步补充用途、版本范围、环境变量和常用命令。
+当前已接入 OpenAI-compatible 文本模型，用于拆页文案、统一视觉说明和页面元素编排 JSON；也已接入统一模型配置表，用于按账号维护 LLM、图片和向量模型，三类模型都复用 AI 供应商的 Base URL 与 API Key。图片生成可通过 `gpt-image-2` 等图片模型生成 PPT 图片图层，未配置、失败或超时时回退 Mock SVG，单张图片请求超时由 `IMAGE_REQUEST_TIMEOUT_MS` 控制，默认 120 秒。Prisma + MySQL 已用于邮箱密码账号、会话、管理员权限、用户启用状态、AI 供应商、统一模型配置、PPT 生成历史、页面 JSON、产物索引和全局 `PptTemplate` 模板库。模板库保存完整 `SlideCompositionPlan` JSON，当前只供管理员维护，尚未接入生成流程自动选模板。Next.js API 是当前唯一后端入口；`storage/uploads/avatars` 保存头像，`storage/decks` 保存单个 PPT 项目的图片图层和 PPTX 产物，`storage/assets` 保存账号级可复用图片素材缓存。Next.js 16 使用 `src/proxy.ts` 承载 next-intl 路由代理逻辑，不再使用已弃用的 `middleware.ts` 文件约定。仍暂缓接入异步队列、对象存储、观测、向量库、图库或 Docker Compose。后续引入 Redis、BullMQ、Qdrant、Neo4j、Cloudflare R2、Langfuse、LangGraph 等能力时，需要同步补充用途、版本范围、环境变量和常用命令。
