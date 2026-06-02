@@ -1,0 +1,549 @@
+{
+  "formatVersion": "ppt-template-import-v1",
+  "name": "标题 + 正文/要点 - 结论 + 证据条",
+  "category": "title-body-points",
+  "description": "极简咨询风模板，适用于研究分析。用左侧结论和右侧证据条呈现咨询式推理路径。",
+  "tags": [
+    "标题 + 正文/要点",
+    "极简咨询风",
+    "研究分析"
+  ],
+  "sortOrder": 123,
+  "isEnabled": true,
+  "slide": {
+    "slideId": "uv1-tbp-cm",
+    "index": 1,
+    "content": {
+      "slideId": "uv1-tbp-cm",
+      "index": 1,
+      "title": "结论 + 证据条",
+      "subtitle": "标题 + 正文/要点 / 极简咨询风",
+      "bodyPoints": [
+        "先给结论",
+        "列出支撑证据",
+        "收束为建议"
+      ],
+      "speakerGoal": "帮助管理员快速复用“结论 + 证据条”模板。",
+      "visualIntent": "用左侧结论和右侧证据条呈现咨询式推理路径。",
+      "coreStatement": "先给结论",
+      "narrativeRole": "argument",
+      "contentLayers": {
+        "primary": [
+          "先给结论"
+        ],
+        "supporting": [
+          "列出支撑证据",
+          "收束为建议"
+        ],
+        "supplementary": [
+          "适用场景：研究分析",
+          "白底黑灰咨询风，强调结论先行、强栅格和克制高亮。"
+        ]
+      },
+      "slideTransition": {
+        "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
+        "toNext": "可继续扩展为同类型页面或相邻内容页。"
+      },
+      "explanationDepth": "supporting",
+      "sourceRequirement": {
+        "required": false,
+        "categories": [
+          "user-input"
+        ],
+        "note": "模板示例不强制注明外部来源。"
+      },
+      "adaptationRules": {
+        "splitWhen": "当模板内容超过 5 个模块时拆为多页模板。",
+        "splitCandidates": [
+          "先给结论",
+          "列出支撑证据",
+          "收束为建议"
+        ],
+        "mergeWhen": "当只保留一个模块时可与相邻模板合并。",
+        "mergeWith": "相邻模板页"
+      },
+      "audienceFocus": {
+        "lens": "business-conclusion",
+        "focus": "管理员关注模板是否清晰、稳定，并能快速替换为业务内容。"
+      },
+      "viewerObjective": {
+        "type": "understand",
+        "description": "看完本页后，用户应理解“结论 + 证据条”的适用场景和表达结构。"
+      },
+      "contentBoundary": {
+        "inScope": "只展示模板结构、占位内容、视觉意图和导入后的可替换区域。",
+        "outOfScope": [
+          "不展开真实业务内容",
+          "不引入外部数据",
+          "不使用第三方模板资产"
+        ]
+      }
+    },
+    "pageIntent": {
+      "audienceTakeaway": "先给结论",
+      "contentDensity": "high",
+      "coreMessage": "先给结论",
+      "pageRole": "content",
+      "primaryGoal": "inform"
+    },
+    "contentHierarchy": {
+      "primaryMessage": "先给结论",
+      "levels": [
+        {
+          "label": "结论 + 证据条",
+          "level": 1,
+          "summary": "先给结论"
+        },
+        {
+          "label": "要点 1",
+          "level": 2,
+          "summary": "先给结论"
+        },
+        {
+          "label": "要点 2",
+          "level": 2,
+          "summary": "列出支撑证据"
+        },
+        {
+          "label": "要点 3",
+          "level": 2,
+          "summary": "收束为建议"
+        }
+      ],
+      "tiers": [
+        {
+          "items": [
+            {
+              "content": "结论 + 证据条",
+              "role": "主标题"
+            },
+            {
+              "content": "先给结论",
+              "role": "核心信息"
+            }
+          ],
+          "label": "一级信息",
+          "level": 1
+        },
+        {
+          "items": [
+            {
+              "content": "先给结论",
+              "role": "要点 1"
+            },
+            {
+              "content": "列出支撑证据",
+              "role": "要点 2"
+            },
+            {
+              "content": "收束为建议",
+              "role": "要点 3"
+            }
+          ],
+          "label": "二级信息",
+          "level": 2
+        },
+        {
+          "items": [
+            {
+              "content": "用左侧结论和右侧证据条呈现咨询式推理路径。",
+              "role": "版式说明"
+            },
+            {
+              "content": "导入后可在模板设计器中替换占位内容。",
+              "role": "使用说明"
+            }
+          ],
+          "label": "三级信息",
+          "level": 3
+        }
+      ]
+    },
+    "layoutSelection": {
+      "candidates": [
+        {
+          "fitReason": "title-body-points 匹配当前 标题 + 正文/要点 分类和 极简咨询风 风格。",
+          "layoutType": "title-body-points",
+          "risk": "风险较低，保持信息层级清晰。",
+          "score": 96
+        },
+        {
+          "fitReason": "left-text-right-image 匹配当前 标题 + 正文/要点 分类和 极简咨询风 风格。",
+          "layoutType": "left-text-right-image",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 88
+        },
+        {
+          "fitReason": "two-column-compare 匹配当前 标题 + 正文/要点 分类和 极简咨询风 风格。",
+          "layoutType": "two-column-compare",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 80
+        }
+      ],
+      "selectedLayoutType": "title-body-points",
+      "selectionReason": "固定选择 title-body-points，与通用模板分类保持一致。"
+    },
+    "constraints": {
+      "coreMessagePresent": true,
+      "densityLimit": "high",
+      "maxHeroVisuals": 1,
+      "renderNotes": [
+        "主标题必须唯一并位于安全边距内。",
+        "核心表达区必须作为一级信息出现。",
+        "形状和图表占位不得压住正文。"
+      ],
+      "safeMargin": {
+        "appliesTo": [
+          "主标题",
+          "核心信息",
+          "正文",
+          "图表标签"
+        ],
+        "unit": "inch",
+        "value": 0.5
+      },
+      "subjectAvoidsTitleArea": true,
+      "titleUnique": true
+    },
+    "designQualityScore": {
+      "dimensions": {
+        "contentDensity": {
+          "score": 92,
+          "summary": "信息密度与模板用途匹配。"
+        },
+        "expressionCompleteness": {
+          "score": 92,
+          "summary": "标题、核心信息和辅助内容完整。"
+        },
+        "informationHierarchy": {
+          "score": 94,
+          "summary": "主次层级清晰。"
+        },
+        "renderability": {
+          "score": 94,
+          "summary": "元素位于画布范围内。"
+        },
+        "visualConsistency": {
+          "score": 92,
+          "summary": "风格说明与页面结构一致。"
+        }
+      },
+      "issues": [],
+      "repairStatus": "not-needed",
+      "suggestions": [
+        "导入后按实际业务替换占位文本和图表内容。"
+      ],
+      "totalScore": 93
+    },
+    "expressionIntent": "用左侧结论和右侧证据条呈现咨询式推理路径。",
+    "designPlan": {
+      "expressionIntent": "用左侧结论和右侧证据条呈现咨询式推理路径。",
+      "layoutTemplate": "title-body-points",
+      "visualStrategy": "白底黑灰咨询风，强调结论先行、强栅格和克制高亮。 用左侧结论和右侧证据条呈现咨询式推理路径。",
+      "readingOrder": [
+        "uv1-tbp-cm-sem-title",
+        "uv1-tbp-cm-sem-key",
+        "uv1-tbp-cm-sem-visual",
+        "uv1-tbp-cm-sem-p1",
+        "uv1-tbp-cm-sem-p2",
+        "uv1-tbp-cm-sem-p3"
+      ]
+    },
+    "layoutDiagnostics": {
+      "density": 0.7,
+      "hasOverflow": false,
+      "needsUserConfirmation": false,
+      "overflowFixes": [],
+      "warnings": []
+    },
+    "semanticElements": [
+      {
+        "category": "text",
+        "constraints": [
+          "模板主标题，替换内容后仍保持最高层级"
+        ],
+        "content": "结论 + 证据条",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-tbp-cm-sem-title",
+        "priority": 1,
+        "role": "主标题",
+        "semanticType": "title"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "承载模板核心结论或说明"
+        ],
+        "content": "先给结论",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-tbp-cm-sem-key",
+        "priority": 2,
+        "role": "核心信息",
+        "semanticType": "subtitle"
+      },
+      {
+        "category": "container",
+        "constraints": [
+          "每页最多一个主视觉中心",
+          "不得遮挡标题"
+        ],
+        "content": "用左侧结论和右侧证据条呈现咨询式推理路径。",
+        "elementType": "shape",
+        "hierarchyLevel": 2,
+        "id": "uv1-tbp-cm-sem-visual",
+        "priority": 3,
+        "role": "模板结构中心",
+        "semanticType": "card"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "先给结论",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-tbp-cm-sem-p1",
+        "priority": 3,
+        "role": "要点 1",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "列出支撑证据",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-tbp-cm-sem-p2",
+        "priority": 4,
+        "role": "要点 2",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "收束为建议",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-tbp-cm-sem-p3",
+        "priority": 5,
+        "role": "要点 3",
+        "semanticType": "body"
+      }
+    ],
+    "elements": [
+      {
+        "id": "uv1-tbp-cm-title",
+        "type": "text",
+        "role": "标题结论",
+        "content": "结论 + 证据条",
+        "bounds": {
+          "x": 0.82,
+          "y": 0.65,
+          "width": 5.5,
+          "height": 0.62
+        },
+        "editable": true,
+        "hierarchyLevel": 1,
+        "semanticType": "title",
+        "zIndex": 40,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#111827",
+          "fontSize": 27,
+          "fontWeight": "bold",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      },
+      {
+        "id": "uv1-tbp-cm-lead",
+        "type": "text",
+        "role": "核心表达",
+        "content": "先给结论",
+        "bounds": {
+          "x": 0.88,
+          "y": 1.72,
+          "width": 4.9,
+          "height": 0.82
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "subtitle",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#374151",
+          "fontSize": 18,
+          "fontWeight": "semibold",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      },
+      {
+        "id": "uv1-tbp-cm-e1",
+        "type": "shape",
+        "role": "证据条一",
+        "bounds": {
+          "x": 6.95,
+          "y": 1.45,
+          "width": 5.1,
+          "height": 0.72
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "card",
+        "zIndex": 10,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-tbp-cm-e2",
+        "type": "shape",
+        "role": "证据条二",
+        "bounds": {
+          "x": 6.95,
+          "y": 2.62,
+          "width": 5.1,
+          "height": 0.72
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "card",
+        "zIndex": 10,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-tbp-cm-e3",
+        "type": "shape",
+        "role": "证据条三",
+        "bounds": {
+          "x": 6.95,
+          "y": 3.79,
+          "width": 5.1,
+          "height": 0.72
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "card",
+        "zIndex": 10,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-tbp-cm-p1",
+        "type": "text",
+        "role": "证据一",
+        "content": "先给结论",
+        "bounds": {
+          "x": 7.25,
+          "y": 1.58,
+          "width": 4.45,
+          "height": 0.42
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "card",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#374151",
+          "fontSize": 15,
+          "fontWeight": "medium",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      },
+      {
+        "id": "uv1-tbp-cm-p2",
+        "type": "text",
+        "role": "证据二",
+        "content": "列出支撑证据",
+        "bounds": {
+          "x": 7.25,
+          "y": 2.75,
+          "width": 4.45,
+          "height": 0.42
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "card",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#374151",
+          "fontSize": 15,
+          "fontWeight": "medium",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      },
+      {
+        "id": "uv1-tbp-cm-p3",
+        "type": "text",
+        "role": "证据三",
+        "content": "收束为建议",
+        "bounds": {
+          "x": 7.25,
+          "y": 3.92,
+          "width": 4.45,
+          "height": 0.42
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "card",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#374151",
+          "fontSize": 15,
+          "fontWeight": "medium",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      },
+      {
+        "id": "uv1-tbp-cm-line",
+        "type": "shape",
+        "role": "底部分割线",
+        "bounds": {
+          "x": 0.86,
+          "y": 6.35,
+          "width": 11.2,
+          "height": 0.08
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "accentShape",
+        "zIndex": 11,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      }
+    ],
+    "imageLayerRequests": [],
+    "canvas": {
+      "aspectRatio": "16:9",
+      "height": 7.5,
+      "safeMargin": 0.5,
+      "unit": "inch",
+      "width": 13.333
+    }
+  }
+}

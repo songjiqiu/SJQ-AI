@@ -1,0 +1,498 @@
+{
+  "formatVersion": "ppt-template-import-v1",
+  "name": "时间轴 - 咨询路线图",
+  "category": "time-axis",
+  "description": "极简咨询风模板，适用于咨询项目。用细线横轴和编号卡片呈现咨询路线图。",
+  "tags": [
+    "时间轴",
+    "极简咨询风",
+    "咨询项目"
+  ],
+  "sortOrder": 203,
+  "isEnabled": true,
+  "slide": {
+    "slideId": "uv1-tax-cm",
+    "index": 1,
+    "content": {
+      "slideId": "uv1-tax-cm",
+      "index": 1,
+      "title": "咨询路线图",
+      "subtitle": "时间轴 / 极简咨询风",
+      "bodyPoints": [
+        "阶段一：诊断",
+        "阶段二：设计",
+        "阶段三：落地"
+      ],
+      "speakerGoal": "帮助管理员快速复用“咨询路线图”模板。",
+      "visualIntent": "用细线横轴和编号卡片呈现咨询路线图。",
+      "coreStatement": "阶段一：诊断",
+      "narrativeRole": "argument",
+      "contentLayers": {
+        "primary": [
+          "阶段一：诊断"
+        ],
+        "supporting": [
+          "阶段二：设计",
+          "阶段三：落地"
+        ],
+        "supplementary": [
+          "适用场景：咨询项目",
+          "白底黑灰咨询风，强调结论先行、强栅格和克制高亮。"
+        ]
+      },
+      "slideTransition": {
+        "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
+        "toNext": "可继续扩展为同类型页面或相邻内容页。"
+      },
+      "explanationDepth": "supporting",
+      "sourceRequirement": {
+        "required": false,
+        "categories": [
+          "user-input"
+        ],
+        "note": "模板示例不强制注明外部来源。"
+      },
+      "adaptationRules": {
+        "splitWhen": "当模板内容超过 5 个模块时拆为多页模板。",
+        "splitCandidates": [
+          "阶段一：诊断",
+          "阶段二：设计",
+          "阶段三：落地"
+        ],
+        "mergeWhen": "当只保留一个模块时可与相邻模板合并。",
+        "mergeWith": "相邻模板页"
+      },
+      "audienceFocus": {
+        "lens": "business-conclusion",
+        "focus": "管理员关注模板是否清晰、稳定，并能快速替换为业务内容。"
+      },
+      "viewerObjective": {
+        "type": "understand",
+        "description": "看完本页后，用户应理解“咨询路线图”的适用场景和表达结构。"
+      },
+      "contentBoundary": {
+        "inScope": "只展示模板结构、占位内容、视觉意图和导入后的可替换区域。",
+        "outOfScope": [
+          "不展开真实业务内容",
+          "不引入外部数据",
+          "不使用第三方模板资产"
+        ]
+      }
+    },
+    "pageIntent": {
+      "audienceTakeaway": "阶段一：诊断",
+      "contentDensity": "medium",
+      "coreMessage": "阶段一：诊断",
+      "pageRole": "process",
+      "primaryGoal": "explain"
+    },
+    "contentHierarchy": {
+      "primaryMessage": "阶段一：诊断",
+      "levels": [
+        {
+          "label": "咨询路线图",
+          "level": 1,
+          "summary": "阶段一：诊断"
+        },
+        {
+          "label": "要点 1",
+          "level": 2,
+          "summary": "阶段一：诊断"
+        },
+        {
+          "label": "要点 2",
+          "level": 2,
+          "summary": "阶段二：设计"
+        },
+        {
+          "label": "要点 3",
+          "level": 2,
+          "summary": "阶段三：落地"
+        }
+      ],
+      "tiers": [
+        {
+          "items": [
+            {
+              "content": "咨询路线图",
+              "role": "主标题"
+            },
+            {
+              "content": "阶段一：诊断",
+              "role": "核心信息"
+            }
+          ],
+          "label": "一级信息",
+          "level": 1
+        },
+        {
+          "items": [
+            {
+              "content": "阶段一：诊断",
+              "role": "要点 1"
+            },
+            {
+              "content": "阶段二：设计",
+              "role": "要点 2"
+            },
+            {
+              "content": "阶段三：落地",
+              "role": "要点 3"
+            }
+          ],
+          "label": "二级信息",
+          "level": 2
+        },
+        {
+          "items": [
+            {
+              "content": "用细线横轴和编号卡片呈现咨询路线图。",
+              "role": "版式说明"
+            },
+            {
+              "content": "导入后可在模板设计器中替换占位内容。",
+              "role": "使用说明"
+            }
+          ],
+          "label": "三级信息",
+          "level": 3
+        }
+      ]
+    },
+    "layoutSelection": {
+      "candidates": [
+        {
+          "fitReason": "time-axis 匹配当前 时间轴 分类和 极简咨询风 风格。",
+          "layoutType": "time-axis",
+          "risk": "风险较低，保持信息层级清晰。",
+          "score": 96
+        },
+        {
+          "fitReason": "process-steps 匹配当前 时间轴 分类和 极简咨询风 风格。",
+          "layoutType": "process-steps",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 88
+        },
+        {
+          "fitReason": "title-body-points 匹配当前 时间轴 分类和 极简咨询风 风格。",
+          "layoutType": "title-body-points",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 80
+        }
+      ],
+      "selectedLayoutType": "time-axis",
+      "selectionReason": "固定选择 time-axis，与通用模板分类保持一致。"
+    },
+    "constraints": {
+      "coreMessagePresent": true,
+      "densityLimit": "medium",
+      "maxHeroVisuals": 1,
+      "renderNotes": [
+        "主标题必须唯一并位于安全边距内。",
+        "核心表达区必须作为一级信息出现。",
+        "形状和图表占位不得压住正文。"
+      ],
+      "safeMargin": {
+        "appliesTo": [
+          "主标题",
+          "核心信息",
+          "正文",
+          "图表标签"
+        ],
+        "unit": "inch",
+        "value": 0.5
+      },
+      "subjectAvoidsTitleArea": true,
+      "titleUnique": true
+    },
+    "designQualityScore": {
+      "dimensions": {
+        "contentDensity": {
+          "score": 92,
+          "summary": "信息密度与模板用途匹配。"
+        },
+        "expressionCompleteness": {
+          "score": 92,
+          "summary": "标题、核心信息和辅助内容完整。"
+        },
+        "informationHierarchy": {
+          "score": 94,
+          "summary": "主次层级清晰。"
+        },
+        "renderability": {
+          "score": 94,
+          "summary": "元素位于画布范围内。"
+        },
+        "visualConsistency": {
+          "score": 92,
+          "summary": "风格说明与页面结构一致。"
+        }
+      },
+      "issues": [],
+      "repairStatus": "not-needed",
+      "suggestions": [
+        "导入后按实际业务替换占位文本和图表内容。"
+      ],
+      "totalScore": 93
+    },
+    "expressionIntent": "用细线横轴和编号卡片呈现咨询路线图。",
+    "designPlan": {
+      "expressionIntent": "用细线横轴和编号卡片呈现咨询路线图。",
+      "layoutTemplate": "time-axis",
+      "visualStrategy": "白底黑灰咨询风，强调结论先行、强栅格和克制高亮。 用细线横轴和编号卡片呈现咨询路线图。",
+      "readingOrder": [
+        "uv1-tax-cm-sem-title",
+        "uv1-tax-cm-sem-key",
+        "uv1-tax-cm-sem-visual",
+        "uv1-tax-cm-sem-p1",
+        "uv1-tax-cm-sem-p2",
+        "uv1-tax-cm-sem-p3"
+      ]
+    },
+    "layoutDiagnostics": {
+      "density": 0.55,
+      "hasOverflow": false,
+      "needsUserConfirmation": false,
+      "overflowFixes": [],
+      "warnings": []
+    },
+    "semanticElements": [
+      {
+        "category": "text",
+        "constraints": [
+          "模板主标题，替换内容后仍保持最高层级"
+        ],
+        "content": "咨询路线图",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-tax-cm-sem-title",
+        "priority": 1,
+        "role": "主标题",
+        "semanticType": "title"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "承载模板核心结论或说明"
+        ],
+        "content": "阶段一：诊断",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-tax-cm-sem-key",
+        "priority": 2,
+        "role": "核心信息",
+        "semanticType": "subtitle"
+      },
+      {
+        "category": "container",
+        "constraints": [
+          "每页最多一个主视觉中心",
+          "不得遮挡标题"
+        ],
+        "content": "用细线横轴和编号卡片呈现咨询路线图。",
+        "elementType": "shape",
+        "hierarchyLevel": 2,
+        "id": "uv1-tax-cm-sem-visual",
+        "priority": 3,
+        "role": "模板结构中心",
+        "semanticType": "card"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "阶段一：诊断",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-tax-cm-sem-p1",
+        "priority": 3,
+        "role": "要点 1",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "阶段二：设计",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-tax-cm-sem-p2",
+        "priority": 4,
+        "role": "要点 2",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "阶段三：落地",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-tax-cm-sem-p3",
+        "priority": 5,
+        "role": "要点 3",
+        "semanticType": "body"
+      }
+    ],
+    "elements": [
+      {
+        "id": "uv1-tax-cm-kicker",
+        "type": "text",
+        "role": "路线图标签",
+        "content": "ROADMAP",
+        "bounds": {
+          "x": 0.82,
+          "y": 0.82,
+          "width": 1.55,
+          "height": 0.32
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "badge",
+        "zIndex": 36,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#111827",
+          "fontSize": 14,
+          "fontWeight": "semibold",
+          "lineHeight": 1.25,
+          "maxLines": 3
+        }
+      },
+      {
+        "id": "uv1-tax-cm-title",
+        "type": "text",
+        "role": "咨询路线图标题",
+        "content": "咨询路线图",
+        "bounds": {
+          "x": 0.82,
+          "y": 1.28,
+          "width": 6.2,
+          "height": 0.6
+        },
+        "editable": true,
+        "hierarchyLevel": 1,
+        "semanticType": "title",
+        "zIndex": 40,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#111827",
+          "fontSize": 25,
+          "fontWeight": "bold",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      },
+      {
+        "id": "uv1-tax-cm-line",
+        "type": "shape",
+        "role": "路线图细线",
+        "bounds": {
+          "x": 1.02,
+          "y": 3.05,
+          "width": 10.6,
+          "height": 0.05
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "accentShape",
+        "zIndex": 10,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-tax-cm-node1",
+        "type": "text",
+        "role": "阶段一",
+        "content": "01\n阶段一：诊断",
+        "bounds": {
+          "x": 1,
+          "y": 3.45,
+          "width": 2.5,
+          "height": 0.95
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "card",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#374151",
+          "fontSize": 15,
+          "fontWeight": "medium",
+          "lineHeight": 1.25,
+          "maxLines": 3
+        }
+      },
+      {
+        "id": "uv1-tax-cm-node2",
+        "type": "text",
+        "role": "阶段二",
+        "content": "02\n阶段二：设计",
+        "bounds": {
+          "x": 5,
+          "y": 3.45,
+          "width": 2.5,
+          "height": 0.95
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "card",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#374151",
+          "fontSize": 15,
+          "fontWeight": "medium",
+          "lineHeight": 1.25,
+          "maxLines": 3
+        }
+      },
+      {
+        "id": "uv1-tax-cm-node3",
+        "type": "text",
+        "role": "阶段三",
+        "content": "03\n阶段三：落地",
+        "bounds": {
+          "x": 9,
+          "y": 3.45,
+          "width": 2.5,
+          "height": 0.95
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "card",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#374151",
+          "fontSize": 15,
+          "fontWeight": "medium",
+          "lineHeight": 1.25,
+          "maxLines": 3
+        }
+      }
+    ],
+    "imageLayerRequests": [],
+    "canvas": {
+      "aspectRatio": "16:9",
+      "height": 7.5,
+      "safeMargin": 0.5,
+      "unit": "inch",
+      "width": 13.333
+    }
+  }
+}

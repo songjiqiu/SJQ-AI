@@ -18,7 +18,14 @@ import {
   DeckProjectNotFoundError,
   DeckSlideFileValidationError
 } from "@/lib/decks/service";
-import { PptTemplateNotFoundError } from "@/lib/admin/templates/service";
+import {
+  TemplateElementAssetNotFoundError,
+  TemplateElementAssetValidationError
+} from "@/lib/admin/template-assets/service";
+import {
+  PptTemplateNotFoundError,
+  PptTemplatePackageImportError
+} from "@/lib/admin/templates/service";
 import { isMissingPrismaStorageError } from "@/lib/db/prisma-errors";
 
 export function apiError(code: string, status: number, details?: unknown) {
@@ -157,6 +164,22 @@ export function handleApiError(error: unknown) {
 
   if (error instanceof PptTemplateNotFoundError) {
     return apiError("NOT_FOUND", 404);
+  }
+
+  if (error instanceof TemplateElementAssetNotFoundError) {
+    return apiError("NOT_FOUND", 404);
+  }
+
+  if (error instanceof TemplateElementAssetValidationError) {
+    return apiError("VALIDATION_FAILED", 400, {
+      message: error.message
+    });
+  }
+
+  if (error instanceof PptTemplatePackageImportError) {
+    return apiError("VALIDATION_FAILED", 400, {
+      message: error.message
+    });
   }
 
   if (error instanceof ActiveGenerationExistsError) {

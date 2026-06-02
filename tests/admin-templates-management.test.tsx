@@ -103,7 +103,7 @@ describe("AdminTemplatesManagement", () => {
     expect(screen.getByText("章节页模板")).toBeInTheDocument();
   });
 
-  it("renders top actions in refresh, download, create order", () => {
+  it("renders top actions without the generic create button", () => {
     renderWithIntl(<AdminTemplatesManagement initialTemplates={[baseTemplate]} />);
 
     const actionNames = screen
@@ -112,11 +112,13 @@ describe("AdminTemplatesManagement", () => {
       .filter(Boolean);
 
     expect(actionNames.indexOf("刷新")).toBeLessThan(
+      actionNames.indexOf("导入通用模板")
+    );
+    expect(actionNames.indexOf("导入通用模板")).toBeLessThan(
       actionNames.indexOf("下载JSON模板格式")
     );
-    expect(actionNames.indexOf("下载JSON模板格式")).toBeLessThan(
-      actionNames.indexOf("新建模板")
-    );
+    expect(screen.queryByRole("button", { name: "新建模板" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "新建章节页" })).toBeInTheDocument();
   });
 
   it("downloads the JSON import format for the selected category", () => {
@@ -157,7 +159,7 @@ describe("AdminTemplatesManagement", () => {
 
     renderWithIntl(<AdminTemplatesManagement initialTemplates={[baseTemplate]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "新建模板" }));
+    fireEvent.click(screen.getByRole("button", { name: "新建章节页" }));
     fireEvent.click(screen.getByRole("button", { name: /使用默认样板创建/ }));
 
     await waitFor(() => {
@@ -188,7 +190,7 @@ describe("AdminTemplatesManagement", () => {
 
     renderWithIntl(<AdminTemplatesManagement initialTemplates={[baseTemplate]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "新建模板" }));
+    fireEvent.click(screen.getByRole("button", { name: "新建章节页" }));
     fireEvent.change(screen.getByLabelText("选择 JSON 模板文件"), {
       target: {
         files: [
@@ -249,7 +251,7 @@ describe("AdminTemplatesManagement", () => {
 
     renderWithIntl(<AdminTemplatesManagement initialTemplates={[baseTemplate]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "新建模板" }));
+    fireEvent.click(screen.getByRole("button", { name: "新建章节页" }));
     fireEvent.change(screen.getByLabelText("选择 JSON 模板文件"), {
       target: {
         files: [
@@ -279,7 +281,7 @@ describe("AdminTemplatesManagement", () => {
 
     renderWithIntl(<AdminTemplatesManagement initialTemplates={[baseTemplate]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "新建模板" }));
+    fireEvent.click(screen.getByRole("button", { name: "新建章节页" }));
     fireEvent.change(screen.getByLabelText("选择 JSON 模板文件"), {
       target: {
         files: [
@@ -345,6 +347,42 @@ describe("AdminTemplatesManagement", () => {
         })
       );
     });
+  });
+
+  it("imports the universal template package after confirmation", async () => {
+    const importedTemplates = [
+      {
+        ...baseTemplate,
+        id: "template-universal",
+        name: "章节页 - 章节编号分栏"
+      }
+    ];
+    const fetchMock = vi.fn<typeof fetch>(async () =>
+      jsonResponse({
+        createdCount: 45,
+        deletedCount: 17,
+        templates: importedTemplates
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithIntl(<AdminTemplatesManagement initialTemplates={[baseTemplate]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "导入通用模板" }));
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "导入通用模板 v1"
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "导入通用模板" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/admin/templates/universal-v1/import",
+        expect.objectContaining({
+          method: "POST"
+        })
+      );
+    });
+    expect(await screen.findByText("章节页 - 章节编号分栏")).toBeInTheDocument();
   });
 });
 

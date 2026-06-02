@@ -483,7 +483,7 @@ export function AdminTemplateDesigner({
           </section>
         </aside>
 
-        <section className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3 overflow-y-auto bg-background p-4">
+        <section className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-3 overflow-y-auto bg-background p-4">
           <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface p-3">
             <Button
               disabled={!selectedElement}
@@ -540,15 +540,16 @@ export function AdminTemplateDesigner({
               slide={slide}
             />
           </div>
+          <TemplateMetaPanel
+            className="mx-auto w-full max-w-5xl"
+            onChange={updateTemplate}
+            template={template}
+            t={t}
+          />
         </section>
 
         <aside className="min-h-0 overflow-y-auto border-t border-border bg-surface p-3 lg:border-l lg:border-t-0">
           <div className="grid gap-4">
-            <TemplateMetaPanel
-              onChange={updateTemplate}
-              template={template}
-              t={t}
-            />
             {selectedElement ? (
               <ElementPanel
                 element={selectedElement}
@@ -637,16 +638,23 @@ export function AdminTemplateDesigner({
 }
 
 function TemplateMetaPanel({
+  className,
   onChange,
   t,
   template
 }: {
+  className?: string;
   onChange: (patch: Partial<PptTemplateDto>) => void;
   t: TemplateTranslator;
   template: PptTemplateDto;
 }) {
   return (
-    <section className="grid gap-3 rounded-lg border border-border bg-background p-3">
+    <section
+      className={cn(
+        "grid gap-3 rounded-lg border border-border bg-background p-3",
+        className
+      )}
+    >
       <h2 className="text-sm font-semibold text-foreground">
         {t("designer.templateInfo")}
       </h2>

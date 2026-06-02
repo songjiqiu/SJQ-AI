@@ -1,0 +1,420 @@
+{
+  "formatVersion": "ppt-template-import-v1",
+  "name": "引用/金句页 - 黑白大字引用",
+  "category": "quote",
+  "description": "极简咨询风模板，适用于观点强调。用黑白大字和充足留白呈现高质感引用页。",
+  "tags": [
+    "引用/金句页",
+    "极简咨询风",
+    "观点强调"
+  ],
+  "sortOrder": 193,
+  "isEnabled": true,
+  "slide": {
+    "slideId": "uv1-quo-cm",
+    "index": 1,
+    "content": {
+      "slideId": "uv1-quo-cm",
+      "index": 1,
+      "title": "黑白大字引用",
+      "subtitle": "引用/金句页 / 极简咨询风",
+      "bodyPoints": [
+        "超大字重承载引用",
+        "来源信息极小并保留留白"
+      ],
+      "speakerGoal": "帮助管理员快速复用“黑白大字引用”模板。",
+      "visualIntent": "用黑白大字和充足留白呈现高质感引用页。",
+      "coreStatement": "超大字重承载引用",
+      "narrativeRole": "argument",
+      "contentLayers": {
+        "primary": [
+          "超大字重承载引用"
+        ],
+        "supporting": [
+          "来源信息极小并保留留白"
+        ],
+        "supplementary": [
+          "适用场景：观点强调",
+          "白底黑灰咨询风，强调结论先行、强栅格和克制高亮。"
+        ]
+      },
+      "slideTransition": {
+        "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
+        "toNext": "可继续扩展为同类型页面或相邻内容页。"
+      },
+      "explanationDepth": "supporting",
+      "sourceRequirement": {
+        "required": false,
+        "categories": [
+          "user-input"
+        ],
+        "note": "模板示例不强制注明外部来源。"
+      },
+      "adaptationRules": {
+        "splitWhen": "当模板内容超过 5 个模块时拆为多页模板。",
+        "splitCandidates": [
+          "超大字重承载引用",
+          "来源信息极小并保留留白"
+        ],
+        "mergeWhen": "当只保留一个模块时可与相邻模板合并。",
+        "mergeWith": "相邻模板页"
+      },
+      "audienceFocus": {
+        "lens": "business-conclusion",
+        "focus": "管理员关注模板是否清晰、稳定，并能快速替换为业务内容。"
+      },
+      "viewerObjective": {
+        "type": "understand",
+        "description": "看完本页后，用户应理解“黑白大字引用”的适用场景和表达结构。"
+      },
+      "contentBoundary": {
+        "inScope": "只展示模板结构、占位内容、视觉意图和导入后的可替换区域。",
+        "outOfScope": [
+          "不展开真实业务内容",
+          "不引入外部数据",
+          "不使用第三方模板资产"
+        ]
+      }
+    },
+    "pageIntent": {
+      "audienceTakeaway": "超大字重承载引用",
+      "contentDensity": "low",
+      "coreMessage": "超大字重承载引用",
+      "pageRole": "content",
+      "primaryGoal": "inform"
+    },
+    "contentHierarchy": {
+      "primaryMessage": "超大字重承载引用",
+      "levels": [
+        {
+          "label": "黑白大字引用",
+          "level": 1,
+          "summary": "超大字重承载引用"
+        },
+        {
+          "label": "要点 1",
+          "level": 2,
+          "summary": "超大字重承载引用"
+        },
+        {
+          "label": "要点 2",
+          "level": 2,
+          "summary": "来源信息极小并保留留白"
+        }
+      ],
+      "tiers": [
+        {
+          "items": [
+            {
+              "content": "黑白大字引用",
+              "role": "主标题"
+            },
+            {
+              "content": "超大字重承载引用",
+              "role": "核心信息"
+            }
+          ],
+          "label": "一级信息",
+          "level": 1
+        },
+        {
+          "items": [
+            {
+              "content": "超大字重承载引用",
+              "role": "要点 1"
+            },
+            {
+              "content": "来源信息极小并保留留白",
+              "role": "要点 2"
+            }
+          ],
+          "label": "二级信息",
+          "level": 2
+        },
+        {
+          "items": [
+            {
+              "content": "用黑白大字和充足留白呈现高质感引用页。",
+              "role": "版式说明"
+            },
+            {
+              "content": "导入后可在模板设计器中替换占位内容。",
+              "role": "使用说明"
+            }
+          ],
+          "label": "三级信息",
+          "level": 3
+        }
+      ]
+    },
+    "layoutSelection": {
+      "candidates": [
+        {
+          "fitReason": "quote 匹配当前 引用/金句页 分类和 极简咨询风 风格。",
+          "layoutType": "quote",
+          "risk": "风险较低，保持信息层级清晰。",
+          "score": 96
+        },
+        {
+          "fitReason": "title-body-points 匹配当前 引用/金句页 分类和 极简咨询风 风格。",
+          "layoutType": "title-body-points",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 88
+        },
+        {
+          "fitReason": "big-image-background 匹配当前 引用/金句页 分类和 极简咨询风 风格。",
+          "layoutType": "big-image-background",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 80
+        }
+      ],
+      "selectedLayoutType": "quote",
+      "selectionReason": "固定选择 quote，与通用模板分类保持一致。"
+    },
+    "constraints": {
+      "coreMessagePresent": true,
+      "densityLimit": "low",
+      "maxHeroVisuals": 1,
+      "renderNotes": [
+        "主标题必须唯一并位于安全边距内。",
+        "核心表达区必须作为一级信息出现。",
+        "形状和图表占位不得压住正文。"
+      ],
+      "safeMargin": {
+        "appliesTo": [
+          "主标题",
+          "核心信息",
+          "正文",
+          "图表标签"
+        ],
+        "unit": "inch",
+        "value": 0.5
+      },
+      "subjectAvoidsTitleArea": true,
+      "titleUnique": true
+    },
+    "designQualityScore": {
+      "dimensions": {
+        "contentDensity": {
+          "score": 92,
+          "summary": "信息密度与模板用途匹配。"
+        },
+        "expressionCompleteness": {
+          "score": 92,
+          "summary": "标题、核心信息和辅助内容完整。"
+        },
+        "informationHierarchy": {
+          "score": 94,
+          "summary": "主次层级清晰。"
+        },
+        "renderability": {
+          "score": 94,
+          "summary": "元素位于画布范围内。"
+        },
+        "visualConsistency": {
+          "score": 92,
+          "summary": "风格说明与页面结构一致。"
+        }
+      },
+      "issues": [],
+      "repairStatus": "not-needed",
+      "suggestions": [
+        "导入后按实际业务替换占位文本和图表内容。"
+      ],
+      "totalScore": 93
+    },
+    "expressionIntent": "用黑白大字和充足留白呈现高质感引用页。",
+    "designPlan": {
+      "expressionIntent": "用黑白大字和充足留白呈现高质感引用页。",
+      "layoutTemplate": "quote",
+      "visualStrategy": "白底黑灰咨询风，强调结论先行、强栅格和克制高亮。 用黑白大字和充足留白呈现高质感引用页。",
+      "readingOrder": [
+        "uv1-quo-cm-sem-title",
+        "uv1-quo-cm-sem-key",
+        "uv1-quo-cm-sem-visual",
+        "uv1-quo-cm-sem-p1",
+        "uv1-quo-cm-sem-p2"
+      ]
+    },
+    "layoutDiagnostics": {
+      "density": 0.38,
+      "hasOverflow": false,
+      "needsUserConfirmation": false,
+      "overflowFixes": [],
+      "warnings": []
+    },
+    "semanticElements": [
+      {
+        "category": "text",
+        "constraints": [
+          "模板主标题，替换内容后仍保持最高层级"
+        ],
+        "content": "黑白大字引用",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-quo-cm-sem-title",
+        "priority": 1,
+        "role": "主标题",
+        "semanticType": "title"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "承载模板核心结论或说明"
+        ],
+        "content": "超大字重承载引用",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-quo-cm-sem-key",
+        "priority": 2,
+        "role": "核心信息",
+        "semanticType": "subtitle"
+      },
+      {
+        "category": "container",
+        "constraints": [
+          "每页最多一个主视觉中心",
+          "不得遮挡标题"
+        ],
+        "content": "用黑白大字和充足留白呈现高质感引用页。",
+        "elementType": "shape",
+        "hierarchyLevel": 2,
+        "id": "uv1-quo-cm-sem-visual",
+        "priority": 3,
+        "role": "模板结构中心",
+        "semanticType": "card"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "超大字重承载引用",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-quo-cm-sem-p1",
+        "priority": 3,
+        "role": "要点 1",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "来源信息极小并保留留白",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-quo-cm-sem-p2",
+        "priority": 4,
+        "role": "要点 2",
+        "semanticType": "body"
+      }
+    ],
+    "elements": [
+      {
+        "id": "uv1-quo-cm-title",
+        "type": "text",
+        "role": "黑白大字引用",
+        "content": "超大字重承载引用",
+        "bounds": {
+          "x": 0.86,
+          "y": 1.35,
+          "width": 9.9,
+          "height": 1.45
+        },
+        "editable": true,
+        "hierarchyLevel": 1,
+        "semanticType": "title",
+        "zIndex": 40,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#111827",
+          "fontSize": 38,
+          "fontWeight": "bold",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      },
+      {
+        "id": "uv1-quo-cm-rule",
+        "type": "shape",
+        "role": "引用细线",
+        "bounds": {
+          "x": 0.9,
+          "y": 3.32,
+          "width": 3.88,
+          "height": 0.05
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "accentShape",
+        "zIndex": 10,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-quo-cm-source",
+        "type": "text",
+        "role": "引用来源",
+        "content": "SOURCE",
+        "bounds": {
+          "x": 0.9,
+          "y": 4,
+          "width": 1.6,
+          "height": 0.3
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "footer",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#374151",
+          "fontSize": 10,
+          "fontWeight": "regular",
+          "lineHeight": 1.25,
+          "maxLines": 6
+        }
+      },
+      {
+        "id": "uv1-quo-cm-note",
+        "type": "text",
+        "role": "引用说明",
+        "content": "来源信息极小并保留留白",
+        "bounds": {
+          "x": 0.9,
+          "y": 4.48,
+          "width": 4.55,
+          "height": 0.5
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "footer",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#374151",
+          "fontSize": 12,
+          "fontWeight": "regular",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      }
+    ],
+    "imageLayerRequests": [],
+    "canvas": {
+      "aspectRatio": "16:9",
+      "height": 7.5,
+      "safeMargin": 0.5,
+      "unit": "inch",
+      "width": 13.333
+    }
+  }
+}

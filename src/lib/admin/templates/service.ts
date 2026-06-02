@@ -1,12 +1,16 @@
 import { Prisma } from "@prisma/client";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 import {
   getPptTemplateCategoryQueryValues,
   normalizePptTemplateCategoryId,
+  pptTemplateCategoryIds,
   type PptTemplateCategoryId
 } from "@/lib/admin/templates/categories";
 import { buildDefaultTemplateSlide } from "@/lib/admin/templates/defaults";
-import type {
+import {
+  pptTemplateCreateSchema,
   PptTemplateCreateInput,
   PptTemplateUpdateInput
 } from "@/lib/admin/templates/schemas";
@@ -17,10 +21,25 @@ import {
 } from "@/lib/ai-deck/schema";
 import { prisma } from "@/lib/db/prisma";
 
+const universalTemplatePackageDir = path.join(
+  process.cwd(),
+  "assets",
+  "templates",
+  "universal-v1"
+);
+const universalTemplateManifestVersion = "ppt-template-manifest-v1";
+
 export class PptTemplateNotFoundError extends Error {
   constructor(message = "PPT template not found") {
     super(message);
     this.name = "PptTemplateNotFoundError";
+  }
+}
+
+export class PptTemplatePackageImportError extends Error {
+  constructor(message = "PPT template package import failed") {
+    super(message);
+    this.name = "PptTemplatePackageImportError";
   }
 }
 
@@ -37,6 +56,21 @@ type PptTemplateRecord = {
   sortOrder: number;
   tags: unknown;
   updatedAt: Date;
+};
+
+type UniversalTemplateManifest = {
+  formatVersion: string;
+  packageId: string;
+  templateCount: number;
+  templates: Array<{
+    category: string;
+    file: string;
+    id: string;
+    name: string;
+    sortOrder: number;
+    style: string;
+    styleName: string;
+  }>;
 };
 
 export function serializePptTemplate(
@@ -207,6 +241,61 @@ export async function deletePptTemplate(templateId: string) {
   }
 }
 
+export async function importUniversalPptTemplatesV1() {
+  const templates = await readUniversalTemplatePackage();
+
+  return prisma.$transaction(async (tx) => {
+    const deleted = await tx.pptTemplate.deleteMany({
+      where: {
+        category: {
+          in: [...pptTemplateCategoryIds]
+        }
+      }
+    });
+
+    const createdTemplates: PptTemplateDto[] = [];
+
+    for (const input of templates) {
+      const slide = normalizeSlideForCategory(input.slide, input.category);
+      const template = await tx.pptTemplate.create({
+        data: {
+          category: input.category,
+          customCategoryKey: input.customCategoryKey ?? null,
+          customCategoryName: input.customCategoryName ?? null,
+          description: input.description ?? null,
+          isEnabled: input.isEnabled,
+          name: input.name,
+          slide: toInputJson(slide),
+          sortOrder: input.sortOrder,
+          tags: toInputJson(input.tags)
+        }
+      });
+
+      createdTemplates.push(serializePptTemplate(template));
+    }
+
+    const latestTemplates = await tx.pptTemplate.findMany({
+      orderBy: [
+        {
+          category: "asc"
+        },
+        {
+          sortOrder: "asc"
+        },
+        {
+          createdAt: "asc"
+        }
+      ]
+    });
+
+    return {
+      createdCount: createdTemplates.length,
+      deletedCount: deleted.count,
+      templates: latestTemplates.map(serializePptTemplate)
+    };
+  });
+}
+
 function normalizeSlide(slide: SlideCompositionPlan) {
   return slideCompositionPlanSchema.parse(slide);
 }
@@ -254,6 +343,65 @@ function parseTags(value: unknown) {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
     : [];
+}
+
+async function readUniversalTemplatePackage() {
+  const manifest = await readJsonFile<UniversalTemplateManifest>(
+    path.join(universalTemplatePackageDir, "manifest.json")
+  );
+
+  if (
+    manifest.formatVersion !== universalTemplateManifestVersion ||
+    manifest.packageId !== "universal-v1" ||
+    manifest.templateCount !== 45 ||
+    manifest.templates.length !== 45
+  ) {
+    throw new PptTemplatePackageImportError("Invalid universal template manifest");
+  }
+
+  return Promise.all(
+    manifest.templates.map(async (item) => {
+      const normalizedFile = item.file.replaceAll("\\", "/");
+      const expectedPrefix = "assets/templates/universal-v1/";
+
+      if (!normalizedFile.startsWith(expectedPrefix)) {
+        throw new PptTemplatePackageImportError(
+          `Unexpected template path: ${item.file}`
+        );
+      }
+
+      const filePath = path.join(process.cwd(), ...normalizedFile.split("/"));
+      const template = await readJsonFile<unknown>(filePath);
+      const input = pptTemplateCreateSchema.parse(
+        isRecord(template)
+          ? Object.fromEntries(
+              Object.entries(template).filter(([key]) => key !== "formatVersion")
+            )
+          : template
+      );
+
+      if (
+        input.category !== item.category ||
+        input.name !== item.name ||
+        input.sortOrder !== item.sortOrder ||
+        input.slide?.slideId !== item.id
+      ) {
+        throw new PptTemplatePackageImportError(
+          `Manifest entry does not match template file: ${item.file}`
+        );
+      }
+
+      return input;
+    })
+  );
+}
+
+async function readJsonFile<T>(filePath: string) {
+  return JSON.parse(await readFile(filePath, "utf8")) as T;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 function toInputJson(value: unknown) {

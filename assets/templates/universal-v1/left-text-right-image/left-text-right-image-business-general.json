@@ -1,0 +1,482 @@
+{
+  "formatVersion": "ppt-template-import-v1",
+  "name": "左文右图 - 观点先行右图",
+  "category": "left-text-right-image",
+  "description": "中国商务通用模板，适用于项目汇报。先表达观点，再用右侧图像强化场景理解。",
+  "tags": [
+    "左文右图",
+    "中国商务通用",
+    "项目汇报"
+  ],
+  "sortOrder": 151,
+  "isEnabled": true,
+  "slide": {
+    "slideId": "uv1-ltri-bg",
+    "index": 1,
+    "content": {
+      "slideId": "uv1-ltri-bg",
+      "index": 1,
+      "title": "观点先行右图",
+      "subtitle": "左文右图 / 中国商务通用",
+      "bodyPoints": [
+        "左侧先给业务判断",
+        "右侧图片强化理解",
+        "底部收束行动建议"
+      ],
+      "speakerGoal": "帮助管理员快速复用“观点先行右图”模板。",
+      "visualIntent": "先表达观点，再用右侧图像强化场景理解。",
+      "coreStatement": "左侧先给业务判断",
+      "narrativeRole": "argument",
+      "contentLayers": {
+        "primary": [
+          "左侧先给业务判断"
+        ],
+        "supporting": [
+          "右侧图片强化理解",
+          "底部收束行动建议"
+        ],
+        "supplementary": [
+          "适用场景：项目汇报",
+          "浅底蓝绿商务风，强调清晰、稳定和可复用。"
+        ]
+      },
+      "slideTransition": {
+        "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
+        "toNext": "可继续扩展为同类型页面或相邻内容页。"
+      },
+      "explanationDepth": "supporting",
+      "sourceRequirement": {
+        "required": false,
+        "categories": [
+          "user-input"
+        ],
+        "note": "模板示例不强制注明外部来源。"
+      },
+      "adaptationRules": {
+        "splitWhen": "当模板内容超过 5 个模块时拆为多页模板。",
+        "splitCandidates": [
+          "左侧先给业务判断",
+          "右侧图片强化理解",
+          "底部收束行动建议"
+        ],
+        "mergeWhen": "当只保留一个模块时可与相邻模板合并。",
+        "mergeWith": "相邻模板页"
+      },
+      "audienceFocus": {
+        "lens": "business-conclusion",
+        "focus": "管理员关注模板是否清晰、稳定，并能快速替换为业务内容。"
+      },
+      "viewerObjective": {
+        "type": "understand",
+        "description": "看完本页后，用户应理解“观点先行右图”的适用场景和表达结构。"
+      },
+      "contentBoundary": {
+        "inScope": "只展示模板结构、占位内容、视觉意图和导入后的可替换区域。",
+        "outOfScope": [
+          "不展开真实业务内容",
+          "不引入外部数据",
+          "不使用第三方模板资产"
+        ]
+      }
+    },
+    "pageIntent": {
+      "audienceTakeaway": "左侧先给业务判断",
+      "contentDensity": "medium",
+      "coreMessage": "左侧先给业务判断",
+      "pageRole": "content",
+      "primaryGoal": "inform"
+    },
+    "contentHierarchy": {
+      "primaryMessage": "左侧先给业务判断",
+      "levels": [
+        {
+          "label": "观点先行右图",
+          "level": 1,
+          "summary": "左侧先给业务判断"
+        },
+        {
+          "label": "要点 1",
+          "level": 2,
+          "summary": "左侧先给业务判断"
+        },
+        {
+          "label": "要点 2",
+          "level": 2,
+          "summary": "右侧图片强化理解"
+        },
+        {
+          "label": "要点 3",
+          "level": 2,
+          "summary": "底部收束行动建议"
+        }
+      ],
+      "tiers": [
+        {
+          "items": [
+            {
+              "content": "观点先行右图",
+              "role": "主标题"
+            },
+            {
+              "content": "左侧先给业务判断",
+              "role": "核心信息"
+            }
+          ],
+          "label": "一级信息",
+          "level": 1
+        },
+        {
+          "items": [
+            {
+              "content": "左侧先给业务判断",
+              "role": "要点 1"
+            },
+            {
+              "content": "右侧图片强化理解",
+              "role": "要点 2"
+            },
+            {
+              "content": "底部收束行动建议",
+              "role": "要点 3"
+            }
+          ],
+          "label": "二级信息",
+          "level": 2
+        },
+        {
+          "items": [
+            {
+              "content": "先表达观点，再用右侧图像强化场景理解。",
+              "role": "版式说明"
+            },
+            {
+              "content": "导入后可在模板设计器中替换占位内容。",
+              "role": "使用说明"
+            }
+          ],
+          "label": "三级信息",
+          "level": 3
+        }
+      ]
+    },
+    "layoutSelection": {
+      "candidates": [
+        {
+          "fitReason": "left-text-right-image 匹配当前 左文右图 分类和 中国商务通用 风格。",
+          "layoutType": "left-text-right-image",
+          "risk": "风险较低，保持信息层级清晰。",
+          "score": 96
+        },
+        {
+          "fitReason": "left-image-right-text 匹配当前 左文右图 分类和 中国商务通用 风格。",
+          "layoutType": "left-image-right-text",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 88
+        },
+        {
+          "fitReason": "title-body-points 匹配当前 左文右图 分类和 中国商务通用 风格。",
+          "layoutType": "title-body-points",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 80
+        }
+      ],
+      "selectedLayoutType": "left-text-right-image",
+      "selectionReason": "固定选择 left-text-right-image，与通用模板分类保持一致。"
+    },
+    "constraints": {
+      "coreMessagePresent": true,
+      "densityLimit": "medium",
+      "maxHeroVisuals": 1,
+      "renderNotes": [
+        "主标题必须唯一并位于安全边距内。",
+        "核心表达区必须作为一级信息出现。",
+        "图片主体避开标题区，避免遮挡正文。"
+      ],
+      "safeMargin": {
+        "appliesTo": [
+          "主标题",
+          "核心信息",
+          "正文",
+          "图表标签"
+        ],
+        "unit": "inch",
+        "value": 0.5
+      },
+      "subjectAvoidsTitleArea": true,
+      "titleUnique": true
+    },
+    "designQualityScore": {
+      "dimensions": {
+        "contentDensity": {
+          "score": 92,
+          "summary": "信息密度与模板用途匹配。"
+        },
+        "expressionCompleteness": {
+          "score": 92,
+          "summary": "标题、核心信息和辅助内容完整。"
+        },
+        "informationHierarchy": {
+          "score": 94,
+          "summary": "主次层级清晰。"
+        },
+        "renderability": {
+          "score": 94,
+          "summary": "元素位于画布范围内。"
+        },
+        "visualConsistency": {
+          "score": 92,
+          "summary": "风格说明与页面结构一致。"
+        }
+      },
+      "issues": [],
+      "repairStatus": "not-needed",
+      "suggestions": [
+        "导入后按实际业务替换占位文本和图表内容。"
+      ],
+      "totalScore": 93
+    },
+    "expressionIntent": "先表达观点，再用右侧图像强化场景理解。",
+    "designPlan": {
+      "expressionIntent": "先表达观点，再用右侧图像强化场景理解。",
+      "layoutTemplate": "left-text-right-image",
+      "visualStrategy": "浅底蓝绿商务风，强调清晰、稳定和可复用。 先表达观点，再用右侧图像强化场景理解。",
+      "readingOrder": [
+        "uv1-ltri-bg-sem-title",
+        "uv1-ltri-bg-sem-key",
+        "uv1-ltri-bg-sem-visual",
+        "uv1-ltri-bg-sem-p1",
+        "uv1-ltri-bg-sem-p2",
+        "uv1-ltri-bg-sem-p3"
+      ]
+    },
+    "layoutDiagnostics": {
+      "density": 0.55,
+      "hasOverflow": false,
+      "needsUserConfirmation": false,
+      "overflowFixes": [],
+      "warnings": []
+    },
+    "semanticElements": [
+      {
+        "category": "text",
+        "constraints": [
+          "模板主标题，替换内容后仍保持最高层级"
+        ],
+        "content": "观点先行右图",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-ltri-bg-sem-title",
+        "priority": 1,
+        "role": "主标题",
+        "semanticType": "title"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "承载模板核心结论或说明"
+        ],
+        "content": "左侧先给业务判断",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-ltri-bg-sem-key",
+        "priority": 2,
+        "role": "核心信息",
+        "semanticType": "subtitle"
+      },
+      {
+        "category": "visual",
+        "constraints": [
+          "每页最多一个主视觉中心",
+          "不得遮挡标题"
+        ],
+        "content": "先表达观点，再用右侧图像强化场景理解。",
+        "elementType": "generatedImage",
+        "hierarchyLevel": 2,
+        "id": "uv1-ltri-bg-sem-visual",
+        "priority": 3,
+        "role": "模板主视觉",
+        "semanticType": "heroVisual"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "左侧先给业务判断",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-ltri-bg-sem-p1",
+        "priority": 3,
+        "role": "要点 1",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "右侧图片强化理解",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-ltri-bg-sem-p2",
+        "priority": 4,
+        "role": "要点 2",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "底部收束行动建议",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-ltri-bg-sem-p3",
+        "priority": 5,
+        "role": "要点 3",
+        "semanticType": "body"
+      }
+    ],
+    "elements": [
+      {
+        "id": "uv1-ltri-bg-title",
+        "type": "text",
+        "role": "左侧标题",
+        "content": "观点先行右图",
+        "bounds": {
+          "x": 0.9,
+          "y": 0.98,
+          "width": 5.7,
+          "height": 0.78
+        },
+        "editable": true,
+        "hierarchyLevel": 1,
+        "semanticType": "title",
+        "zIndex": 40,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#103B3F",
+          "fontSize": 28,
+          "fontWeight": "bold",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      },
+      {
+        "id": "uv1-ltri-bg-body",
+        "type": "text",
+        "role": "左侧正文",
+        "content": "左侧先给业务判断\n右侧图片强化理解\n底部收束行动建议",
+        "bounds": {
+          "x": 0.94,
+          "y": 2.02,
+          "width": 5.2,
+          "height": 2.62
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "body",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#355052",
+          "fontSize": 15,
+          "fontWeight": "regular",
+          "lineHeight": 1.25,
+          "maxLines": 6
+        }
+      },
+      {
+        "id": "uv1-ltri-bg-hero",
+        "type": "generatedImage",
+        "role": "主视觉图层",
+        "bounds": {
+          "x": 7.15,
+          "y": 0.9,
+          "width": 4.85,
+          "height": 4.8
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "imageRequestId": "uv1-ltri-bg-hero-req",
+        "semanticType": "heroVisual",
+        "zIndex": 20,
+        "styleNotes": "透明主视觉请求占位，主体不得压住标题区。",
+        "requiresImageGeneration": true
+      },
+      {
+        "id": "uv1-ltri-bg-line",
+        "type": "shape",
+        "role": "左侧强调线",
+        "bounds": {
+          "x": 0.95,
+          "y": 5.22,
+          "width": 2.3,
+          "height": 0.12
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "accentShape",
+        "zIndex": 12,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-ltri-bg-foot",
+        "type": "text",
+        "role": "来源说明",
+        "content": "可替换为来源 / 口径 / 时间。",
+        "bounds": {
+          "x": 0.95,
+          "y": 5.64,
+          "width": 4.6,
+          "height": 0.34
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "footer",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#355052",
+          "fontSize": 11,
+          "fontWeight": "regular",
+          "lineHeight": 1.25,
+          "maxLines": 6
+        }
+      }
+    ],
+    "imageLayerRequests": [
+      {
+        "id": "uv1-ltri-bg-hero-req",
+        "elementId": "uv1-ltri-bg-hero",
+        "purpose": "生成模板主视觉",
+        "imageType": "illustration",
+        "keywords": [
+          "PPT模板",
+          "观点先行右图",
+          "中国商务通用"
+        ],
+        "prompt": "为 PPT 模板“观点先行右图”生成透明背景主视觉插画。风格：浅底蓝绿商务风，强调清晰、稳定和可复用。。画面简洁、专业、无文字、适合演示页面分层。",
+        "negativePrompt": "不要文字、不要水印、不要复杂背景、不要低清晰度",
+        "avoid": "不要文字、不要水印、不要复杂背景、不要低清晰度",
+        "transparentBackground": true,
+        "aspectRatio": "16:9",
+        "visualNotes": "浅底蓝绿商务风，强调清晰、稳定和可复用。"
+      }
+    ],
+    "canvas": {
+      "aspectRatio": "16:9",
+      "height": 7.5,
+      "safeMargin": 0.5,
+      "unit": "inch",
+      "width": 13.333
+    }
+  }
+}

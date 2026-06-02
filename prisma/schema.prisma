@@ -28,6 +28,32 @@ enum ReusableImageAssetStatus {
   REJECTED
 }
 
+enum TemplateElementAssetKind {
+  CONTAINER
+  ICON
+  SHAPE
+  LINE
+  NAVIGATION
+  TEXT_STYLE
+}
+
+enum TemplateAssetSetKind {
+  COMMON
+  TEMPLATE
+}
+
+enum TemplateAssetReviewStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum TemplateAssetSource {
+  MANUAL
+  AI_GENERATED
+}
+
 enum AiModelKind {
   LLM
   IMAGE
@@ -241,4 +267,43 @@ model PptTemplate {
 
   @@index([category, sortOrder])
   @@index([isEnabled])
+}
+
+model TemplateElementAsset {
+  id             String                    @id @default(cuid())
+  kind           TemplateElementAssetKind
+  setKind        TemplateAssetSetKind      @default(COMMON)
+  setKey         String                    @default("common") @db.VarChar(80)
+  setName        String                    @default("通用套装") @db.VarChar(120)
+  name           String                    @db.VarChar(120)
+  description    String?                   @db.VarChar(500)
+  primaryCategory   String?               @db.VarChar(80)
+  secondaryCategory String?               @db.VarChar(80)
+  variantKey        String?               @db.VarChar(80)
+  tags           Json
+  semanticTags   Json
+  keywords       Json
+  synonyms       Json
+  pageTypes      Json
+  usageScenarios Json
+  styleTags      Json
+  colorTags      Json
+  backgroundModes Json
+  style          Json
+  preview        Json
+  resource       Json
+  aiModifyPermissions Json
+  reviewStatus   TemplateAssetReviewStatus @default(APPROVED)
+  source         TemplateAssetSource        @default(MANUAL)
+  sortOrder      Int                      @default(0)
+  isEnabled      Boolean                  @default(true)
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  @@unique([setKind, setKey, kind, name])
+  @@index([setKind, setKey, kind, sortOrder])
+  @@index([kind, reviewStatus, isEnabled])
+  @@index([kind, sortOrder])
+  @@index([kind, isEnabled])
+  @@index([kind, primaryCategory, secondaryCategory, variantKey], name: "TemplateElementAsset_category_idx")
 }

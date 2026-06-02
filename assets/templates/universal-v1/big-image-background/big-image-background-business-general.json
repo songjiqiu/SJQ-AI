@@ -1,0 +1,447 @@
+{
+  "formatVersion": "ppt-template-import-v1",
+  "name": "大图背景 - 半遮罩场景页",
+  "category": "big-image-background",
+  "description": "中国商务通用模板，适用于品牌方案。用全幅背景和半透明遮罩呈现稳重场景页。",
+  "tags": [
+    "大图背景",
+    "中国商务通用",
+    "品牌方案"
+  ],
+  "sortOrder": 131,
+  "isEnabled": true,
+  "slide": {
+    "slideId": "uv1-bib-bg",
+    "index": 1,
+    "content": {
+      "slideId": "uv1-bib-bg",
+      "index": 1,
+      "title": "半遮罩场景页",
+      "subtitle": "大图背景 / 中国商务通用",
+      "bodyPoints": [
+        "让场景图承载情绪",
+        "前景文字保持高对比"
+      ],
+      "speakerGoal": "帮助管理员快速复用“半遮罩场景页”模板。",
+      "visualIntent": "用全幅背景和半透明遮罩呈现稳重场景页。",
+      "coreStatement": "让场景图承载情绪",
+      "narrativeRole": "argument",
+      "contentLayers": {
+        "primary": [
+          "让场景图承载情绪"
+        ],
+        "supporting": [
+          "前景文字保持高对比"
+        ],
+        "supplementary": [
+          "适用场景：品牌方案",
+          "浅底蓝绿商务风，强调清晰、稳定和可复用。"
+        ]
+      },
+      "slideTransition": {
+        "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
+        "toNext": "可继续扩展为同类型页面或相邻内容页。"
+      },
+      "explanationDepth": "supporting",
+      "sourceRequirement": {
+        "required": false,
+        "categories": [
+          "user-input"
+        ],
+        "note": "模板示例不强制注明外部来源。"
+      },
+      "adaptationRules": {
+        "splitWhen": "当模板内容超过 5 个模块时拆为多页模板。",
+        "splitCandidates": [
+          "让场景图承载情绪",
+          "前景文字保持高对比"
+        ],
+        "mergeWhen": "当只保留一个模块时可与相邻模板合并。",
+        "mergeWith": "相邻模板页"
+      },
+      "audienceFocus": {
+        "lens": "business-conclusion",
+        "focus": "管理员关注模板是否清晰、稳定，并能快速替换为业务内容。"
+      },
+      "viewerObjective": {
+        "type": "understand",
+        "description": "看完本页后，用户应理解“半遮罩场景页”的适用场景和表达结构。"
+      },
+      "contentBoundary": {
+        "inScope": "只展示模板结构、占位内容、视觉意图和导入后的可替换区域。",
+        "outOfScope": [
+          "不展开真实业务内容",
+          "不引入外部数据",
+          "不使用第三方模板资产"
+        ]
+      }
+    },
+    "pageIntent": {
+      "audienceTakeaway": "让场景图承载情绪",
+      "contentDensity": "medium",
+      "coreMessage": "让场景图承载情绪",
+      "pageRole": "content",
+      "primaryGoal": "inform"
+    },
+    "contentHierarchy": {
+      "primaryMessage": "让场景图承载情绪",
+      "levels": [
+        {
+          "label": "半遮罩场景页",
+          "level": 1,
+          "summary": "让场景图承载情绪"
+        },
+        {
+          "label": "要点 1",
+          "level": 2,
+          "summary": "让场景图承载情绪"
+        },
+        {
+          "label": "要点 2",
+          "level": 2,
+          "summary": "前景文字保持高对比"
+        }
+      ],
+      "tiers": [
+        {
+          "items": [
+            {
+              "content": "半遮罩场景页",
+              "role": "主标题"
+            },
+            {
+              "content": "让场景图承载情绪",
+              "role": "核心信息"
+            }
+          ],
+          "label": "一级信息",
+          "level": 1
+        },
+        {
+          "items": [
+            {
+              "content": "让场景图承载情绪",
+              "role": "要点 1"
+            },
+            {
+              "content": "前景文字保持高对比",
+              "role": "要点 2"
+            }
+          ],
+          "label": "二级信息",
+          "level": 2
+        },
+        {
+          "items": [
+            {
+              "content": "用全幅背景和半透明遮罩呈现稳重场景页。",
+              "role": "版式说明"
+            },
+            {
+              "content": "导入后可在模板设计器中替换占位内容。",
+              "role": "使用说明"
+            }
+          ],
+          "label": "三级信息",
+          "level": 3
+        }
+      ]
+    },
+    "layoutSelection": {
+      "candidates": [
+        {
+          "fitReason": "big-image-background 匹配当前 大图背景 分类和 中国商务通用 风格。",
+          "layoutType": "big-image-background",
+          "risk": "风险较低，保持信息层级清晰。",
+          "score": 96
+        },
+        {
+          "fitReason": "cover-title 匹配当前 大图背景 分类和 中国商务通用 风格。",
+          "layoutType": "cover-title",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 88
+        },
+        {
+          "fitReason": "left-text-right-image 匹配当前 大图背景 分类和 中国商务通用 风格。",
+          "layoutType": "left-text-right-image",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 80
+        }
+      ],
+      "selectedLayoutType": "big-image-background",
+      "selectionReason": "固定选择 big-image-background，与通用模板分类保持一致。"
+    },
+    "constraints": {
+      "coreMessagePresent": true,
+      "densityLimit": "medium",
+      "maxHeroVisuals": 1,
+      "renderNotes": [
+        "主标题必须唯一并位于安全边距内。",
+        "核心表达区必须作为一级信息出现。",
+        "图片主体避开标题区，避免遮挡正文。"
+      ],
+      "safeMargin": {
+        "appliesTo": [
+          "主标题",
+          "核心信息",
+          "正文",
+          "图表标签"
+        ],
+        "unit": "inch",
+        "value": 0.5
+      },
+      "subjectAvoidsTitleArea": true,
+      "titleUnique": true
+    },
+    "designQualityScore": {
+      "dimensions": {
+        "contentDensity": {
+          "score": 92,
+          "summary": "信息密度与模板用途匹配。"
+        },
+        "expressionCompleteness": {
+          "score": 92,
+          "summary": "标题、核心信息和辅助内容完整。"
+        },
+        "informationHierarchy": {
+          "score": 94,
+          "summary": "主次层级清晰。"
+        },
+        "renderability": {
+          "score": 94,
+          "summary": "元素位于画布范围内。"
+        },
+        "visualConsistency": {
+          "score": 92,
+          "summary": "风格说明与页面结构一致。"
+        }
+      },
+      "issues": [],
+      "repairStatus": "not-needed",
+      "suggestions": [
+        "导入后按实际业务替换占位文本和图表内容。"
+      ],
+      "totalScore": 93
+    },
+    "expressionIntent": "用全幅背景和半透明遮罩呈现稳重场景页。",
+    "designPlan": {
+      "expressionIntent": "用全幅背景和半透明遮罩呈现稳重场景页。",
+      "layoutTemplate": "big-image-background",
+      "visualStrategy": "浅底蓝绿商务风，强调清晰、稳定和可复用。 用全幅背景和半透明遮罩呈现稳重场景页。",
+      "readingOrder": [
+        "uv1-bib-bg-sem-title",
+        "uv1-bib-bg-sem-key",
+        "uv1-bib-bg-sem-visual",
+        "uv1-bib-bg-sem-p1",
+        "uv1-bib-bg-sem-p2"
+      ]
+    },
+    "layoutDiagnostics": {
+      "density": 0.55,
+      "hasOverflow": false,
+      "needsUserConfirmation": false,
+      "overflowFixes": [],
+      "warnings": []
+    },
+    "semanticElements": [
+      {
+        "category": "text",
+        "constraints": [
+          "模板主标题，替换内容后仍保持最高层级"
+        ],
+        "content": "半遮罩场景页",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-bib-bg-sem-title",
+        "priority": 1,
+        "role": "主标题",
+        "semanticType": "title"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "承载模板核心结论或说明"
+        ],
+        "content": "让场景图承载情绪",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-bib-bg-sem-key",
+        "priority": 2,
+        "role": "核心信息",
+        "semanticType": "subtitle"
+      },
+      {
+        "category": "visual",
+        "constraints": [
+          "每页最多一个主视觉中心",
+          "不得遮挡标题"
+        ],
+        "content": "用全幅背景和半透明遮罩呈现稳重场景页。",
+        "elementType": "generatedImage",
+        "hierarchyLevel": 2,
+        "id": "uv1-bib-bg-sem-visual",
+        "priority": 3,
+        "role": "模板主视觉",
+        "semanticType": "heroVisual"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "让场景图承载情绪",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-bib-bg-sem-p1",
+        "priority": 3,
+        "role": "要点 1",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "前景文字保持高对比",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-bib-bg-sem-p2",
+        "priority": 4,
+        "role": "要点 2",
+        "semanticType": "body"
+      }
+    ],
+    "elements": [
+      {
+        "id": "uv1-bib-bg-bgimg",
+        "type": "generatedImage",
+        "role": "页面背景图",
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 13.333,
+          "height": 7.5
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "imageRequestId": "uv1-bib-bg-bgimg-req",
+        "semanticType": "background",
+        "zIndex": 1,
+        "styleNotes": "背景图请求占位，文字区域需要保持低对比。",
+        "requiresImageGeneration": true
+      },
+      {
+        "id": "uv1-bib-bg-overlay",
+        "type": "shape",
+        "role": "左侧文字遮罩",
+        "bounds": {
+          "x": 0.72,
+          "y": 0.78,
+          "width": 5.85,
+          "height": 5.75
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "card",
+        "zIndex": 18,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-bib-bg-title",
+        "type": "text",
+        "role": "背景图标题",
+        "content": "半遮罩场景页",
+        "bounds": {
+          "x": 1.08,
+          "y": 1.48,
+          "width": 4.95,
+          "height": 0.82
+        },
+        "editable": true,
+        "hierarchyLevel": 1,
+        "semanticType": "title",
+        "zIndex": 40,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#103B3F",
+          "fontSize": 30,
+          "fontWeight": "bold",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      },
+      {
+        "id": "uv1-bib-bg-body",
+        "type": "text",
+        "role": "背景图说明",
+        "content": "让场景图承载情绪\n前景文字保持高对比",
+        "bounds": {
+          "x": 1.1,
+          "y": 2.72,
+          "width": 4.65,
+          "height": 1.2
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "body",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#355052",
+          "fontSize": 15,
+          "fontWeight": "regular",
+          "lineHeight": 1.25,
+          "maxLines": 4
+        }
+      },
+      {
+        "id": "uv1-bib-bg-accent",
+        "type": "shape",
+        "role": "标题强调线",
+        "bounds": {
+          "x": 1.1,
+          "y": 4.38,
+          "width": 1.75,
+          "height": 0.12
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "accentShape",
+        "zIndex": 22,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      }
+    ],
+    "imageLayerRequests": [
+      {
+        "id": "uv1-bib-bg-bgimg-req",
+        "elementId": "uv1-bib-bg-bgimg",
+        "purpose": "生成页面背景图",
+        "imageType": "background",
+        "keywords": [
+          "PPT模板",
+          "半遮罩场景页",
+          "中国商务通用"
+        ],
+        "prompt": "为 PPT 模板“半遮罩场景页”生成低对比 16:9 背景图。风格：浅底蓝绿商务风，强调清晰、稳定和可复用。。必须留出文字安全区域，不包含文字、水印或复杂高对比纹理。",
+        "negativePrompt": "不要文字、不要水印、不要复杂背景、不要低清晰度",
+        "avoid": "不要文字、不要水印、不要复杂背景、不要低清晰度",
+        "transparentBackground": false,
+        "aspectRatio": "16:9",
+        "visualNotes": "浅底蓝绿商务风，强调清晰、稳定和可复用。"
+      }
+    ],
+    "canvas": {
+      "aspectRatio": "16:9",
+      "height": 7.5,
+      "safeMargin": 0.5,
+      "unit": "inch",
+      "width": 13.333
+    }
+  }
+}

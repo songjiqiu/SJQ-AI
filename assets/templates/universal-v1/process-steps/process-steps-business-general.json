@@ -1,0 +1,540 @@
+{
+  "formatVersion": "ppt-template-import-v1",
+  "name": "流程/步骤 - 三步闭环",
+  "category": "process-steps",
+  "description": "中国商务通用模板，适用于培训课程。用三段式步骤说明方法路径和操作流程。",
+  "tags": [
+    "流程/步骤",
+    "中国商务通用",
+    "培训课程"
+  ],
+  "sortOrder": 211,
+  "isEnabled": true,
+  "slide": {
+    "slideId": "uv1-pst-bg",
+    "index": 1,
+    "content": {
+      "slideId": "uv1-pst-bg",
+      "index": 1,
+      "title": "三步闭环",
+      "subtitle": "流程/步骤 / 中国商务通用",
+      "bodyPoints": [
+        "第一步：输入想法",
+        "第二步：生成结构",
+        "第三步：导出演示"
+      ],
+      "speakerGoal": "帮助管理员快速复用“三步闭环”模板。",
+      "visualIntent": "用三段式步骤说明方法路径和操作流程。",
+      "coreStatement": "第一步：输入想法",
+      "narrativeRole": "argument",
+      "contentLayers": {
+        "primary": [
+          "第一步：输入想法"
+        ],
+        "supporting": [
+          "第二步：生成结构",
+          "第三步：导出演示"
+        ],
+        "supplementary": [
+          "适用场景：培训课程",
+          "浅底蓝绿商务风，强调清晰、稳定和可复用。"
+        ]
+      },
+      "slideTransition": {
+        "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
+        "toNext": "可继续扩展为同类型页面或相邻内容页。"
+      },
+      "explanationDepth": "supporting",
+      "sourceRequirement": {
+        "required": false,
+        "categories": [
+          "user-input"
+        ],
+        "note": "模板示例不强制注明外部来源。"
+      },
+      "adaptationRules": {
+        "splitWhen": "当模板内容超过 5 个模块时拆为多页模板。",
+        "splitCandidates": [
+          "第一步：输入想法",
+          "第二步：生成结构",
+          "第三步：导出演示"
+        ],
+        "mergeWhen": "当只保留一个模块时可与相邻模板合并。",
+        "mergeWith": "相邻模板页"
+      },
+      "audienceFocus": {
+        "lens": "business-conclusion",
+        "focus": "管理员关注模板是否清晰、稳定，并能快速替换为业务内容。"
+      },
+      "viewerObjective": {
+        "type": "understand",
+        "description": "看完本页后，用户应理解“三步闭环”的适用场景和表达结构。"
+      },
+      "contentBoundary": {
+        "inScope": "只展示模板结构、占位内容、视觉意图和导入后的可替换区域。",
+        "outOfScope": [
+          "不展开真实业务内容",
+          "不引入外部数据",
+          "不使用第三方模板资产"
+        ]
+      }
+    },
+    "pageIntent": {
+      "audienceTakeaway": "第一步：输入想法",
+      "contentDensity": "high",
+      "coreMessage": "第一步：输入想法",
+      "pageRole": "process",
+      "primaryGoal": "explain"
+    },
+    "contentHierarchy": {
+      "primaryMessage": "第一步：输入想法",
+      "levels": [
+        {
+          "label": "三步闭环",
+          "level": 1,
+          "summary": "第一步：输入想法"
+        },
+        {
+          "label": "要点 1",
+          "level": 2,
+          "summary": "第一步：输入想法"
+        },
+        {
+          "label": "要点 2",
+          "level": 2,
+          "summary": "第二步：生成结构"
+        },
+        {
+          "label": "要点 3",
+          "level": 2,
+          "summary": "第三步：导出演示"
+        }
+      ],
+      "tiers": [
+        {
+          "items": [
+            {
+              "content": "三步闭环",
+              "role": "主标题"
+            },
+            {
+              "content": "第一步：输入想法",
+              "role": "核心信息"
+            }
+          ],
+          "label": "一级信息",
+          "level": 1
+        },
+        {
+          "items": [
+            {
+              "content": "第一步：输入想法",
+              "role": "要点 1"
+            },
+            {
+              "content": "第二步：生成结构",
+              "role": "要点 2"
+            },
+            {
+              "content": "第三步：导出演示",
+              "role": "要点 3"
+            }
+          ],
+          "label": "二级信息",
+          "level": 2
+        },
+        {
+          "items": [
+            {
+              "content": "用三段式步骤说明方法路径和操作流程。",
+              "role": "版式说明"
+            },
+            {
+              "content": "导入后可在模板设计器中替换占位内容。",
+              "role": "使用说明"
+            }
+          ],
+          "label": "三级信息",
+          "level": 3
+        }
+      ]
+    },
+    "layoutSelection": {
+      "candidates": [
+        {
+          "fitReason": "process-steps 匹配当前 流程/步骤 分类和 中国商务通用 风格。",
+          "layoutType": "process-steps",
+          "risk": "风险较低，保持信息层级清晰。",
+          "score": 96
+        },
+        {
+          "fitReason": "time-axis 匹配当前 流程/步骤 分类和 中国商务通用 风格。",
+          "layoutType": "time-axis",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 88
+        },
+        {
+          "fitReason": "title-body-points 匹配当前 流程/步骤 分类和 中国商务通用 风格。",
+          "layoutType": "title-body-points",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 80
+        }
+      ],
+      "selectedLayoutType": "process-steps",
+      "selectionReason": "固定选择 process-steps，与通用模板分类保持一致。"
+    },
+    "constraints": {
+      "coreMessagePresent": true,
+      "densityLimit": "high",
+      "maxHeroVisuals": 1,
+      "renderNotes": [
+        "主标题必须唯一并位于安全边距内。",
+        "核心表达区必须作为一级信息出现。",
+        "形状和图表占位不得压住正文。"
+      ],
+      "safeMargin": {
+        "appliesTo": [
+          "主标题",
+          "核心信息",
+          "正文",
+          "图表标签"
+        ],
+        "unit": "inch",
+        "value": 0.5
+      },
+      "subjectAvoidsTitleArea": true,
+      "titleUnique": true
+    },
+    "designQualityScore": {
+      "dimensions": {
+        "contentDensity": {
+          "score": 92,
+          "summary": "信息密度与模板用途匹配。"
+        },
+        "expressionCompleteness": {
+          "score": 92,
+          "summary": "标题、核心信息和辅助内容完整。"
+        },
+        "informationHierarchy": {
+          "score": 94,
+          "summary": "主次层级清晰。"
+        },
+        "renderability": {
+          "score": 94,
+          "summary": "元素位于画布范围内。"
+        },
+        "visualConsistency": {
+          "score": 92,
+          "summary": "风格说明与页面结构一致。"
+        }
+      },
+      "issues": [],
+      "repairStatus": "not-needed",
+      "suggestions": [
+        "导入后按实际业务替换占位文本和图表内容。"
+      ],
+      "totalScore": 93
+    },
+    "expressionIntent": "用三段式步骤说明方法路径和操作流程。",
+    "designPlan": {
+      "expressionIntent": "用三段式步骤说明方法路径和操作流程。",
+      "layoutTemplate": "process-steps",
+      "visualStrategy": "浅底蓝绿商务风，强调清晰、稳定和可复用。 用三段式步骤说明方法路径和操作流程。",
+      "readingOrder": [
+        "uv1-pst-bg-sem-title",
+        "uv1-pst-bg-sem-key",
+        "uv1-pst-bg-sem-visual",
+        "uv1-pst-bg-sem-p1",
+        "uv1-pst-bg-sem-p2",
+        "uv1-pst-bg-sem-p3"
+      ]
+    },
+    "layoutDiagnostics": {
+      "density": 0.7,
+      "hasOverflow": false,
+      "needsUserConfirmation": false,
+      "overflowFixes": [],
+      "warnings": []
+    },
+    "semanticElements": [
+      {
+        "category": "text",
+        "constraints": [
+          "模板主标题，替换内容后仍保持最高层级"
+        ],
+        "content": "三步闭环",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-pst-bg-sem-title",
+        "priority": 1,
+        "role": "主标题",
+        "semanticType": "title"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "承载模板核心结论或说明"
+        ],
+        "content": "第一步：输入想法",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-pst-bg-sem-key",
+        "priority": 2,
+        "role": "核心信息",
+        "semanticType": "subtitle"
+      },
+      {
+        "category": "container",
+        "constraints": [
+          "每页最多一个主视觉中心",
+          "不得遮挡标题"
+        ],
+        "content": "用三段式步骤说明方法路径和操作流程。",
+        "elementType": "shape",
+        "hierarchyLevel": 2,
+        "id": "uv1-pst-bg-sem-visual",
+        "priority": 3,
+        "role": "模板结构中心",
+        "semanticType": "card"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "第一步：输入想法",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-pst-bg-sem-p1",
+        "priority": 3,
+        "role": "要点 1",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "第二步：生成结构",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-pst-bg-sem-p2",
+        "priority": 4,
+        "role": "要点 2",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "第三步：导出演示",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-pst-bg-sem-p3",
+        "priority": 5,
+        "role": "要点 3",
+        "semanticType": "body"
+      }
+    ],
+    "elements": [
+      {
+        "id": "uv1-pst-bg-title",
+        "type": "text",
+        "role": "流程标题",
+        "content": "三步闭环",
+        "bounds": {
+          "x": 0.82,
+          "y": 0.62,
+          "width": 7.8,
+          "height": 0.62
+        },
+        "editable": true,
+        "hierarchyLevel": 1,
+        "semanticType": "title",
+        "zIndex": 40,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#103B3F",
+          "fontSize": 26,
+          "fontWeight": "bold",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      },
+      {
+        "id": "uv1-pst-bg-step1-card",
+        "type": "shape",
+        "role": "步骤卡片一",
+        "bounds": {
+          "x": 0.9,
+          "y": 2,
+          "width": 3.05,
+          "height": 2.35
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "card",
+        "zIndex": 10,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-pst-bg-step2-card",
+        "type": "shape",
+        "role": "步骤卡片二",
+        "bounds": {
+          "x": 4.05,
+          "y": 2,
+          "width": 3.05,
+          "height": 2.35
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "card",
+        "zIndex": 10,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-pst-bg-step3-card",
+        "type": "shape",
+        "role": "步骤卡片三",
+        "bounds": {
+          "x": 7.2,
+          "y": 2,
+          "width": 3.05,
+          "height": 2.35
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "card",
+        "zIndex": 10,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-pst-bg-step1",
+        "type": "text",
+        "role": "第一步",
+        "content": "01\n第一步：输入想法",
+        "bounds": {
+          "x": 1.2,
+          "y": 2.45,
+          "width": 2.45,
+          "height": 1.25
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "card",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "center",
+          "color": "#355052",
+          "fontSize": 15,
+          "fontWeight": "bold",
+          "lineHeight": 1.25,
+          "maxLines": 3
+        }
+      },
+      {
+        "id": "uv1-pst-bg-step2",
+        "type": "text",
+        "role": "第二步",
+        "content": "02\n第二步：生成结构",
+        "bounds": {
+          "x": 4.35,
+          "y": 2.45,
+          "width": 2.45,
+          "height": 1.25
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "card",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "center",
+          "color": "#355052",
+          "fontSize": 15,
+          "fontWeight": "bold",
+          "lineHeight": 1.25,
+          "maxLines": 3
+        }
+      },
+      {
+        "id": "uv1-pst-bg-step3",
+        "type": "text",
+        "role": "第三步",
+        "content": "03\n第三步：导出演示",
+        "bounds": {
+          "x": 7.5,
+          "y": 2.45,
+          "width": 2.45,
+          "height": 1.25
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "card",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "center",
+          "color": "#355052",
+          "fontSize": 15,
+          "fontWeight": "bold",
+          "lineHeight": 1.25,
+          "maxLines": 3
+        }
+      },
+      {
+        "id": "uv1-pst-bg-connector1",
+        "type": "shape",
+        "role": "连接线一",
+        "bounds": {
+          "x": 4.08,
+          "y": 3.12,
+          "width": 0.62,
+          "height": 0.1
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "accentShape",
+        "zIndex": 20,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-pst-bg-connector2",
+        "type": "shape",
+        "role": "连接线二",
+        "bounds": {
+          "x": 7.22,
+          "y": 3.12,
+          "width": 0.62,
+          "height": 0.1
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "accentShape",
+        "zIndex": 20,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      }
+    ],
+    "imageLayerRequests": [],
+    "canvas": {
+      "aspectRatio": "16:9",
+      "height": 7.5,
+      "safeMargin": 0.5,
+      "unit": "inch",
+      "width": 13.333
+    }
+  }
+}

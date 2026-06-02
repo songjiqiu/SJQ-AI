@@ -1,0 +1,542 @@
+{
+  "formatVersion": "ppt-template-import-v1",
+  "name": "左文右图 - AI 流程插画右",
+  "category": "left-text-right-image",
+  "description": "AI 科技感模板，适用于AI 培训。用右侧透明插画表达 AI 流程与能力闭环。",
+  "tags": [
+    "左文右图",
+    "AI 科技感",
+    "AI 培训"
+  ],
+  "sortOrder": 152,
+  "isEnabled": true,
+  "slide": {
+    "slideId": "uv1-ltri-ai",
+    "index": 1,
+    "content": {
+      "slideId": "uv1-ltri-ai",
+      "index": 1,
+      "title": "AI 流程插画右",
+      "subtitle": "左文右图 / AI 科技感",
+      "bodyPoints": [
+        "描述智能处理流程",
+        "右侧承载算法节点意象",
+        "强调自动化收益"
+      ],
+      "speakerGoal": "帮助管理员快速复用“AI 流程插画右”模板。",
+      "visualIntent": "用右侧透明插画表达 AI 流程与能力闭环。",
+      "coreStatement": "描述智能处理流程",
+      "narrativeRole": "argument",
+      "contentLayers": {
+        "primary": [
+          "描述智能处理流程"
+        ],
+        "supporting": [
+          "右侧承载算法节点意象",
+          "强调自动化收益"
+        ],
+        "supplementary": [
+          "适用场景：AI 培训",
+          "青绿琥珀科技风，使用节点、光标和数据面板表达智能感。"
+        ]
+      },
+      "slideTransition": {
+        "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
+        "toNext": "可继续扩展为同类型页面或相邻内容页。"
+      },
+      "explanationDepth": "supporting",
+      "sourceRequirement": {
+        "required": false,
+        "categories": [
+          "user-input"
+        ],
+        "note": "模板示例不强制注明外部来源。"
+      },
+      "adaptationRules": {
+        "splitWhen": "当模板内容超过 5 个模块时拆为多页模板。",
+        "splitCandidates": [
+          "描述智能处理流程",
+          "右侧承载算法节点意象",
+          "强调自动化收益"
+        ],
+        "mergeWhen": "当只保留一个模块时可与相邻模板合并。",
+        "mergeWith": "相邻模板页"
+      },
+      "audienceFocus": {
+        "lens": "business-conclusion",
+        "focus": "管理员关注模板是否清晰、稳定，并能快速替换为业务内容。"
+      },
+      "viewerObjective": {
+        "type": "understand",
+        "description": "看完本页后，用户应理解“AI 流程插画右”的适用场景和表达结构。"
+      },
+      "contentBoundary": {
+        "inScope": "只展示模板结构、占位内容、视觉意图和导入后的可替换区域。",
+        "outOfScope": [
+          "不展开真实业务内容",
+          "不引入外部数据",
+          "不使用第三方模板资产"
+        ]
+      }
+    },
+    "pageIntent": {
+      "audienceTakeaway": "描述智能处理流程",
+      "contentDensity": "medium",
+      "coreMessage": "描述智能处理流程",
+      "pageRole": "content",
+      "primaryGoal": "inform"
+    },
+    "contentHierarchy": {
+      "primaryMessage": "描述智能处理流程",
+      "levels": [
+        {
+          "label": "AI 流程插画右",
+          "level": 1,
+          "summary": "描述智能处理流程"
+        },
+        {
+          "label": "要点 1",
+          "level": 2,
+          "summary": "描述智能处理流程"
+        },
+        {
+          "label": "要点 2",
+          "level": 2,
+          "summary": "右侧承载算法节点意象"
+        },
+        {
+          "label": "要点 3",
+          "level": 2,
+          "summary": "强调自动化收益"
+        }
+      ],
+      "tiers": [
+        {
+          "items": [
+            {
+              "content": "AI 流程插画右",
+              "role": "主标题"
+            },
+            {
+              "content": "描述智能处理流程",
+              "role": "核心信息"
+            }
+          ],
+          "label": "一级信息",
+          "level": 1
+        },
+        {
+          "items": [
+            {
+              "content": "描述智能处理流程",
+              "role": "要点 1"
+            },
+            {
+              "content": "右侧承载算法节点意象",
+              "role": "要点 2"
+            },
+            {
+              "content": "强调自动化收益",
+              "role": "要点 3"
+            }
+          ],
+          "label": "二级信息",
+          "level": 2
+        },
+        {
+          "items": [
+            {
+              "content": "用右侧透明插画表达 AI 流程与能力闭环。",
+              "role": "版式说明"
+            },
+            {
+              "content": "导入后可在模板设计器中替换占位内容。",
+              "role": "使用说明"
+            }
+          ],
+          "label": "三级信息",
+          "level": 3
+        }
+      ]
+    },
+    "layoutSelection": {
+      "candidates": [
+        {
+          "fitReason": "left-text-right-image 匹配当前 左文右图 分类和 AI 科技感 风格。",
+          "layoutType": "left-text-right-image",
+          "risk": "风险较低，保持信息层级清晰。",
+          "score": 96
+        },
+        {
+          "fitReason": "left-image-right-text 匹配当前 左文右图 分类和 AI 科技感 风格。",
+          "layoutType": "left-image-right-text",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 88
+        },
+        {
+          "fitReason": "title-body-points 匹配当前 左文右图 分类和 AI 科技感 风格。",
+          "layoutType": "title-body-points",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 80
+        }
+      ],
+      "selectedLayoutType": "left-text-right-image",
+      "selectionReason": "固定选择 left-text-right-image，与通用模板分类保持一致。"
+    },
+    "constraints": {
+      "coreMessagePresent": true,
+      "densityLimit": "medium",
+      "maxHeroVisuals": 1,
+      "renderNotes": [
+        "主标题必须唯一并位于安全边距内。",
+        "核心表达区必须作为一级信息出现。",
+        "图片主体避开标题区，避免遮挡正文。"
+      ],
+      "safeMargin": {
+        "appliesTo": [
+          "主标题",
+          "核心信息",
+          "正文",
+          "图表标签"
+        ],
+        "unit": "inch",
+        "value": 0.5
+      },
+      "subjectAvoidsTitleArea": true,
+      "titleUnique": true
+    },
+    "designQualityScore": {
+      "dimensions": {
+        "contentDensity": {
+          "score": 92,
+          "summary": "信息密度与模板用途匹配。"
+        },
+        "expressionCompleteness": {
+          "score": 92,
+          "summary": "标题、核心信息和辅助内容完整。"
+        },
+        "informationHierarchy": {
+          "score": 94,
+          "summary": "主次层级清晰。"
+        },
+        "renderability": {
+          "score": 94,
+          "summary": "元素位于画布范围内。"
+        },
+        "visualConsistency": {
+          "score": 92,
+          "summary": "风格说明与页面结构一致。"
+        }
+      },
+      "issues": [],
+      "repairStatus": "not-needed",
+      "suggestions": [
+        "导入后按实际业务替换占位文本和图表内容。"
+      ],
+      "totalScore": 93
+    },
+    "expressionIntent": "用右侧透明插画表达 AI 流程与能力闭环。",
+    "designPlan": {
+      "expressionIntent": "用右侧透明插画表达 AI 流程与能力闭环。",
+      "layoutTemplate": "left-text-right-image",
+      "visualStrategy": "青绿琥珀科技风，使用节点、光标和数据面板表达智能感。 用右侧透明插画表达 AI 流程与能力闭环。",
+      "readingOrder": [
+        "uv1-ltri-ai-sem-title",
+        "uv1-ltri-ai-sem-key",
+        "uv1-ltri-ai-sem-visual",
+        "uv1-ltri-ai-sem-p1",
+        "uv1-ltri-ai-sem-p2",
+        "uv1-ltri-ai-sem-p3"
+      ]
+    },
+    "layoutDiagnostics": {
+      "density": 0.55,
+      "hasOverflow": false,
+      "needsUserConfirmation": false,
+      "overflowFixes": [],
+      "warnings": []
+    },
+    "semanticElements": [
+      {
+        "category": "text",
+        "constraints": [
+          "模板主标题，替换内容后仍保持最高层级"
+        ],
+        "content": "AI 流程插画右",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-ltri-ai-sem-title",
+        "priority": 1,
+        "role": "主标题",
+        "semanticType": "title"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "承载模板核心结论或说明"
+        ],
+        "content": "描述智能处理流程",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-ltri-ai-sem-key",
+        "priority": 2,
+        "role": "核心信息",
+        "semanticType": "subtitle"
+      },
+      {
+        "category": "visual",
+        "constraints": [
+          "每页最多一个主视觉中心",
+          "不得遮挡标题"
+        ],
+        "content": "用右侧透明插画表达 AI 流程与能力闭环。",
+        "elementType": "generatedImage",
+        "hierarchyLevel": 2,
+        "id": "uv1-ltri-ai-sem-visual",
+        "priority": 3,
+        "role": "模板主视觉",
+        "semanticType": "heroVisual"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "描述智能处理流程",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-ltri-ai-sem-p1",
+        "priority": 3,
+        "role": "要点 1",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "右侧承载算法节点意象",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-ltri-ai-sem-p2",
+        "priority": 4,
+        "role": "要点 2",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "强调自动化收益",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-ltri-ai-sem-p3",
+        "priority": 5,
+        "role": "要点 3",
+        "semanticType": "body"
+      }
+    ],
+    "elements": [
+      {
+        "id": "uv1-ltri-ai-title",
+        "type": "text",
+        "role": "流程插画标题",
+        "content": "AI 流程插画右",
+        "bounds": {
+          "x": 0.88,
+          "y": 0.82,
+          "width": 6.5,
+          "height": 0.7
+        },
+        "editable": true,
+        "hierarchyLevel": 1,
+        "semanticType": "title",
+        "zIndex": 40,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#E6FFFB",
+          "fontSize": 27,
+          "fontWeight": "bold",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      },
+      {
+        "id": "uv1-ltri-ai-step1",
+        "type": "text",
+        "role": "流程一",
+        "content": "描述智能处理流程",
+        "bounds": {
+          "x": 0.95,
+          "y": 2,
+          "width": 2.1,
+          "height": 0.58
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "card",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#A7F3D0",
+          "fontSize": 15,
+          "fontWeight": "medium",
+          "lineHeight": 1.25,
+          "maxLines": 6
+        }
+      },
+      {
+        "id": "uv1-ltri-ai-arrow1",
+        "type": "shape",
+        "role": "流程连接一",
+        "bounds": {
+          "x": 3.22,
+          "y": 2.24,
+          "width": 1.35,
+          "height": 0.08
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "accentShape",
+        "zIndex": 16,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-ltri-ai-step2",
+        "type": "text",
+        "role": "流程二",
+        "content": "右侧承载算法节点意象",
+        "bounds": {
+          "x": 4.8,
+          "y": 2,
+          "width": 2.1,
+          "height": 0.58
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "card",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#A7F3D0",
+          "fontSize": 15,
+          "fontWeight": "medium",
+          "lineHeight": 1.25,
+          "maxLines": 6
+        }
+      },
+      {
+        "id": "uv1-ltri-ai-arrow2",
+        "type": "shape",
+        "role": "流程连接二",
+        "bounds": {
+          "x": 6.98,
+          "y": 2.24,
+          "width": 0.82,
+          "height": 0.08
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "accentShape",
+        "zIndex": 16,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-ltri-ai-hero",
+        "type": "generatedImage",
+        "role": "主视觉图层",
+        "bounds": {
+          "x": 8.1,
+          "y": 1.25,
+          "width": 3.55,
+          "height": 3.55
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "imageRequestId": "uv1-ltri-ai-hero-req",
+        "semanticType": "heroVisual",
+        "zIndex": 20,
+        "styleNotes": "透明主视觉请求占位，主体不得压住标题区。",
+        "requiresImageGeneration": true
+      },
+      {
+        "id": "uv1-ltri-ai-body",
+        "type": "text",
+        "role": "流程收益",
+        "content": "强调自动化收益",
+        "bounds": {
+          "x": 0.96,
+          "y": 3.82,
+          "width": 5.2,
+          "height": 0.72
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "body",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#A7F3D0",
+          "fontSize": 15,
+          "fontWeight": "regular",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      },
+      {
+        "id": "uv1-ltri-ai-panel",
+        "type": "shape",
+        "role": "右侧科技面板",
+        "bounds": {
+          "x": 7.62,
+          "y": 0.94,
+          "width": 4.45,
+          "height": 4.85
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "card",
+        "zIndex": 8,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      }
+    ],
+    "imageLayerRequests": [
+      {
+        "id": "uv1-ltri-ai-hero-req",
+        "elementId": "uv1-ltri-ai-hero",
+        "purpose": "生成模板主视觉",
+        "imageType": "illustration",
+        "keywords": [
+          "PPT模板",
+          "AI 流程插画右",
+          "AI 科技感"
+        ],
+        "prompt": "为 PPT 模板“AI 流程插画右”生成透明背景主视觉插画。风格：青绿琥珀科技风，使用节点、光标和数据面板表达智能感。。画面简洁、专业、无文字、适合演示页面分层。",
+        "negativePrompt": "不要文字、不要水印、不要复杂背景、不要低清晰度",
+        "avoid": "不要文字、不要水印、不要复杂背景、不要低清晰度",
+        "transparentBackground": true,
+        "aspectRatio": "16:9",
+        "visualNotes": "青绿琥珀科技风，使用节点、光标和数据面板表达智能感。"
+      }
+    ],
+    "canvas": {
+      "aspectRatio": "16:9",
+      "height": 7.5,
+      "safeMargin": 0.5,
+      "unit": "inch",
+      "width": 13.333
+    }
+  }
+}

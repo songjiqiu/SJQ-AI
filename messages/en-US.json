@@ -88,6 +88,42 @@
       }
     }
   },
+  "adminTemplateWorkspace": {
+    "navAria": "Template workspace navigation",
+    "actions": {
+      "back": "Back to Admin Console"
+    },
+    "nav": {
+      "templates": {
+        "title": "Template Management",
+        "body": "Manage page template JSON"
+      },
+      "icons": {
+        "title": "Icon Management",
+        "body": "Manage semantic icon assets"
+      },
+      "shapes": {
+        "title": "Shape Management",
+        "body": "Manage containers and accent shapes"
+      },
+      "lines": {
+        "title": "Line Management",
+        "body": "Manage connectors and dividers"
+      },
+      "textStyles": {
+        "title": "Text Style Management",
+        "body": "Manage text hierarchy styles"
+      },
+      "containers": {
+        "title": "Container Management",
+        "body": "Manage cards and content areas"
+      },
+      "navigation": {
+        "title": "Navigation Management",
+        "body": "Manage TOC, pages, and progress"
+      }
+    }
+  },
   "settings": {
     "title": "Experience Settings",
     "tabs": {
@@ -418,6 +454,8 @@
       "backToTemplates": "Back to Templates",
       "refresh": "Refresh",
       "downloadJsonFormat": "Download JSON Format",
+      "importUniversalTemplates": "Import Universal Templates",
+      "importingUniversalTemplates": "Importing",
       "newTemplate": "New Template",
       "createFromDefault": "Create from Default Pattern",
       "importJson": "Import from JSON",
@@ -440,11 +478,14 @@
     },
     "confirm": {
       "deleteTitle": "Confirm Template Deletion",
-      "delete": "Delete template \"{name}\"? This cannot be undone."
+      "delete": "Delete template \"{name}\"? This cannot be undone.",
+      "importUniversalTemplatesTitle": "Import Universal Templates v1",
+      "importUniversalTemplates": "Before importing, all existing templates in the 15 fixed categories will be deleted, then 45 universal templates will be created. This replaces the current fixed-category template library. Continue?"
     },
     "toast": {
       "created": "Template created",
       "imported": "JSON import succeeded",
+      "universalImported": "Universal templates imported: deleted {deleted} old templates and created {created} templates",
       "saved": "Template saved",
       "deleted": "Template deleted"
     },
@@ -587,6 +628,189 @@
       "matrix": "Matrix",
       "deep-space": "Deep Space",
       "morning-mist": "Morning Mist"
+    }
+  },
+  "adminTemplateAssets": {
+    "listAria": "Semantic element asset list",
+    "searchPlaceholder": "Search names, descriptions, sets, semantics, keywords, page types, styles, or backgrounds",
+    "loading": "Loading assets",
+    "empty": "No assets in this category yet",
+    "count": "{count} assets",
+    "uncategorized": "Uncategorized",
+    "icons": {
+      "title": "Icon Management",
+      "subtitle": "Manage reusable icon assets, including line, filled, duotone, and monochrome configurations for later semantic element generation.",
+      "shortName": "Icon",
+      "defaultName": "Line Concept Icon",
+      "defaultDescription": "A line icon for ideas, features, metrics, or process nodes."
+    },
+    "shapes": {
+      "title": "Shape Management",
+      "subtitle": "Manage basic shape assets such as cards, containers, badges, and background blocks for page structure and visual emphasis.",
+      "shortName": "Shape",
+      "defaultName": "Rounded Info Container",
+      "defaultDescription": "A rounded container shape for body copy, metrics, or comparison content."
+    },
+    "lines": {
+      "title": "Line Management",
+      "subtitle": "Manage connector, arrow, timeline, and divider assets for processes, relationships, and page separation.",
+      "shortName": "Line",
+      "defaultName": "Rounded Arrow Connector",
+      "defaultDescription": "An arrow line for step flow, relationship direction, or connecting page regions."
+    },
+    "status": {
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "actions": {
+      "refresh": "Refresh",
+      "new": "New Asset",
+      "edit": "Edit",
+      "enable": "Enable",
+      "disable": "Disable",
+      "delete": "Delete",
+      "clearFilters": "Clear Filters",
+      "cancel": "Cancel",
+      "save": "Save Asset",
+      "saving": "Saving",
+      "import": "Batch Import",
+      "importing": "Importing"
+    },
+    "fields": {
+      "name": "Asset Name",
+      "description": "Description",
+      "setKind": "Set Type",
+      "setKey": "Set Key",
+      "setName": "Set Name",
+      "primaryCategory": "Primary Category",
+      "secondaryCategory": "Secondary Semantic",
+      "variant": "Asset Variant",
+      "keywords": "Keywords (one per line)",
+      "synonyms": "Synonyms (one per line)",
+      "tags": "Tags (one per line)",
+      "semanticTags": "Semantic Tags (one per line)",
+      "pageTypes": "Page Types (one per line)",
+      "usageScenarios": "Usage Scenarios (one per line)",
+      "styleTags": "Style Tags (one per line)",
+      "colorTags": "Color Tags (one per line)",
+      "backgroundModes": "Background Modes (one per line)",
+      "style": "Style JSON",
+      "resource": "Resource File / Params JSON",
+      "preview": "Preview JSON",
+      "sortOrder": "Sort Order",
+      "reviewStatus": "Review Status",
+      "source": "Source",
+      "aiModifyPermissions": "AI Modification Permissions",
+      "isEnabled": "Enable Asset"
+    },
+    "filters": {
+      "primaryCategory": "Primary Category",
+      "secondaryCategory": "Secondary Semantic",
+      "variant": "Asset Variant",
+      "setKind": "Set Type",
+      "pageType": "Page Type",
+      "styleTag": "Style Tag",
+      "backgroundMode": "Background Mode",
+      "reviewStatus": "Review Status",
+      "allPrimary": "All Primary Categories",
+      "allSecondary": "All Secondary Semantics",
+      "allVariants": "All Asset Variants",
+      "allSetKinds": "All Sets",
+      "allBackgroundModes": "All Backgrounds",
+      "allReviewStatuses": "All Review Statuses",
+      "uncategorized": "Uncategorized"
+    },
+    "form": {
+      "createTitle": "New Semantic Asset",
+      "editTitle": "Edit Semantic Asset",
+      "description": "Manage the name, tags, usage scenarios, and JSON configuration. Style and preview JSON must be objects.",
+      "previewTitle": "Preview",
+      "sections": {
+        "basicTitle": "Basic Info",
+        "basicSummary": "Manage the set, categories, name, status, and description.",
+        "discoveryTitle": "Discovery Tags",
+        "discoverySummary": "Configure keywords, semantics, page types, and style tags used by AI retrieval.",
+        "jsonTitle": "JSON Configuration",
+        "jsonSummary": "Edit style, resource parameters, and preview configuration. All three must be JSON objects.",
+        "permissionsTitle": "AI Modification Permissions",
+        "permissionsSummary": "Control which visual properties AI may adjust when reusing the asset."
+      },
+      "previewMeta": {
+        "set": "Set",
+        "review": "Review",
+        "source": "Source"
+      }
+    },
+    "confirm": {
+      "deleteTitle": "Confirm Asset Deletion",
+      "delete": "Delete asset \"{name}\"? This cannot be undone."
+    },
+    "toast": {
+      "created": "Asset created",
+      "saved": "Asset saved",
+      "deleted": "Asset deleted",
+      "imported": "Imported {count} assets"
+    },
+    "errors": {
+      "unauthorized": "Your session has expired. Please log in again.",
+      "forbidden": "Only administrators can manage semantic assets.",
+      "accountDisabled": "This account has been disabled.",
+      "validation": "The asset is invalid. Check required fields, tag counts, and JSON objects.",
+      "invalidJson": "The style JSON, resource JSON, or preview JSON is invalid. Enter JSON objects.",
+      "duplicate": "An asset with this name already exists for the same type. Use another name.",
+      "notFound": "The asset does not exist or has been deleted.",
+      "generic": "Semantic asset management failed. Please try again later.",
+      "invalidImportJson": "The import JSON is invalid. Provide an asset array or an object with an assets array."
+    },
+    "defaultSetName": "Universal Set",
+    "setMeta": "{type} · {name}",
+    "textStyles": {
+      "title": "Text Style Management",
+      "subtitle": "Manage reusable text hierarchy styles such as titles, subtitles, body copy, bullets, quotes, tags, headers, footers, and number emphasis.",
+      "shortName": "Text Style",
+      "defaultName": "Title Text Style",
+      "defaultDescription": "A reusable text style for title, page heading, or body hierarchy."
+    },
+    "containers": {
+      "title": "Container Management",
+      "subtitle": "Manage cards, info boxes, chart areas, image areas, column containers, list containers, placeholders, and conclusion boxes.",
+      "shortName": "Container",
+      "defaultName": "Info Card Container",
+      "defaultDescription": "A reusable container for body copy, images, charts, or conclusion content."
+    },
+    "navigation": {
+      "title": "Navigation Management",
+      "subtitle": "Manage table of contents, section titles, page numbers, progress bars, step numbers, and current-position indicators.",
+      "shortName": "Navigation",
+      "defaultName": "Footer Progress Navigation",
+      "defaultDescription": "A navigation component for page numbers, sections, or progress state at a fixed position."
+    },
+    "setKinds": {
+      "COMMON": "Universal Set",
+      "TEMPLATE": "Template Set"
+    },
+    "reviewStatus": {
+      "DRAFT": "Draft",
+      "PENDING_REVIEW": "Pending Review",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    },
+    "source": {
+      "MANUAL": "Manual",
+      "AI_GENERATED": "AI Generated"
+    },
+    "backgroundModes": {
+      "light": "Light Background",
+      "dark": "Dark Background",
+      "transparent": "Transparent Background"
+    },
+    "permissions": {
+      "allowRecolor": "Allow AI recolor",
+      "allowResize": "Allow AI resize",
+      "allowMove": "Allow AI reposition",
+      "allowStretch": "Allow AI stretch",
+      "allowAutoLayout": "Allow AI auto layout",
+      "allowTextShrink": "Allow AI text shrink"
     }
   },
   "workbench": {

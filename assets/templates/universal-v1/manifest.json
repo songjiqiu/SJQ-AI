@@ -1,0 +1,413 @@
+{
+  "formatVersion": "ppt-template-manifest-v1",
+  "packageId": "universal-v1",
+  "packageName": "通用 PPT 模板包 v1",
+  "templateCount": 45,
+  "templates": [
+    {
+      "category": "chapter",
+      "file": "assets/templates/universal-v1/chapter/chapter-business-general.json",
+      "id": "uv1-ch-bg",
+      "name": "章节页 - 章节编号分栏",
+      "sortOrder": 101,
+      "style": "business-general",
+      "styleName": "中国商务通用"
+    },
+    {
+      "category": "chapter",
+      "file": "assets/templates/universal-v1/chapter/chapter-ai-tech.json",
+      "id": "uv1-ch-ai",
+      "name": "章节页 - 星图坐标章节",
+      "sortOrder": 102,
+      "style": "ai-tech",
+      "styleName": "AI 科技感"
+    },
+    {
+      "category": "chapter",
+      "file": "assets/templates/universal-v1/chapter/chapter-consulting-minimal.json",
+      "id": "uv1-ch-cm",
+      "name": "章节页 - 大留白分割章",
+      "sortOrder": 103,
+      "style": "consulting-minimal",
+      "styleName": "极简咨询风"
+    },
+    {
+      "category": "cover-title",
+      "file": "assets/templates/universal-v1/cover-title/cover-title-business-general.json",
+      "id": "uv1-cov-bg",
+      "name": "封面大标题 - 年度汇报封面",
+      "sortOrder": 111,
+      "style": "business-general",
+      "styleName": "中国商务通用"
+    },
+    {
+      "category": "cover-title",
+      "file": "assets/templates/universal-v1/cover-title/cover-title-ai-tech.json",
+      "id": "uv1-cov-ai",
+      "name": "封面大标题 - 智能中枢封面",
+      "sortOrder": 112,
+      "style": "ai-tech",
+      "styleName": "AI 科技感"
+    },
+    {
+      "category": "cover-title",
+      "file": "assets/templates/universal-v1/cover-title/cover-title-consulting-minimal.json",
+      "id": "uv1-cov-cm",
+      "name": "封面大标题 - 一句话封面",
+      "sortOrder": 113,
+      "style": "consulting-minimal",
+      "styleName": "极简咨询风"
+    },
+    {
+      "category": "title-body-points",
+      "file": "assets/templates/universal-v1/title-body-points/title-body-points-business-general.json",
+      "id": "uv1-tbp-bg",
+      "name": "标题 + 正文/要点 - 三卡要点",
+      "sortOrder": 121,
+      "style": "business-general",
+      "styleName": "中国商务通用"
+    },
+    {
+      "category": "title-body-points",
+      "file": "assets/templates/universal-v1/title-body-points/title-body-points-ai-tech.json",
+      "id": "uv1-tbp-ai",
+      "name": "标题 + 正文/要点 - 发光节点要点",
+      "sortOrder": 122,
+      "style": "ai-tech",
+      "styleName": "AI 科技感"
+    },
+    {
+      "category": "title-body-points",
+      "file": "assets/templates/universal-v1/title-body-points/title-body-points-consulting-minimal.json",
+      "id": "uv1-tbp-cm",
+      "name": "标题 + 正文/要点 - 结论 + 证据条",
+      "sortOrder": 123,
+      "style": "consulting-minimal",
+      "styleName": "极简咨询风"
+    },
+    {
+      "category": "big-image-background",
+      "file": "assets/templates/universal-v1/big-image-background/big-image-background-business-general.json",
+      "id": "uv1-bib-bg",
+      "name": "大图背景 - 半遮罩场景页",
+      "sortOrder": 131,
+      "style": "business-general",
+      "styleName": "中国商务通用"
+    },
+    {
+      "category": "big-image-background",
+      "file": "assets/templates/universal-v1/big-image-background/big-image-background-ai-tech.json",
+      "id": "uv1-bib-ai",
+      "name": "大图背景 - 数据宇宙背景",
+      "sortOrder": 132,
+      "style": "ai-tech",
+      "styleName": "AI 科技感"
+    },
+    {
+      "category": "big-image-background",
+      "file": "assets/templates/universal-v1/big-image-background/big-image-background-consulting-minimal.json",
+      "id": "uv1-bib-cm",
+      "name": "大图背景 - 黑白大图标题",
+      "sortOrder": 133,
+      "style": "consulting-minimal",
+      "styleName": "极简咨询风"
+    },
+    {
+      "category": "left-image-right-text",
+      "file": "assets/templates/universal-v1/left-image-right-text/left-image-right-text-business-general.json",
+      "id": "uv1-lirt-bg",
+      "name": "左图右文 - 案例图左文右",
+      "sortOrder": 141,
+      "style": "business-general",
+      "styleName": "中国商务通用"
+    },
+    {
+      "category": "left-image-right-text",
+      "file": "assets/templates/universal-v1/left-image-right-text/left-image-right-text-ai-tech.json",
+      "id": "uv1-lirt-ai",
+      "name": "左图右文 - 产品视觉左文右",
+      "sortOrder": 142,
+      "style": "ai-tech",
+      "styleName": "AI 科技感"
+    },
+    {
+      "category": "left-image-right-text",
+      "file": "assets/templates/universal-v1/left-image-right-text/left-image-right-text-consulting-minimal.json",
+      "id": "uv1-lirt-cm",
+      "name": "左图右文 - 报告图左文右",
+      "sortOrder": 143,
+      "style": "consulting-minimal",
+      "styleName": "极简咨询风"
+    },
+    {
+      "category": "left-text-right-image",
+      "file": "assets/templates/universal-v1/left-text-right-image/left-text-right-image-business-general.json",
+      "id": "uv1-ltri-bg",
+      "name": "左文右图 - 观点先行右图",
+      "sortOrder": 151,
+      "style": "business-general",
+      "styleName": "中国商务通用"
+    },
+    {
+      "category": "left-text-right-image",
+      "file": "assets/templates/universal-v1/left-text-right-image/left-text-right-image-ai-tech.json",
+      "id": "uv1-ltri-ai",
+      "name": "左文右图 - AI 流程插画右",
+      "sortOrder": 152,
+      "style": "ai-tech",
+      "styleName": "AI 科技感"
+    },
+    {
+      "category": "left-text-right-image",
+      "file": "assets/templates/universal-v1/left-text-right-image/left-text-right-image-consulting-minimal.json",
+      "id": "uv1-ltri-cm",
+      "name": "左文右图 - 证据图右置",
+      "sortOrder": 153,
+      "style": "consulting-minimal",
+      "styleName": "极简咨询风"
+    },
+    {
+      "category": "left-text-right-chart",
+      "file": "assets/templates/universal-v1/left-text-right-chart/left-text-right-chart-business-general.json",
+      "id": "uv1-ltrc-bg",
+      "name": "左文右图表 - 结论 + 柱线图",
+      "sortOrder": 161,
+      "style": "business-general",
+      "styleName": "中国商务通用"
+    },
+    {
+      "category": "left-text-right-chart",
+      "file": "assets/templates/universal-v1/left-text-right-chart/left-text-right-chart-ai-tech.json",
+      "id": "uv1-ltrc-ai",
+      "name": "左文右图表 - 模型指标面板",
+      "sortOrder": 162,
+      "style": "ai-tech",
+      "styleName": "AI 科技感"
+    },
+    {
+      "category": "left-text-right-chart",
+      "file": "assets/templates/universal-v1/left-text-right-chart/left-text-right-chart-consulting-minimal.json",
+      "id": "uv1-ltrc-cm",
+      "name": "左文右图表 - 咨询图表拆分",
+      "sortOrder": 163,
+      "style": "consulting-minimal",
+      "styleName": "极简咨询风"
+    },
+    {
+      "category": "big-chart",
+      "file": "assets/templates/universal-v1/big-chart/big-chart-business-general.json",
+      "id": "uv1-bch-bg",
+      "name": "大图表 - 单图表结论页",
+      "sortOrder": 171,
+      "style": "business-general",
+      "styleName": "中国商务通用"
+    },
+    {
+      "category": "big-chart",
+      "file": "assets/templates/universal-v1/big-chart/big-chart-ai-tech.json",
+      "id": "uv1-bch-ai",
+      "name": "大图表 - 数据驾驶舱",
+      "sortOrder": 172,
+      "style": "ai-tech",
+      "styleName": "AI 科技感"
+    },
+    {
+      "category": "big-chart",
+      "file": "assets/templates/universal-v1/big-chart/big-chart-consulting-minimal.json",
+      "id": "uv1-bch-cm",
+      "name": "大图表 - 全宽趋势图",
+      "sortOrder": 173,
+      "style": "consulting-minimal",
+      "styleName": "极简咨询风"
+    },
+    {
+      "category": "two-column-compare",
+      "file": "assets/templates/universal-v1/two-column-compare/two-column-compare-business-general.json",
+      "id": "uv1-tcc-bg",
+      "name": "双栏对比 - 现状 / 目标",
+      "sortOrder": 181,
+      "style": "business-general",
+      "styleName": "中国商务通用"
+    },
+    {
+      "category": "two-column-compare",
+      "file": "assets/templates/universal-v1/two-column-compare/two-column-compare-ai-tech.json",
+      "id": "uv1-tcc-ai",
+      "name": "双栏对比 - 人工 / 智能",
+      "sortOrder": 182,
+      "style": "ai-tech",
+      "styleName": "AI 科技感"
+    },
+    {
+      "category": "two-column-compare",
+      "file": "assets/templates/universal-v1/two-column-compare/two-column-compare-consulting-minimal.json",
+      "id": "uv1-tcc-cm",
+      "name": "双栏对比 - 方案 A / B",
+      "sortOrder": 183,
+      "style": "consulting-minimal",
+      "styleName": "极简咨询风"
+    },
+    {
+      "category": "quote",
+      "file": "assets/templates/universal-v1/quote/quote-business-general.json",
+      "id": "uv1-quo-bg",
+      "name": "引用/金句页 - 领导/客户金句",
+      "sortOrder": 191,
+      "style": "business-general",
+      "styleName": "中国商务通用"
+    },
+    {
+      "category": "quote",
+      "file": "assets/templates/universal-v1/quote/quote-ai-tech.json",
+      "id": "uv1-quo-ai",
+      "name": "引用/金句页 - 核心洞察光标",
+      "sortOrder": 192,
+      "style": "ai-tech",
+      "styleName": "AI 科技感"
+    },
+    {
+      "category": "quote",
+      "file": "assets/templates/universal-v1/quote/quote-consulting-minimal.json",
+      "id": "uv1-quo-cm",
+      "name": "引用/金句页 - 黑白大字引用",
+      "sortOrder": 193,
+      "style": "consulting-minimal",
+      "styleName": "极简咨询风"
+    },
+    {
+      "category": "time-axis",
+      "file": "assets/templates/universal-v1/time-axis/time-axis-business-general.json",
+      "id": "uv1-tax-bg",
+      "name": "时间轴 - 里程碑横轴",
+      "sortOrder": 201,
+      "style": "business-general",
+      "styleName": "中国商务通用"
+    },
+    {
+      "category": "time-axis",
+      "file": "assets/templates/universal-v1/time-axis/time-axis-ai-tech.json",
+      "id": "uv1-tax-ai",
+      "name": "时间轴 - 技术演进轨道",
+      "sortOrder": 202,
+      "style": "ai-tech",
+      "styleName": "AI 科技感"
+    },
+    {
+      "category": "time-axis",
+      "file": "assets/templates/universal-v1/time-axis/time-axis-consulting-minimal.json",
+      "id": "uv1-tax-cm",
+      "name": "时间轴 - 咨询路线图",
+      "sortOrder": 203,
+      "style": "consulting-minimal",
+      "styleName": "极简咨询风"
+    },
+    {
+      "category": "process-steps",
+      "file": "assets/templates/universal-v1/process-steps/process-steps-business-general.json",
+      "id": "uv1-pst-bg",
+      "name": "流程/步骤 - 三步闭环",
+      "sortOrder": 211,
+      "style": "business-general",
+      "styleName": "中国商务通用"
+    },
+    {
+      "category": "process-steps",
+      "file": "assets/templates/universal-v1/process-steps/process-steps-ai-tech.json",
+      "id": "uv1-pst-ai",
+      "name": "流程/步骤 - 智能生成流水线",
+      "sortOrder": 212,
+      "style": "ai-tech",
+      "styleName": "AI 科技感"
+    },
+    {
+      "category": "process-steps",
+      "file": "assets/templates/universal-v1/process-steps/process-steps-consulting-minimal.json",
+      "id": "uv1-pst-cm",
+      "name": "流程/步骤 - 编号步骤",
+      "sortOrder": 213,
+      "style": "consulting-minimal",
+      "styleName": "极简咨询风"
+    },
+    {
+      "category": "key-metrics",
+      "file": "assets/templates/universal-v1/key-metrics/key-metrics-business-general.json",
+      "id": "uv1-kmt-bg",
+      "name": "关键指标页 - 大数字 + 解释",
+      "sortOrder": 221,
+      "style": "business-general",
+      "styleName": "中国商务通用"
+    },
+    {
+      "category": "key-metrics",
+      "file": "assets/templates/universal-v1/key-metrics/key-metrics-ai-tech.json",
+      "id": "uv1-kmt-ai",
+      "name": "关键指标页 - 指标仪表盘",
+      "sortOrder": 222,
+      "style": "ai-tech",
+      "styleName": "AI 科技感"
+    },
+    {
+      "category": "key-metrics",
+      "file": "assets/templates/universal-v1/key-metrics/key-metrics-consulting-minimal.json",
+      "id": "uv1-kmt-cm",
+      "name": "关键指标页 - KPI 结论页",
+      "sortOrder": 223,
+      "style": "consulting-minimal",
+      "styleName": "极简咨询风"
+    },
+    {
+      "category": "quadrant-matrix",
+      "file": "assets/templates/universal-v1/quadrant-matrix/quadrant-matrix-business-general.json",
+      "id": "uv1-qmx-bg",
+      "name": "四象限/矩阵 - 优先级矩阵",
+      "sortOrder": 231,
+      "style": "business-general",
+      "styleName": "中国商务通用"
+    },
+    {
+      "category": "quadrant-matrix",
+      "file": "assets/templates/universal-v1/quadrant-matrix/quadrant-matrix-ai-tech.json",
+      "id": "uv1-qmx-ai",
+      "name": "四象限/矩阵 - 能力/价值象限",
+      "sortOrder": 232,
+      "style": "ai-tech",
+      "styleName": "AI 科技感"
+    },
+    {
+      "category": "quadrant-matrix",
+      "file": "assets/templates/universal-v1/quadrant-matrix/quadrant-matrix-consulting-minimal.json",
+      "id": "uv1-qmx-cm",
+      "name": "四象限/矩阵 - 咨询 2x2",
+      "sortOrder": 233,
+      "style": "consulting-minimal",
+      "styleName": "极简咨询风"
+    },
+    {
+      "category": "ending",
+      "file": "assets/templates/universal-v1/ending/ending-business-general.json",
+      "id": "uv1-end-bg",
+      "name": "结束页 - 行动号召",
+      "sortOrder": 241,
+      "style": "business-general",
+      "styleName": "中国商务通用"
+    },
+    {
+      "category": "ending",
+      "file": "assets/templates/universal-v1/ending/ending-ai-tech.json",
+      "id": "uv1-end-ai",
+      "name": "结束页 - 下一步智能协作",
+      "sortOrder": 242,
+      "style": "ai-tech",
+      "styleName": "AI 科技感"
+    },
+    {
+      "category": "ending",
+      "file": "assets/templates/universal-v1/ending/ending-consulting-minimal.json",
+      "id": "uv1-end-cm",
+      "name": "结束页 - 极简谢谢",
+      "sortOrder": 243,
+      "style": "consulting-minimal",
+      "styleName": "极简咨询风"
+    }
+  ]
+}

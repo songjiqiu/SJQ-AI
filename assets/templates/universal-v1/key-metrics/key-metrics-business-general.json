@@ -1,0 +1,437 @@
+{
+  "formatVersion": "ppt-template-import-v1",
+  "name": "关键指标页 - 大数字 + 解释",
+  "category": "key-metrics",
+  "description": "中国商务通用模板，适用于经营复盘。用一个大数字形成强记忆点并解释行动含义。",
+  "tags": [
+    "关键指标页",
+    "中国商务通用",
+    "经营复盘"
+  ],
+  "sortOrder": 221,
+  "isEnabled": true,
+  "slide": {
+    "slideId": "uv1-kmt-bg",
+    "index": 1,
+    "content": {
+      "slideId": "uv1-kmt-bg",
+      "index": 1,
+      "title": "大数字 + 解释",
+      "subtitle": "关键指标页 / 中国商务通用",
+      "bodyPoints": [
+        "86% 关键指标承载结论",
+        "补充数字背后的业务含义"
+      ],
+      "speakerGoal": "帮助管理员快速复用“大数字 + 解释”模板。",
+      "visualIntent": "用一个大数字形成强记忆点并解释行动含义。",
+      "coreStatement": "86% 关键指标承载结论",
+      "narrativeRole": "argument",
+      "contentLayers": {
+        "primary": [
+          "86% 关键指标承载结论"
+        ],
+        "supporting": [
+          "补充数字背后的业务含义"
+        ],
+        "supplementary": [
+          "适用场景：经营复盘",
+          "浅底蓝绿商务风，强调清晰、稳定和可复用。"
+        ]
+      },
+      "slideTransition": {
+        "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
+        "toNext": "可继续扩展为同类型页面或相邻内容页。"
+      },
+      "explanationDepth": "supporting",
+      "sourceRequirement": {
+        "required": false,
+        "categories": [
+          "user-input"
+        ],
+        "note": "模板示例不强制注明外部来源。"
+      },
+      "adaptationRules": {
+        "splitWhen": "当模板内容超过 5 个模块时拆为多页模板。",
+        "splitCandidates": [
+          "86% 关键指标承载结论",
+          "补充数字背后的业务含义"
+        ],
+        "mergeWhen": "当只保留一个模块时可与相邻模板合并。",
+        "mergeWith": "相邻模板页"
+      },
+      "audienceFocus": {
+        "lens": "business-conclusion",
+        "focus": "管理员关注模板是否清晰、稳定，并能快速替换为业务内容。"
+      },
+      "viewerObjective": {
+        "type": "understand",
+        "description": "看完本页后，用户应理解“大数字 + 解释”的适用场景和表达结构。"
+      },
+      "contentBoundary": {
+        "inScope": "只展示模板结构、占位内容、视觉意图和导入后的可替换区域。",
+        "outOfScope": [
+          "不展开真实业务内容",
+          "不引入外部数据",
+          "不使用第三方模板资产"
+        ]
+      }
+    },
+    "pageIntent": {
+      "audienceTakeaway": "86% 关键指标承载结论",
+      "contentDensity": "medium",
+      "coreMessage": "86% 关键指标承载结论",
+      "pageRole": "data",
+      "primaryGoal": "explain"
+    },
+    "contentHierarchy": {
+      "primaryMessage": "86% 关键指标承载结论",
+      "levels": [
+        {
+          "label": "大数字 + 解释",
+          "level": 1,
+          "summary": "86% 关键指标承载结论"
+        },
+        {
+          "label": "要点 1",
+          "level": 2,
+          "summary": "86% 关键指标承载结论"
+        },
+        {
+          "label": "要点 2",
+          "level": 2,
+          "summary": "补充数字背后的业务含义"
+        }
+      ],
+      "tiers": [
+        {
+          "items": [
+            {
+              "content": "大数字 + 解释",
+              "role": "主标题"
+            },
+            {
+              "content": "86% 关键指标承载结论",
+              "role": "核心信息"
+            }
+          ],
+          "label": "一级信息",
+          "level": 1
+        },
+        {
+          "items": [
+            {
+              "content": "86% 关键指标承载结论",
+              "role": "要点 1"
+            },
+            {
+              "content": "补充数字背后的业务含义",
+              "role": "要点 2"
+            }
+          ],
+          "label": "二级信息",
+          "level": 2
+        },
+        {
+          "items": [
+            {
+              "content": "用一个大数字形成强记忆点并解释行动含义。",
+              "role": "版式说明"
+            },
+            {
+              "content": "导入后可在模板设计器中替换占位内容。",
+              "role": "使用说明"
+            }
+          ],
+          "label": "三级信息",
+          "level": 3
+        }
+      ]
+    },
+    "layoutSelection": {
+      "candidates": [
+        {
+          "fitReason": "key-metrics 匹配当前 关键指标页 分类和 中国商务通用 风格。",
+          "layoutType": "key-metrics",
+          "risk": "风险较低，保持信息层级清晰。",
+          "score": 96
+        },
+        {
+          "fitReason": "big-chart 匹配当前 关键指标页 分类和 中国商务通用 风格。",
+          "layoutType": "big-chart",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 88
+        },
+        {
+          "fitReason": "left-text-right-chart 匹配当前 关键指标页 分类和 中国商务通用 风格。",
+          "layoutType": "left-text-right-chart",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 80
+        }
+      ],
+      "selectedLayoutType": "key-metrics",
+      "selectionReason": "固定选择 key-metrics，与通用模板分类保持一致。"
+    },
+    "constraints": {
+      "coreMessagePresent": true,
+      "densityLimit": "medium",
+      "maxHeroVisuals": 1,
+      "renderNotes": [
+        "主标题必须唯一并位于安全边距内。",
+        "核心表达区必须作为一级信息出现。",
+        "形状和图表占位不得压住正文。"
+      ],
+      "safeMargin": {
+        "appliesTo": [
+          "主标题",
+          "核心信息",
+          "正文",
+          "图表标签"
+        ],
+        "unit": "inch",
+        "value": 0.5
+      },
+      "subjectAvoidsTitleArea": true,
+      "titleUnique": true
+    },
+    "designQualityScore": {
+      "dimensions": {
+        "contentDensity": {
+          "score": 92,
+          "summary": "信息密度与模板用途匹配。"
+        },
+        "expressionCompleteness": {
+          "score": 92,
+          "summary": "标题、核心信息和辅助内容完整。"
+        },
+        "informationHierarchy": {
+          "score": 94,
+          "summary": "主次层级清晰。"
+        },
+        "renderability": {
+          "score": 94,
+          "summary": "元素位于画布范围内。"
+        },
+        "visualConsistency": {
+          "score": 92,
+          "summary": "风格说明与页面结构一致。"
+        }
+      },
+      "issues": [],
+      "repairStatus": "not-needed",
+      "suggestions": [
+        "导入后按实际业务替换占位文本和图表内容。"
+      ],
+      "totalScore": 93
+    },
+    "expressionIntent": "用一个大数字形成强记忆点并解释行动含义。",
+    "designPlan": {
+      "expressionIntent": "用一个大数字形成强记忆点并解释行动含义。",
+      "layoutTemplate": "key-metrics",
+      "visualStrategy": "浅底蓝绿商务风，强调清晰、稳定和可复用。 用一个大数字形成强记忆点并解释行动含义。",
+      "readingOrder": [
+        "uv1-kmt-bg-sem-title",
+        "uv1-kmt-bg-sem-key",
+        "uv1-kmt-bg-sem-visual",
+        "uv1-kmt-bg-sem-p1",
+        "uv1-kmt-bg-sem-p2"
+      ]
+    },
+    "layoutDiagnostics": {
+      "density": 0.55,
+      "hasOverflow": false,
+      "needsUserConfirmation": false,
+      "overflowFixes": [],
+      "warnings": []
+    },
+    "semanticElements": [
+      {
+        "category": "text",
+        "constraints": [
+          "模板主标题，替换内容后仍保持最高层级"
+        ],
+        "content": "大数字 + 解释",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-kmt-bg-sem-title",
+        "priority": 1,
+        "role": "主标题",
+        "semanticType": "title"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "承载模板核心结论或说明"
+        ],
+        "content": "86% 关键指标承载结论",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-kmt-bg-sem-key",
+        "priority": 2,
+        "role": "核心信息",
+        "semanticType": "subtitle"
+      },
+      {
+        "category": "container",
+        "constraints": [
+          "每页最多一个主视觉中心",
+          "不得遮挡标题"
+        ],
+        "content": "用一个大数字形成强记忆点并解释行动含义。",
+        "elementType": "shape",
+        "hierarchyLevel": 2,
+        "id": "uv1-kmt-bg-sem-visual",
+        "priority": 3,
+        "role": "模板结构中心",
+        "semanticType": "card"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "86% 关键指标承载结论",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-kmt-bg-sem-p1",
+        "priority": 3,
+        "role": "要点 1",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "补充数字背后的业务含义",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-kmt-bg-sem-p2",
+        "priority": 4,
+        "role": "要点 2",
+        "semanticType": "body"
+      }
+    ],
+    "elements": [
+      {
+        "id": "uv1-kmt-bg-metric",
+        "type": "text",
+        "role": "关键指标",
+        "content": "86%",
+        "bounds": {
+          "x": 0.95,
+          "y": 1.28,
+          "width": 5.15,
+          "height": 1.35
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "badge",
+        "zIndex": 36,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#0F8B8D",
+          "fontSize": 40,
+          "fontWeight": "bold",
+          "lineHeight": 1.25,
+          "maxLines": 1
+        }
+      },
+      {
+        "id": "uv1-kmt-bg-title",
+        "type": "text",
+        "role": "指标结论",
+        "content": "大数字 + 解释",
+        "bounds": {
+          "x": 0.98,
+          "y": 3.05,
+          "width": 5.9,
+          "height": 0.62
+        },
+        "editable": true,
+        "hierarchyLevel": 1,
+        "semanticType": "title",
+        "zIndex": 40,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#103B3F",
+          "fontSize": 26,
+          "fontWeight": "bold",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      },
+      {
+        "id": "uv1-kmt-bg-body",
+        "type": "text",
+        "role": "指标解释",
+        "content": "86% 关键指标承载结论\n补充数字背后的业务含义",
+        "bounds": {
+          "x": 1.02,
+          "y": 4.03,
+          "width": 5.8,
+          "height": 1.3
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "body",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#355052",
+          "fontSize": 15,
+          "fontWeight": "regular",
+          "lineHeight": 1.25,
+          "maxLines": 5
+        }
+      },
+      {
+        "id": "uv1-kmt-bg-panel",
+        "type": "shape",
+        "role": "右侧指标背景",
+        "bounds": {
+          "x": 7.5,
+          "y": 0.9,
+          "width": 4.4,
+          "height": 5.4
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "card",
+        "zIndex": 8,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-kmt-bg-ring",
+        "type": "shape",
+        "role": "指标装饰环",
+        "bounds": {
+          "x": 8.32,
+          "y": 1.75,
+          "width": 2.75,
+          "height": 2.75
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "badge",
+        "zIndex": 14,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      }
+    ],
+    "imageLayerRequests": [],
+    "canvas": {
+      "aspectRatio": "16:9",
+      "height": 7.5,
+      "safeMargin": 0.5,
+      "unit": "inch",
+      "width": 13.333
+    }
+  }
+}

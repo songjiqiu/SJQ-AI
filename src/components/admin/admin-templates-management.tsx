@@ -6,6 +6,7 @@ import {
   Download,
   Edit3,
   FileJson,
+  GalleryVerticalEnd,
   LayoutTemplate,
   LoaderCircle,
   Plus,
@@ -23,6 +24,7 @@ import { toast } from "sonner";
 
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { AdminTemplateWorkspaceNav } from "@/components/admin/admin-template-workspace-nav";
 import { TemplateCanvas } from "@/components/admin/template-canvas";
 import { Link, useRouter } from "@/i18n/navigation";
 import {
@@ -73,6 +75,10 @@ export function AdminTemplatesManagement({
   const [isLoading, setIsLoading] = useState(false);
   const [isCreatePanelOpen, setIsCreatePanelOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isImportingUniversalTemplates, setIsImportingUniversalTemplates] =
+    useState(false);
+  const [isUniversalImportConfirmOpen, setIsUniversalImportConfirmOpen] =
+    useState(false);
   const [creatingCategory, setCreatingCategory] =
     useState<PptTemplateCategoryId | null>(null);
   const [savingTemplateId, setSavingTemplateId] = useState<string | null>(null);
@@ -300,6 +306,39 @@ export function AdminTemplatesManagement({
     }
   }
 
+  async function importUniversalTemplates() {
+    setIsImportingUniversalTemplates(true);
+
+    try {
+      const response = await fetch("/api/admin/templates/universal-v1/import", {
+        method: "POST"
+      });
+
+      if (!response.ok) {
+        throw new Error(await readApiError(response, errorMessages));
+      }
+
+      const payload = (await response.json()) as {
+        createdCount?: number;
+        deletedCount?: number;
+        templates?: PptTemplateDto[];
+      };
+
+      setTemplates(payload.templates ?? []);
+      setIsUniversalImportConfirmOpen(false);
+      toast.success(
+        t("toast.universalImported", {
+          created: payload.createdCount ?? 0,
+          deleted: payload.deletedCount ?? 0
+        })
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("errors.generic"));
+    } finally {
+      setIsImportingUniversalTemplates(false);
+    }
+  }
+
   async function updateTemplate(
     template: PptTemplateDto,
     input: Partial<Pick<PptTemplateDto, "isEnabled">>
@@ -365,64 +404,68 @@ export function AdminTemplatesManagement({
 
   return (
     <main className="mx-auto min-h-[calc(100vh-4rem)] w-full max-w-7xl px-4 py-8">
-      <header className="mb-6 flex flex-col gap-4 border-b border-border pb-5 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0">
-          <Link
-            className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-muted outline-none transition hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent"
-            href="/admin"
-          >
-            <ArrowLeft className="size-4" aria-hidden="true" />
-            {t("actions.back")}
-          </Link>
-          <div className="flex items-center gap-3">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-accent text-white">
-              <LayoutTemplate className="size-5" aria-hidden="true" />
-            </span>
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground">
-                {t("title")}
-              </h1>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-muted">
-                {t("subtitle")}
-              </p>
+      <header className="mb-6 grid gap-5 border-b border-border pb-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <Link
+              className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-muted outline-none transition hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent"
+              href="/admin"
+            >
+              <ArrowLeft className="size-4" aria-hidden="true" />
+              {t("actions.back")}
+            </Link>
+            <div className="flex items-center gap-3">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-accent text-white">
+                <LayoutTemplate className="size-5" aria-hidden="true" />
+              </span>
+              <div>
+                <h1 className="text-2xl font-semibold text-foreground">
+                  {t("title")}
+                </h1>
+                <p className="mt-1 text-sm leading-6 text-muted lg:whitespace-nowrap">
+                  {t("subtitle")}
+                </p>
+              </div>
             </div>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              disabled={isLoading}
+              onClick={() => void refreshTemplates()}
+              type="button"
+              variant="secondary"
+            >
+              {isLoading ? (
+                <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <RefreshCcw className="size-4" aria-hidden="true" />
+              )}
+              {t("actions.refresh")}
+            </Button>
+            <Button
+              disabled={isImportingUniversalTemplates}
+              onClick={() => setIsUniversalImportConfirmOpen(true)}
+              type="button"
+              variant="secondary"
+            >
+              {isImportingUniversalTemplates ? (
+                <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <GalleryVerticalEnd className="size-4" aria-hidden="true" />
+              )}
+              {t("actions.importUniversalTemplates")}
+            </Button>
+            <Button
+              onClick={() => downloadJsonTemplateFormat(selectedCategory)}
+              type="button"
+              variant="secondary"
+            >
+              <Download className="size-4" aria-hidden="true" />
+              {t("actions.downloadJsonFormat")}
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            disabled={isLoading}
-            onClick={() => void refreshTemplates()}
-            type="button"
-            variant="secondary"
-          >
-            {isLoading ? (
-              <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <RefreshCcw className="size-4" aria-hidden="true" />
-            )}
-            {t("actions.refresh")}
-          </Button>
-          <Button
-            onClick={() => downloadJsonTemplateFormat(selectedCategory)}
-            type="button"
-            variant="secondary"
-          >
-            <Download className="size-4" aria-hidden="true" />
-            {t("actions.downloadJsonFormat")}
-          </Button>
-          <Button
-            disabled={creatingCategory !== null}
-            onClick={() => setIsCreatePanelOpen(true)}
-            type="button"
-          >
-            {creatingCategory ? (
-              <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <Plus className="size-4" aria-hidden="true" />
-            )}
-            {t("actions.newTemplate")}
-          </Button>
-        </div>
+        <AdminTemplateWorkspaceNav active="templates" />
       </header>
 
       <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
@@ -607,6 +650,22 @@ export function AdminTemplatesManagement({
         }}
         open={deletingTemplate !== null}
         title={t("confirm.deleteTitle")}
+      />
+
+      <AlertDialog
+        actionLabel={t("actions.importUniversalTemplates")}
+        actionLoadingLabel={t("actions.importingUniversalTemplates")}
+        cancelLabel={t("actions.cancel")}
+        description={t("confirm.importUniversalTemplates")}
+        loading={isImportingUniversalTemplates}
+        onAction={() => void importUniversalTemplates()}
+        onOpenChange={(open) => {
+          if (!open && !isImportingUniversalTemplates) {
+            setIsUniversalImportConfirmOpen(false);
+          }
+        }}
+        open={isUniversalImportConfirmOpen}
+        title={t("confirm.importUniversalTemplatesTitle")}
       />
 
       {isCreatePanelOpen ? (

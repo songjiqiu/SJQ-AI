@@ -88,6 +88,42 @@
       }
     }
   },
+  "adminTemplateWorkspace": {
+    "navAria": "模板工作区导航",
+    "actions": {
+      "back": "返回管理端"
+    },
+    "nav": {
+      "templates": {
+        "title": "模板管理",
+        "body": "维护页面模板 JSON"
+      },
+      "icons": {
+        "title": "图标管理",
+        "body": "维护语义图标资产"
+      },
+      "shapes": {
+        "title": "图形管理",
+        "body": "维护容器与强调图形"
+      },
+      "lines": {
+        "title": "线条管理",
+        "body": "维护连接与分隔线"
+      },
+      "textStyles": {
+        "title": "文本样式管理",
+        "body": "维护标题与正文层级"
+      },
+      "containers": {
+        "title": "容器组件管理",
+        "body": "维护卡片与内容区域"
+      },
+      "navigation": {
+        "title": "导航组件管理",
+        "body": "维护目录、页码和进度"
+      }
+    }
+  },
   "settings": {
     "title": "体验设置",
     "tabs": {
@@ -418,6 +454,8 @@
       "backToTemplates": "返回模板库",
       "refresh": "刷新",
       "downloadJsonFormat": "下载JSON模板格式",
+      "importUniversalTemplates": "导入通用模板",
+      "importingUniversalTemplates": "导入中",
       "newTemplate": "新建模板",
       "createFromDefault": "使用默认样板创建",
       "importJson": "从JSON导入",
@@ -440,11 +478,14 @@
     },
     "confirm": {
       "deleteTitle": "确认删除模板",
-      "delete": "确定删除模板“{name}”吗？删除后不可恢复。"
+      "delete": "确定删除模板“{name}”吗？删除后不可恢复。",
+      "importUniversalTemplatesTitle": "导入通用模板 v1",
+      "importUniversalTemplates": "导入前会删除 15 个固定分类下的全部旧模板，然后写入 45 个通用模板。该操作会替换当前模板库中的固定分类模板，确定继续吗？"
     },
     "toast": {
       "created": "模板已创建",
       "imported": "JSON导入成功",
+      "universalImported": "通用模板导入成功：已删除 {deleted} 个旧模板，新增 {created} 个模板",
       "saved": "模板已保存",
       "deleted": "模板已删除"
     },
@@ -587,6 +628,189 @@
       "matrix": "矩阵",
       "deep-space": "深空",
       "morning-mist": "晨雾"
+    }
+  },
+  "adminTemplateAssets": {
+    "listAria": "语义元素资产列表",
+    "searchPlaceholder": "搜索名称、说明、套装、语义、关键词、页面类型、风格或背景",
+    "loading": "正在加载资产",
+    "empty": "当前分类暂无资产",
+    "count": "共 {count} 个资产",
+    "uncategorized": "未分类",
+    "icons": {
+      "title": "图标管理",
+      "subtitle": "维护可复用图标资产，包括线性、面性、双色和单色图标配置，后续生成语义元素时可按标签检索。",
+      "shortName": "图标",
+      "defaultName": "线性概念图标",
+      "defaultDescription": "适合用于观点、功能、指标或流程节点的线性图标。"
+    },
+    "shapes": {
+      "title": "图形管理",
+      "subtitle": "维护卡片、容器、徽标、背景块等基础图形资产，为页面结构和视觉强调提供统一配置。",
+      "shortName": "图形",
+      "defaultName": "圆角信息容器",
+      "defaultDescription": "适合承载正文、指标或对比信息的圆角容器图形。"
+    },
+    "lines": {
+      "title": "线条管理",
+      "subtitle": "维护连接线、箭头线、时间轴和分隔线资产，为流程、关系和版面分隔提供统一线条样式。",
+      "shortName": "线条",
+      "defaultName": "圆角箭头连接线",
+      "defaultDescription": "适合表达步骤流转、关系指向或页面区域连接的箭头线。"
+    },
+    "status": {
+      "enabled": "启用",
+      "disabled": "停用"
+    },
+    "actions": {
+      "refresh": "刷新",
+      "new": "新增资产",
+      "edit": "编辑",
+      "enable": "启用",
+      "disable": "停用",
+      "delete": "删除",
+      "clearFilters": "清空筛选",
+      "cancel": "取消",
+      "save": "保存资产",
+      "saving": "保存中",
+      "import": "批量导入",
+      "importing": "导入中"
+    },
+    "fields": {
+      "name": "资产名称",
+      "description": "说明",
+      "setKind": "套装类型",
+      "setKey": "套装标识",
+      "setName": "套装名称",
+      "primaryCategory": "主类目",
+      "secondaryCategory": "二级语义",
+      "variant": "资源变体",
+      "keywords": "关键词（每行一个）",
+      "synonyms": "同义词（每行一个）",
+      "tags": "普通标签（每行一个）",
+      "semanticTags": "语义标签（每行一个）",
+      "pageTypes": "适用页面类型（每行一个）",
+      "usageScenarios": "使用场景（每行一个）",
+      "styleTags": "风格标签（每行一个）",
+      "colorTags": "颜色标签（每行一个）",
+      "backgroundModes": "背景适配（每行一个）",
+      "style": "样式 JSON",
+      "resource": "资源文件 / 参数 JSON",
+      "preview": "预览 JSON",
+      "sortOrder": "排序",
+      "reviewStatus": "审核状态",
+      "source": "来源",
+      "aiModifyPermissions": "AI 修改权限",
+      "isEnabled": "启用资产"
+    },
+    "filters": {
+      "primaryCategory": "主类目",
+      "secondaryCategory": "二级语义",
+      "variant": "资源变体",
+      "setKind": "套装类型",
+      "pageType": "页面类型",
+      "styleTag": "风格标签",
+      "backgroundMode": "背景适配",
+      "reviewStatus": "审核状态",
+      "allPrimary": "全部主类目",
+      "allSecondary": "全部二级语义",
+      "allVariants": "全部资源变体",
+      "allSetKinds": "全部套装",
+      "allBackgroundModes": "全部背景",
+      "allReviewStatuses": "全部审核状态",
+      "uncategorized": "未分类"
+    },
+    "form": {
+      "createTitle": "新增语义资产",
+      "editTitle": "编辑语义资产",
+      "description": "维护名称、标签、使用场景和 JSON 配置。样式与预览 JSON 必须是对象。",
+      "previewTitle": "预览",
+      "sections": {
+        "basicTitle": "基础信息",
+        "basicSummary": "维护套装、分类、名称、状态和说明。",
+        "discoveryTitle": "检索标签",
+        "discoverySummary": "配置 AI 检索会使用的关键词、语义、页面类型和风格标签。",
+        "jsonTitle": "JSON 配置",
+        "jsonSummary": "编辑样式、资源参数和预览配置，三项都必须是 JSON 对象。",
+        "permissionsTitle": "AI 修改权限",
+        "permissionsSummary": "控制 AI 复用资产时允许调整的视觉属性。"
+      },
+      "previewMeta": {
+        "set": "套装",
+        "review": "审核",
+        "source": "来源"
+      }
+    },
+    "confirm": {
+      "deleteTitle": "确认删除资产",
+      "delete": "确定删除资产“{name}”吗？删除后不可恢复。"
+    },
+    "toast": {
+      "created": "资产已创建",
+      "saved": "资产已保存",
+      "deleted": "资产已删除",
+      "imported": "已导入 {count} 个资产"
+    },
+    "errors": {
+      "unauthorized": "登录已失效，请重新登录。",
+      "forbidden": "只有管理员可以管理语义资产。",
+      "accountDisabled": "该账号已被禁用。",
+      "validation": "资产内容不符合要求，请检查必填字段、标签数量和 JSON 对象。",
+      "invalidJson": "样式 JSON、资源 JSON 或预览 JSON 无效，请输入 JSON 对象。",
+      "duplicate": "同类型资产名称已存在，请换一个名称。",
+      "notFound": "资产不存在或已被删除。",
+      "generic": "语义资产管理操作失败，请稍后重试。",
+      "invalidImportJson": "导入 JSON 无效，请提供资产数组或包含 assets 数组的对象。"
+    },
+    "defaultSetName": "通用套装",
+    "setMeta": "{type} · {name}",
+    "textStyles": {
+      "title": "文本样式管理",
+      "subtitle": "维护主标题、副标题、正文、要点、引用、标签、页眉页脚和数字强调等文本层级，供 AI 按页面语义选择排版样式。",
+      "shortName": "文本样式",
+      "defaultName": "标题文本样式",
+      "defaultDescription": "适合主标题、页面标题或正文层级的可复用文本样式。"
+    },
+    "containers": {
+      "title": "容器组件管理",
+      "subtitle": "维护卡片、信息框、图表区域、图片区域、分栏容器、列表容器和结论框等内容承载组件。",
+      "shortName": "容器",
+      "defaultName": "信息卡片容器",
+      "defaultDescription": "适合承载正文、图片、图表或结论内容的可复用容器。"
+    },
+    "navigation": {
+      "title": "导航组件管理",
+      "subtitle": "维护目录、章节标题、页码、进度条、步骤编号和当前位置标识，保证整套 PPT 的连续性。",
+      "shortName": "导航",
+      "defaultName": "页脚进度导航",
+      "defaultDescription": "适合在页面固定位置展示页码、章节或进度状态的导航组件。"
+    },
+    "setKinds": {
+      "COMMON": "通用套装",
+      "TEMPLATE": "模板套装"
+    },
+    "reviewStatus": {
+      "DRAFT": "草稿",
+      "PENDING_REVIEW": "待审核",
+      "APPROVED": "已入库",
+      "REJECTED": "已拒绝"
+    },
+    "source": {
+      "MANUAL": "人工录入",
+      "AI_GENERATED": "AI 生成"
+    },
+    "backgroundModes": {
+      "light": "浅色背景",
+      "dark": "深色背景",
+      "transparent": "透明背景"
+    },
+    "permissions": {
+      "allowRecolor": "允许 AI 改色",
+      "allowResize": "允许 AI 缩放",
+      "allowMove": "允许 AI 调整位置",
+      "allowStretch": "允许 AI 拉伸",
+      "allowAutoLayout": "允许 AI 自动换布局",
+      "allowTextShrink": "允许 AI 自动缩小文字"
     }
   },
   "workbench": {

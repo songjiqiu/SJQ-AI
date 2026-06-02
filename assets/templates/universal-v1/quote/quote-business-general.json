@@ -1,0 +1,437 @@
+{
+  "formatVersion": "ppt-template-import-v1",
+  "name": "引用/金句页 - 领导/客户金句",
+  "category": "quote",
+  "description": "中国商务通用模板，适用于客户证言。用浅色背景和大字号引用强化观点记忆。",
+  "tags": [
+    "引用/金句页",
+    "中国商务通用",
+    "客户证言"
+  ],
+  "sortOrder": 191,
+  "isEnabled": true,
+  "slide": {
+    "slideId": "uv1-quo-bg",
+    "index": 1,
+    "content": {
+      "slideId": "uv1-quo-bg",
+      "index": 1,
+      "title": "领导/客户金句",
+      "subtitle": "引用/金句页 / 中国商务通用",
+      "bodyPoints": [
+        "把最重要的一句话放大",
+        "右下角注明来源和语境"
+      ],
+      "speakerGoal": "帮助管理员快速复用“领导/客户金句”模板。",
+      "visualIntent": "用浅色背景和大字号引用强化观点记忆。",
+      "coreStatement": "把最重要的一句话放大",
+      "narrativeRole": "argument",
+      "contentLayers": {
+        "primary": [
+          "把最重要的一句话放大"
+        ],
+        "supporting": [
+          "右下角注明来源和语境"
+        ],
+        "supplementary": [
+          "适用场景：客户证言",
+          "浅底蓝绿商务风，强调清晰、稳定和可复用。"
+        ]
+      },
+      "slideTransition": {
+        "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
+        "toNext": "可继续扩展为同类型页面或相邻内容页。"
+      },
+      "explanationDepth": "supporting",
+      "sourceRequirement": {
+        "required": false,
+        "categories": [
+          "user-input"
+        ],
+        "note": "模板示例不强制注明外部来源。"
+      },
+      "adaptationRules": {
+        "splitWhen": "当模板内容超过 5 个模块时拆为多页模板。",
+        "splitCandidates": [
+          "把最重要的一句话放大",
+          "右下角注明来源和语境"
+        ],
+        "mergeWhen": "当只保留一个模块时可与相邻模板合并。",
+        "mergeWith": "相邻模板页"
+      },
+      "audienceFocus": {
+        "lens": "business-conclusion",
+        "focus": "管理员关注模板是否清晰、稳定，并能快速替换为业务内容。"
+      },
+      "viewerObjective": {
+        "type": "understand",
+        "description": "看完本页后，用户应理解“领导/客户金句”的适用场景和表达结构。"
+      },
+      "contentBoundary": {
+        "inScope": "只展示模板结构、占位内容、视觉意图和导入后的可替换区域。",
+        "outOfScope": [
+          "不展开真实业务内容",
+          "不引入外部数据",
+          "不使用第三方模板资产"
+        ]
+      }
+    },
+    "pageIntent": {
+      "audienceTakeaway": "把最重要的一句话放大",
+      "contentDensity": "low",
+      "coreMessage": "把最重要的一句话放大",
+      "pageRole": "content",
+      "primaryGoal": "inform"
+    },
+    "contentHierarchy": {
+      "primaryMessage": "把最重要的一句话放大",
+      "levels": [
+        {
+          "label": "领导/客户金句",
+          "level": 1,
+          "summary": "把最重要的一句话放大"
+        },
+        {
+          "label": "要点 1",
+          "level": 2,
+          "summary": "把最重要的一句话放大"
+        },
+        {
+          "label": "要点 2",
+          "level": 2,
+          "summary": "右下角注明来源和语境"
+        }
+      ],
+      "tiers": [
+        {
+          "items": [
+            {
+              "content": "领导/客户金句",
+              "role": "主标题"
+            },
+            {
+              "content": "把最重要的一句话放大",
+              "role": "核心信息"
+            }
+          ],
+          "label": "一级信息",
+          "level": 1
+        },
+        {
+          "items": [
+            {
+              "content": "把最重要的一句话放大",
+              "role": "要点 1"
+            },
+            {
+              "content": "右下角注明来源和语境",
+              "role": "要点 2"
+            }
+          ],
+          "label": "二级信息",
+          "level": 2
+        },
+        {
+          "items": [
+            {
+              "content": "用浅色背景和大字号引用强化观点记忆。",
+              "role": "版式说明"
+            },
+            {
+              "content": "导入后可在模板设计器中替换占位内容。",
+              "role": "使用说明"
+            }
+          ],
+          "label": "三级信息",
+          "level": 3
+        }
+      ]
+    },
+    "layoutSelection": {
+      "candidates": [
+        {
+          "fitReason": "quote 匹配当前 引用/金句页 分类和 中国商务通用 风格。",
+          "layoutType": "quote",
+          "risk": "风险较低，保持信息层级清晰。",
+          "score": 96
+        },
+        {
+          "fitReason": "title-body-points 匹配当前 引用/金句页 分类和 中国商务通用 风格。",
+          "layoutType": "title-body-points",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 88
+        },
+        {
+          "fitReason": "big-image-background 匹配当前 引用/金句页 分类和 中国商务通用 风格。",
+          "layoutType": "big-image-background",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 80
+        }
+      ],
+      "selectedLayoutType": "quote",
+      "selectionReason": "固定选择 quote，与通用模板分类保持一致。"
+    },
+    "constraints": {
+      "coreMessagePresent": true,
+      "densityLimit": "low",
+      "maxHeroVisuals": 1,
+      "renderNotes": [
+        "主标题必须唯一并位于安全边距内。",
+        "核心表达区必须作为一级信息出现。",
+        "形状和图表占位不得压住正文。"
+      ],
+      "safeMargin": {
+        "appliesTo": [
+          "主标题",
+          "核心信息",
+          "正文",
+          "图表标签"
+        ],
+        "unit": "inch",
+        "value": 0.5
+      },
+      "subjectAvoidsTitleArea": true,
+      "titleUnique": true
+    },
+    "designQualityScore": {
+      "dimensions": {
+        "contentDensity": {
+          "score": 92,
+          "summary": "信息密度与模板用途匹配。"
+        },
+        "expressionCompleteness": {
+          "score": 92,
+          "summary": "标题、核心信息和辅助内容完整。"
+        },
+        "informationHierarchy": {
+          "score": 94,
+          "summary": "主次层级清晰。"
+        },
+        "renderability": {
+          "score": 94,
+          "summary": "元素位于画布范围内。"
+        },
+        "visualConsistency": {
+          "score": 92,
+          "summary": "风格说明与页面结构一致。"
+        }
+      },
+      "issues": [],
+      "repairStatus": "not-needed",
+      "suggestions": [
+        "导入后按实际业务替换占位文本和图表内容。"
+      ],
+      "totalScore": 93
+    },
+    "expressionIntent": "用浅色背景和大字号引用强化观点记忆。",
+    "designPlan": {
+      "expressionIntent": "用浅色背景和大字号引用强化观点记忆。",
+      "layoutTemplate": "quote",
+      "visualStrategy": "浅底蓝绿商务风，强调清晰、稳定和可复用。 用浅色背景和大字号引用强化观点记忆。",
+      "readingOrder": [
+        "uv1-quo-bg-sem-title",
+        "uv1-quo-bg-sem-key",
+        "uv1-quo-bg-sem-visual",
+        "uv1-quo-bg-sem-p1",
+        "uv1-quo-bg-sem-p2"
+      ]
+    },
+    "layoutDiagnostics": {
+      "density": 0.38,
+      "hasOverflow": false,
+      "needsUserConfirmation": false,
+      "overflowFixes": [],
+      "warnings": []
+    },
+    "semanticElements": [
+      {
+        "category": "text",
+        "constraints": [
+          "模板主标题，替换内容后仍保持最高层级"
+        ],
+        "content": "领导/客户金句",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-quo-bg-sem-title",
+        "priority": 1,
+        "role": "主标题",
+        "semanticType": "title"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "承载模板核心结论或说明"
+        ],
+        "content": "把最重要的一句话放大",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-quo-bg-sem-key",
+        "priority": 2,
+        "role": "核心信息",
+        "semanticType": "subtitle"
+      },
+      {
+        "category": "container",
+        "constraints": [
+          "每页最多一个主视觉中心",
+          "不得遮挡标题"
+        ],
+        "content": "用浅色背景和大字号引用强化观点记忆。",
+        "elementType": "shape",
+        "hierarchyLevel": 2,
+        "id": "uv1-quo-bg-sem-visual",
+        "priority": 3,
+        "role": "模板结构中心",
+        "semanticType": "card"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "把最重要的一句话放大",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-quo-bg-sem-p1",
+        "priority": 3,
+        "role": "要点 1",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "右下角注明来源和语境",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-quo-bg-sem-p2",
+        "priority": 4,
+        "role": "要点 2",
+        "semanticType": "body"
+      }
+    ],
+    "elements": [
+      {
+        "id": "uv1-quo-bg-mark-left",
+        "type": "shape",
+        "role": "引用符号左",
+        "bounds": {
+          "x": 1.35,
+          "y": 1.35,
+          "width": 0.55,
+          "height": 0.55
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "accentShape",
+        "zIndex": 10,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-quo-bg-title",
+        "type": "text",
+        "role": "引用金句",
+        "content": "“把最重要的一句话放大。”",
+        "bounds": {
+          "x": 2.05,
+          "y": 2,
+          "width": 9.25,
+          "height": 1.18
+        },
+        "editable": true,
+        "hierarchyLevel": 1,
+        "semanticType": "title",
+        "zIndex": 40,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "center",
+          "color": "#103B3F",
+          "fontSize": 31,
+          "fontWeight": "bold",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      },
+      {
+        "id": "uv1-quo-bg-source",
+        "type": "text",
+        "role": "引用来源",
+        "content": "来源 / 场景说明",
+        "bounds": {
+          "x": 4.1,
+          "y": 3.58,
+          "width": 5.1,
+          "height": 0.42
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "footer",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "center",
+          "color": "#355052",
+          "fontSize": 14,
+          "fontWeight": "regular",
+          "lineHeight": 1.25,
+          "maxLines": 6
+        }
+      },
+      {
+        "id": "uv1-quo-bg-mark-right",
+        "type": "shape",
+        "role": "引用符号右",
+        "bounds": {
+          "x": 11.35,
+          "y": 4.1,
+          "width": 0.55,
+          "height": 0.55
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "accentShape",
+        "zIndex": 10,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-quo-bg-note",
+        "type": "text",
+        "role": "语境说明",
+        "content": "右下角注明来源和语境",
+        "bounds": {
+          "x": 3.18,
+          "y": 4.55,
+          "width": 7,
+          "height": 0.42
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "body",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "center",
+          "color": "#355052",
+          "fontSize": 13,
+          "fontWeight": "regular",
+          "lineHeight": 1.25,
+          "maxLines": 6
+        }
+      }
+    ],
+    "imageLayerRequests": [],
+    "canvas": {
+      "aspectRatio": "16:9",
+      "height": 7.5,
+      "safeMargin": 0.5,
+      "unit": "inch",
+      "width": 13.333
+    }
+  }
+}

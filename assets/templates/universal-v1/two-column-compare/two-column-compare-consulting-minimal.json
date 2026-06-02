@@ -1,0 +1,506 @@
+{
+  "formatVersion": "ppt-template-import-v1",
+  "name": "双栏对比 - 方案 A / B",
+  "category": "two-column-compare",
+  "description": "极简咨询风模板，适用于方案评估。用标准咨询对比页支撑方案选择。",
+  "tags": [
+    "双栏对比",
+    "极简咨询风",
+    "方案评估"
+  ],
+  "sortOrder": 183,
+  "isEnabled": true,
+  "slide": {
+    "slideId": "uv1-tcc-cm",
+    "index": 1,
+    "content": {
+      "slideId": "uv1-tcc-cm",
+      "index": 1,
+      "title": "方案 A / B",
+      "subtitle": "双栏对比 / 极简咨询风",
+      "bodyPoints": [
+        "两栏严格同构",
+        "按维度列出优劣",
+        "给出适用条件"
+      ],
+      "speakerGoal": "帮助管理员快速复用“方案 A / B”模板。",
+      "visualIntent": "用标准咨询对比页支撑方案选择。",
+      "coreStatement": "两栏严格同构",
+      "narrativeRole": "argument",
+      "contentLayers": {
+        "primary": [
+          "两栏严格同构"
+        ],
+        "supporting": [
+          "按维度列出优劣",
+          "给出适用条件"
+        ],
+        "supplementary": [
+          "适用场景：方案评估",
+          "白底黑灰咨询风，强调结论先行、强栅格和克制高亮。"
+        ]
+      },
+      "slideTransition": {
+        "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
+        "toNext": "可继续扩展为同类型页面或相邻内容页。"
+      },
+      "explanationDepth": "supporting",
+      "sourceRequirement": {
+        "required": false,
+        "categories": [
+          "user-input"
+        ],
+        "note": "模板示例不强制注明外部来源。"
+      },
+      "adaptationRules": {
+        "splitWhen": "当模板内容超过 5 个模块时拆为多页模板。",
+        "splitCandidates": [
+          "两栏严格同构",
+          "按维度列出优劣",
+          "给出适用条件"
+        ],
+        "mergeWhen": "当只保留一个模块时可与相邻模板合并。",
+        "mergeWith": "相邻模板页"
+      },
+      "audienceFocus": {
+        "lens": "business-conclusion",
+        "focus": "管理员关注模板是否清晰、稳定，并能快速替换为业务内容。"
+      },
+      "viewerObjective": {
+        "type": "understand",
+        "description": "看完本页后，用户应理解“方案 A / B”的适用场景和表达结构。"
+      },
+      "contentBoundary": {
+        "inScope": "只展示模板结构、占位内容、视觉意图和导入后的可替换区域。",
+        "outOfScope": [
+          "不展开真实业务内容",
+          "不引入外部数据",
+          "不使用第三方模板资产"
+        ]
+      }
+    },
+    "pageIntent": {
+      "audienceTakeaway": "两栏严格同构",
+      "contentDensity": "medium",
+      "coreMessage": "两栏严格同构",
+      "pageRole": "comparison",
+      "primaryGoal": "compare"
+    },
+    "contentHierarchy": {
+      "primaryMessage": "两栏严格同构",
+      "levels": [
+        {
+          "label": "方案 A / B",
+          "level": 1,
+          "summary": "两栏严格同构"
+        },
+        {
+          "label": "要点 1",
+          "level": 2,
+          "summary": "两栏严格同构"
+        },
+        {
+          "label": "要点 2",
+          "level": 2,
+          "summary": "按维度列出优劣"
+        },
+        {
+          "label": "要点 3",
+          "level": 2,
+          "summary": "给出适用条件"
+        }
+      ],
+      "tiers": [
+        {
+          "items": [
+            {
+              "content": "方案 A / B",
+              "role": "主标题"
+            },
+            {
+              "content": "两栏严格同构",
+              "role": "核心信息"
+            }
+          ],
+          "label": "一级信息",
+          "level": 1
+        },
+        {
+          "items": [
+            {
+              "content": "两栏严格同构",
+              "role": "要点 1"
+            },
+            {
+              "content": "按维度列出优劣",
+              "role": "要点 2"
+            },
+            {
+              "content": "给出适用条件",
+              "role": "要点 3"
+            }
+          ],
+          "label": "二级信息",
+          "level": 2
+        },
+        {
+          "items": [
+            {
+              "content": "用标准咨询对比页支撑方案选择。",
+              "role": "版式说明"
+            },
+            {
+              "content": "导入后可在模板设计器中替换占位内容。",
+              "role": "使用说明"
+            }
+          ],
+          "label": "三级信息",
+          "level": 3
+        }
+      ]
+    },
+    "layoutSelection": {
+      "candidates": [
+        {
+          "fitReason": "two-column-compare 匹配当前 双栏对比 分类和 极简咨询风 风格。",
+          "layoutType": "two-column-compare",
+          "risk": "风险较低，保持信息层级清晰。",
+          "score": 96
+        },
+        {
+          "fitReason": "quadrant-matrix 匹配当前 双栏对比 分类和 极简咨询风 风格。",
+          "layoutType": "quadrant-matrix",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 88
+        },
+        {
+          "fitReason": "title-body-points 匹配当前 双栏对比 分类和 极简咨询风 风格。",
+          "layoutType": "title-body-points",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 80
+        }
+      ],
+      "selectedLayoutType": "two-column-compare",
+      "selectionReason": "固定选择 two-column-compare，与通用模板分类保持一致。"
+    },
+    "constraints": {
+      "coreMessagePresent": true,
+      "densityLimit": "medium",
+      "maxHeroVisuals": 1,
+      "renderNotes": [
+        "主标题必须唯一并位于安全边距内。",
+        "核心表达区必须作为一级信息出现。",
+        "形状和图表占位不得压住正文。"
+      ],
+      "safeMargin": {
+        "appliesTo": [
+          "主标题",
+          "核心信息",
+          "正文",
+          "图表标签"
+        ],
+        "unit": "inch",
+        "value": 0.5
+      },
+      "subjectAvoidsTitleArea": true,
+      "titleUnique": true
+    },
+    "designQualityScore": {
+      "dimensions": {
+        "contentDensity": {
+          "score": 92,
+          "summary": "信息密度与模板用途匹配。"
+        },
+        "expressionCompleteness": {
+          "score": 92,
+          "summary": "标题、核心信息和辅助内容完整。"
+        },
+        "informationHierarchy": {
+          "score": 94,
+          "summary": "主次层级清晰。"
+        },
+        "renderability": {
+          "score": 94,
+          "summary": "元素位于画布范围内。"
+        },
+        "visualConsistency": {
+          "score": 92,
+          "summary": "风格说明与页面结构一致。"
+        }
+      },
+      "issues": [],
+      "repairStatus": "not-needed",
+      "suggestions": [
+        "导入后按实际业务替换占位文本和图表内容。"
+      ],
+      "totalScore": 93
+    },
+    "expressionIntent": "用标准咨询对比页支撑方案选择。",
+    "designPlan": {
+      "expressionIntent": "用标准咨询对比页支撑方案选择。",
+      "layoutTemplate": "two-column-compare",
+      "visualStrategy": "白底黑灰咨询风，强调结论先行、强栅格和克制高亮。 用标准咨询对比页支撑方案选择。",
+      "readingOrder": [
+        "uv1-tcc-cm-sem-title",
+        "uv1-tcc-cm-sem-key",
+        "uv1-tcc-cm-sem-visual",
+        "uv1-tcc-cm-sem-p1",
+        "uv1-tcc-cm-sem-p2",
+        "uv1-tcc-cm-sem-p3"
+      ]
+    },
+    "layoutDiagnostics": {
+      "density": 0.55,
+      "hasOverflow": false,
+      "needsUserConfirmation": false,
+      "overflowFixes": [],
+      "warnings": []
+    },
+    "semanticElements": [
+      {
+        "category": "text",
+        "constraints": [
+          "模板主标题，替换内容后仍保持最高层级"
+        ],
+        "content": "方案 A / B",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-tcc-cm-sem-title",
+        "priority": 1,
+        "role": "主标题",
+        "semanticType": "title"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "承载模板核心结论或说明"
+        ],
+        "content": "两栏严格同构",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-tcc-cm-sem-key",
+        "priority": 2,
+        "role": "核心信息",
+        "semanticType": "subtitle"
+      },
+      {
+        "category": "container",
+        "constraints": [
+          "每页最多一个主视觉中心",
+          "不得遮挡标题"
+        ],
+        "content": "用标准咨询对比页支撑方案选择。",
+        "elementType": "shape",
+        "hierarchyLevel": 2,
+        "id": "uv1-tcc-cm-sem-visual",
+        "priority": 3,
+        "role": "模板结构中心",
+        "semanticType": "card"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "两栏严格同构",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-tcc-cm-sem-p1",
+        "priority": 3,
+        "role": "要点 1",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "按维度列出优劣",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-tcc-cm-sem-p2",
+        "priority": 4,
+        "role": "要点 2",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "给出适用条件",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-tcc-cm-sem-p3",
+        "priority": 5,
+        "role": "要点 3",
+        "semanticType": "body"
+      }
+    ],
+    "elements": [
+      {
+        "id": "uv1-tcc-cm-title",
+        "type": "text",
+        "role": "方案对比标题",
+        "content": "方案 A / B",
+        "bounds": {
+          "x": 0.82,
+          "y": 0.62,
+          "width": 6.8,
+          "height": 0.62
+        },
+        "editable": true,
+        "hierarchyLevel": 1,
+        "semanticType": "title",
+        "zIndex": 40,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#111827",
+          "fontSize": 26,
+          "fontWeight": "bold",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      },
+      {
+        "id": "uv1-tcc-cm-top-rule",
+        "type": "shape",
+        "role": "顶部表格线",
+        "bounds": {
+          "x": 0.88,
+          "y": 1.62,
+          "width": 11.32,
+          "height": 0.05
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "accentShape",
+        "zIndex": 10,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-tcc-cm-mid-rule",
+        "type": "shape",
+        "role": "中部表格线",
+        "bounds": {
+          "x": 0.88,
+          "y": 3.45,
+          "width": 11.32,
+          "height": 0.05
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "accentShape",
+        "zIndex": 10,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-tcc-cm-vertical",
+        "type": "shape",
+        "role": "表格中线",
+        "bounds": {
+          "x": 6.56,
+          "y": 1.62,
+          "width": 0.05,
+          "height": 3.98
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "accentShape",
+        "zIndex": 10,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-tcc-cm-left",
+        "type": "text",
+        "role": "方案 A",
+        "content": "两栏严格同构\n按维度列出优劣",
+        "bounds": {
+          "x": 1.08,
+          "y": 2.08,
+          "width": 4.88,
+          "height": 1.08
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "card",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#374151",
+          "fontSize": 15,
+          "fontWeight": "medium",
+          "lineHeight": 1.25,
+          "maxLines": 6
+        }
+      },
+      {
+        "id": "uv1-tcc-cm-right",
+        "type": "text",
+        "role": "方案 B",
+        "content": "给出适用条件\n给出适用条件",
+        "bounds": {
+          "x": 6.92,
+          "y": 2.08,
+          "width": 4.88,
+          "height": 1.08
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "card",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#374151",
+          "fontSize": 15,
+          "fontWeight": "medium",
+          "lineHeight": 1.25,
+          "maxLines": 6
+        }
+      },
+      {
+        "id": "uv1-tcc-cm-note",
+        "type": "text",
+        "role": "适用条件",
+        "content": "适用条件 / 风险 / 决策建议",
+        "bounds": {
+          "x": 1.08,
+          "y": 4.28,
+          "width": 6.4,
+          "height": 0.42
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "footer",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "left",
+          "color": "#374151",
+          "fontSize": 12,
+          "fontWeight": "regular",
+          "lineHeight": 1.25,
+          "maxLines": 6
+        }
+      }
+    ],
+    "imageLayerRequests": [],
+    "canvas": {
+      "aspectRatio": "16:9",
+      "height": 7.5,
+      "safeMargin": 0.5,
+      "unit": "inch",
+      "width": 13.333
+    }
+  }
+}

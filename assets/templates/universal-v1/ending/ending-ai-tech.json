@@ -1,0 +1,454 @@
+{
+  "formatVersion": "ppt-template-import-v1",
+  "name": "结束页 - 下一步智能协作",
+  "category": "ending",
+  "description": "AI 科技感模板，适用于AI 收尾。用弱科技视觉强化继续协作和下一步行动。",
+  "tags": [
+    "结束页",
+    "AI 科技感",
+    "AI 收尾"
+  ],
+  "sortOrder": 242,
+  "isEnabled": true,
+  "slide": {
+    "slideId": "uv1-end-ai",
+    "index": 1,
+    "content": {
+      "slideId": "uv1-end-ai",
+      "index": 1,
+      "title": "下一步智能协作",
+      "subtitle": "结束页 / AI 科技感",
+      "bodyPoints": [
+        "开始生成下一份 PPT",
+        "进入更高效的协作流程"
+      ],
+      "speakerGoal": "帮助管理员快速复用“下一步智能协作”模板。",
+      "visualIntent": "用弱科技视觉强化继续协作和下一步行动。",
+      "coreStatement": "开始生成下一份 PPT",
+      "narrativeRole": "summary",
+      "contentLayers": {
+        "primary": [
+          "开始生成下一份 PPT"
+        ],
+        "supporting": [
+          "进入更高效的协作流程"
+        ],
+        "supplementary": [
+          "适用场景：AI 收尾",
+          "青绿琥珀科技风，使用节点、光标和数据面板表达智能感。"
+        ]
+      },
+      "slideTransition": {
+        "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
+        "toNext": "可继续扩展为同类型页面或相邻内容页。"
+      },
+      "explanationDepth": "supporting",
+      "sourceRequirement": {
+        "required": false,
+        "categories": [
+          "user-input"
+        ],
+        "note": "模板示例不强制注明外部来源。"
+      },
+      "adaptationRules": {
+        "splitWhen": "当模板内容超过 5 个模块时拆为多页模板。",
+        "splitCandidates": [
+          "开始生成下一份 PPT",
+          "进入更高效的协作流程"
+        ],
+        "mergeWhen": "当只保留一个模块时可与相邻模板合并。",
+        "mergeWith": "相邻模板页"
+      },
+      "audienceFocus": {
+        "lens": "business-conclusion",
+        "focus": "管理员关注模板是否清晰、稳定，并能快速替换为业务内容。"
+      },
+      "viewerObjective": {
+        "type": "act",
+        "description": "看完本页后，用户应理解“下一步智能协作”的适用场景和表达结构。"
+      },
+      "contentBoundary": {
+        "inScope": "只展示模板结构、占位内容、视觉意图和导入后的可替换区域。",
+        "outOfScope": [
+          "不展开真实业务内容",
+          "不引入外部数据",
+          "不使用第三方模板资产"
+        ]
+      }
+    },
+    "pageIntent": {
+      "audienceTakeaway": "开始生成下一份 PPT",
+      "contentDensity": "low",
+      "coreMessage": "开始生成下一份 PPT",
+      "pageRole": "summary",
+      "primaryGoal": "summarize"
+    },
+    "contentHierarchy": {
+      "primaryMessage": "开始生成下一份 PPT",
+      "levels": [
+        {
+          "label": "下一步智能协作",
+          "level": 1,
+          "summary": "开始生成下一份 PPT"
+        },
+        {
+          "label": "要点 1",
+          "level": 2,
+          "summary": "开始生成下一份 PPT"
+        },
+        {
+          "label": "要点 2",
+          "level": 2,
+          "summary": "进入更高效的协作流程"
+        }
+      ],
+      "tiers": [
+        {
+          "items": [
+            {
+              "content": "下一步智能协作",
+              "role": "主标题"
+            },
+            {
+              "content": "开始生成下一份 PPT",
+              "role": "核心信息"
+            }
+          ],
+          "label": "一级信息",
+          "level": 1
+        },
+        {
+          "items": [
+            {
+              "content": "开始生成下一份 PPT",
+              "role": "要点 1"
+            },
+            {
+              "content": "进入更高效的协作流程",
+              "role": "要点 2"
+            }
+          ],
+          "label": "二级信息",
+          "level": 2
+        },
+        {
+          "items": [
+            {
+              "content": "用弱科技视觉强化继续协作和下一步行动。",
+              "role": "版式说明"
+            },
+            {
+              "content": "导入后可在模板设计器中替换占位内容。",
+              "role": "使用说明"
+            }
+          ],
+          "label": "三级信息",
+          "level": 3
+        }
+      ]
+    },
+    "layoutSelection": {
+      "candidates": [
+        {
+          "fitReason": "ending 匹配当前 结束页 分类和 AI 科技感 风格。",
+          "layoutType": "ending",
+          "risk": "风险较低，保持信息层级清晰。",
+          "score": 96
+        },
+        {
+          "fitReason": "quote 匹配当前 结束页 分类和 AI 科技感 风格。",
+          "layoutType": "quote",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 88
+        },
+        {
+          "fitReason": "title-body-points 匹配当前 结束页 分类和 AI 科技感 风格。",
+          "layoutType": "title-body-points",
+          "risk": "需要控制正文长度和视觉遮挡。",
+          "score": 80
+        }
+      ],
+      "selectedLayoutType": "ending",
+      "selectionReason": "固定选择 ending，与通用模板分类保持一致。"
+    },
+    "constraints": {
+      "coreMessagePresent": true,
+      "densityLimit": "low",
+      "maxHeroVisuals": 1,
+      "renderNotes": [
+        "主标题必须唯一并位于安全边距内。",
+        "核心表达区必须作为一级信息出现。",
+        "形状和图表占位不得压住正文。"
+      ],
+      "safeMargin": {
+        "appliesTo": [
+          "主标题",
+          "核心信息",
+          "正文",
+          "图表标签"
+        ],
+        "unit": "inch",
+        "value": 0.5
+      },
+      "subjectAvoidsTitleArea": true,
+      "titleUnique": true
+    },
+    "designQualityScore": {
+      "dimensions": {
+        "contentDensity": {
+          "score": 92,
+          "summary": "信息密度与模板用途匹配。"
+        },
+        "expressionCompleteness": {
+          "score": 92,
+          "summary": "标题、核心信息和辅助内容完整。"
+        },
+        "informationHierarchy": {
+          "score": 94,
+          "summary": "主次层级清晰。"
+        },
+        "renderability": {
+          "score": 94,
+          "summary": "元素位于画布范围内。"
+        },
+        "visualConsistency": {
+          "score": 92,
+          "summary": "风格说明与页面结构一致。"
+        }
+      },
+      "issues": [],
+      "repairStatus": "not-needed",
+      "suggestions": [
+        "导入后按实际业务替换占位文本和图表内容。"
+      ],
+      "totalScore": 93
+    },
+    "expressionIntent": "用弱科技视觉强化继续协作和下一步行动。",
+    "designPlan": {
+      "expressionIntent": "用弱科技视觉强化继续协作和下一步行动。",
+      "layoutTemplate": "ending",
+      "visualStrategy": "青绿琥珀科技风，使用节点、光标和数据面板表达智能感。 用弱科技视觉强化继续协作和下一步行动。",
+      "readingOrder": [
+        "uv1-end-ai-sem-title",
+        "uv1-end-ai-sem-key",
+        "uv1-end-ai-sem-visual",
+        "uv1-end-ai-sem-p1",
+        "uv1-end-ai-sem-p2"
+      ]
+    },
+    "layoutDiagnostics": {
+      "density": 0.38,
+      "hasOverflow": false,
+      "needsUserConfirmation": false,
+      "overflowFixes": [],
+      "warnings": []
+    },
+    "semanticElements": [
+      {
+        "category": "text",
+        "constraints": [
+          "模板主标题，替换内容后仍保持最高层级"
+        ],
+        "content": "下一步智能协作",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-end-ai-sem-title",
+        "priority": 1,
+        "role": "主标题",
+        "semanticType": "title"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "承载模板核心结论或说明"
+        ],
+        "content": "开始生成下一份 PPT",
+        "elementType": "text",
+        "hierarchyLevel": 1,
+        "id": "uv1-end-ai-sem-key",
+        "priority": 2,
+        "role": "核心信息",
+        "semanticType": "subtitle"
+      },
+      {
+        "category": "container",
+        "constraints": [
+          "每页最多一个主视觉中心",
+          "不得遮挡标题"
+        ],
+        "content": "用弱科技视觉强化继续协作和下一步行动。",
+        "elementType": "shape",
+        "hierarchyLevel": 2,
+        "id": "uv1-end-ai-sem-visual",
+        "priority": 3,
+        "role": "模板结构中心",
+        "semanticType": "card"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "开始生成下一份 PPT",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-end-ai-sem-p1",
+        "priority": 3,
+        "role": "要点 1",
+        "semanticType": "body"
+      },
+      {
+        "category": "text",
+        "constraints": [
+          "二级内容，可替换为业务要点"
+        ],
+        "content": "进入更高效的协作流程",
+        "elementType": "text",
+        "hierarchyLevel": 2,
+        "id": "uv1-end-ai-sem-p2",
+        "priority": 4,
+        "role": "要点 2",
+        "semanticType": "body"
+      }
+    ],
+    "elements": [
+      {
+        "id": "uv1-end-ai-panel",
+        "type": "shape",
+        "role": "智能协作面板",
+        "bounds": {
+          "x": 1.48,
+          "y": 1.32,
+          "width": 10.38,
+          "height": 4.42
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "card",
+        "zIndex": 8,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-end-ai-tag",
+        "type": "text",
+        "role": "下一步标签",
+        "content": "NEXT",
+        "bounds": {
+          "x": 5.82,
+          "y": 1.8,
+          "width": 1,
+          "height": 0.32
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "badge",
+        "zIndex": 36,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "center",
+          "color": "#22D3EE",
+          "fontSize": 14,
+          "fontWeight": "semibold",
+          "lineHeight": 1.25,
+          "maxLines": 3
+        }
+      },
+      {
+        "id": "uv1-end-ai-title",
+        "type": "text",
+        "role": "结束语",
+        "content": "下一步智能协作",
+        "bounds": {
+          "x": 2.68,
+          "y": 2.55,
+          "width": 8,
+          "height": 0.86
+        },
+        "editable": true,
+        "hierarchyLevel": 1,
+        "semanticType": "title",
+        "zIndex": 40,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "center",
+          "color": "#E6FFFB",
+          "fontSize": 33,
+          "fontWeight": "bold",
+          "lineHeight": 1.25,
+          "maxLines": 2
+        }
+      },
+      {
+        "id": "uv1-end-ai-body",
+        "type": "text",
+        "role": "协作说明",
+        "content": "开始生成下一份 PPT\n进入更高效的协作流程",
+        "bounds": {
+          "x": 3.38,
+          "y": 3.78,
+          "width": 6.55,
+          "height": 0.78
+        },
+        "editable": true,
+        "hierarchyLevel": 2,
+        "semanticType": "body",
+        "zIndex": 35,
+        "styleNotes": "通用模板文本，可按业务内容替换。",
+        "requiresImageGeneration": false,
+        "textStyle": {
+          "align": "center",
+          "color": "#A7F3D0",
+          "fontSize": 15,
+          "fontWeight": "regular",
+          "lineHeight": 1.25,
+          "maxLines": 3
+        }
+      },
+      {
+        "id": "uv1-end-ai-node1",
+        "type": "shape",
+        "role": "协作节点一",
+        "bounds": {
+          "x": 2.08,
+          "y": 4.92,
+          "width": 0.36,
+          "height": 0.36
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "badge",
+        "zIndex": 10,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      },
+      {
+        "id": "uv1-end-ai-node2",
+        "type": "shape",
+        "role": "协作节点二",
+        "bounds": {
+          "x": 10.92,
+          "y": 1.98,
+          "width": 0.36,
+          "height": 0.36
+        },
+        "editable": true,
+        "hierarchyLevel": 4,
+        "semanticType": "badge",
+        "zIndex": 10,
+        "styleNotes": "通用模板强调形状，可作为背景、分隔线或信息卡底。",
+        "requiresImageGeneration": false
+      }
+    ],
+    "imageLayerRequests": [],
+    "canvas": {
+      "aspectRatio": "16:9",
+      "height": 7.5,
+      "safeMargin": 0.5,
+      "unit": "inch",
+      "width": 13.333
+    }
+  }
+}

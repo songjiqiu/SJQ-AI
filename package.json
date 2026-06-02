@@ -21,7 +21,9 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev"
+    "db:migrate": "prisma migrate dev",
+    "db:seed:template-assets": "node scripts/seed-template-element-assets.mjs",
+    "generate:template-assets": "node scripts/generate-universal-template-element-assets.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "5.2.2",
