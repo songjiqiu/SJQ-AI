@@ -19,9 +19,11 @@ export default async function WorkbenchPage({
 
   setRequestLocale(locale);
 
-  if (!(await getCurrentUser())) {
+  const user = await getCurrentUser();
+
+  if (!user) {
     redirect(`/${locale}/login`);
   }
 
-  return <CreationWorkbench />;
+  return <CreationWorkbench showAdminBackLink={user.role === "ADMIN"} />;
 }

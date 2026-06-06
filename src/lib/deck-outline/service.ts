@@ -10,12 +10,12 @@ import {
 import {
   deckOutlineIntentInputSchema,
   deckStructureSlideSchema,
+  generationInputSchema,
   type AnalyzeDeckRequest,
   type DeckOutlineIntentInput,
   type DeckIntentAnalysisResult
 } from "@/lib/ai-deck/schema";
 import { NotFoundError } from "@/lib/ai-config/service";
-import { deckInputFileExtensions } from "@/lib/create-deck/file-options";
 import { prisma } from "@/lib/db/prisma";
 import { isMissingPrismaModelStorageError } from "@/lib/db/prisma-errors";
 import { ActiveGenerationExistsError } from "@/lib/decks/errors";
@@ -30,7 +30,15 @@ import {
   type DeckOutlineDraftListItem
 } from "./schema";
 
-const supportedTextFileExtensions = new Set<string>(deckInputFileExtensions);
+const supportedTextFileExtensions = new Set([
+  ".txt",
+  ".md",
+  ".markdown",
+  ".csv",
+  ".json",
+  ".docx"
+]);
+const outlineSourceTextMaxLength = 24000;
 
 export type CreateDeckOutlineDraftOptions = {
   analyzerOptions?: AnalyzeDeckOptions;
@@ -54,6 +62,7 @@ export async function createDeckOutlineDraftForUser(
   const input = createDeckOutlineDraftSchema.parse(rawInput);
 
   validateTextFiles(input.textFiles);
+  generationInputSchema.parse(input);
 
   const intentAnalysis = buildConfirmedIntentAnalysis(input);
   const outlineInput = buildAnalyzeDeckRequest(input);
@@ -61,7 +70,10 @@ export async function createDeckOutlineDraftForUser(
     outlineInput,
     intentAnalysis.structureOutline,
     intentAnalysis.fileSummaries,
-    options.analyzerOptions
+    {
+      ...options.analyzerOptions,
+      intentAnalysis
+    }
   );
   const draft = await prisma.deckOutlineDraft.create({
     data: {
@@ -87,6 +99,7 @@ export async function analyzeDeckOutlineIntentForUser(
   const input = deckOutlineIntentInputSchema.parse(rawInput);
 
   validateTextFiles(input.textFiles);
+  generationInputSchema.parse(input);
 
   return analyzeDeckIntent(input, options.analyzerOptions);
 }
@@ -178,6 +191,10 @@ export async function updateDeckOutlineDraftForUser(
     throw new NotFoundError("Outline draft not found");
   }
 
+  const normalizedVisualSpec = normalizeUnifiedVisualSpec(
+    input.unifiedVisualSpec,
+    existing.input as AnalyzeDeckRequest
+  );
   const draft = await prisma.deckOutlineDraft.update({
     where: {
       id: draftId
@@ -185,7 +202,7 @@ export async function updateDeckOutlineDraftForUser(
     data: {
       title: input.deckTitle,
       summary: input.deckSummary,
-      unifiedVisualSpec: toInputJson(input.unifiedVisualSpec),
+      unifiedVisualSpec: toInputJson(normalizedVisualSpec),
       slides: toInputJson(input.slides)
     }
   });
@@ -244,7 +261,9 @@ function buildAnalyzeDeckRequest(
     pageCount: input.confirmedPlan.recommendedPageCount,
     deckType: input.deckType,
     palette: input.palette,
-    locale: input.locale
+    locale: input.locale,
+    parsedFiles: input.parsedFiles ?? [],
+    sources: input.sources ?? []
   };
 }
 
@@ -253,11 +272,13 @@ function buildConfirmedIntentAnalysis(
 ): DeckIntentAnalysisResult {
   return {
     ...input.confirmedPlan,
-    fileSummaries: buildFileSummaries(input.textFiles),
+    fileSummaries: buildFileSummaries(input),
     input: {
       idea: input.idea,
       sourceText: input.sourceText,
       textFiles: input.textFiles,
+      parsedFiles: input.parsedFiles ?? [],
+      sources: input.sources ?? [],
       ...(input.pageCount ? { pageCount: input.pageCount } : {}),
       deckType: input.deckType,
       palette: input.palette,
@@ -266,8 +287,18 @@ function buildConfirmedIntentAnalysis(
   };
 }
 
-function buildFileSummaries(files: CreateDeckOutlineDraftInput["textFiles"]) {
-  return files.map((file) => ({
+function buildFileSummaries(input: CreateDeckOutlineDraftInput) {
+  if ((input.parsedFiles ?? []).length > 0) {
+    return (input.parsedFiles ?? []).map((file) => ({
+      characterCount: file.characterCount,
+      name: file.name,
+      size: file.size,
+      summary: compactText(file.summary || file.text, 500),
+      snippets: buildFileSnippets(file.text || file.summary)
+    }));
+  }
+
+  return input.textFiles.map((file) => ({
     characterCount: file.content.length,
     name: file.name,
     size: file.size,
@@ -296,13 +327,18 @@ function mergeSourceText(input: CreateDeckOutlineDraftInput) {
   const sections = [
     ["创作想法", input.idea],
     ["补充文本", input.sourceText],
+    ...(input.sources ?? []).map(
+      (source) => [`来源 ${source.sourceId}：${source.label}`, source.text] as const
+    ),
     ...input.textFiles.map((file) => [`文件：${file.name}`, file.content] as const)
   ]
     .filter(([, content]) => content.trim().length > 0)
     .map(([title, content]) => `【${title}】\n${content.trim()}`);
   const merged = sections.join("\n\n").replace(/\s+\n/g, "\n").trim();
 
-  return merged.length > 12000 ? merged.slice(0, 12000) : merged;
+  return merged.length > outlineSourceTextMaxLength
+    ? merged.slice(0, outlineSourceTextMaxLength)
+    : merged;
 }
 
 function validateTextFiles(

@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import {
   analyzeDeckRequestSchema,
+  deckPageCountMax,
+  deckPageCountMin,
   deckIntentAnalysisResultSchema,
   deckOutlineFileSummarySchema,
   deckOutlineIntentInputSchema,
@@ -54,7 +56,7 @@ export const updateDeckOutlineDraftSchema = z
     deckTitle: z.string().trim().min(2).max(100),
     deckSummary: z.string().trim().min(8).max(300),
     unifiedVisualSpec: unifiedVisualSpecSchema,
-    slides: z.array(slideContentSchema).min(3).max(18)
+    slides: z.array(slideContentSchema).min(deckPageCountMin).max(deckPageCountMax)
   })
   .strict();
 
@@ -75,7 +77,7 @@ export const deckOutlineDraftListItemSchema = z
     deckTitle: z.string().min(2).max(100),
     deckSummary: z.string().min(8).max(300),
     mode: z.enum(["ai-json", "mock"]),
-    slideCount: z.number().int().min(3).max(18),
+    slideCount: z.number().int().min(deckPageCountMin).max(deckPageCountMax),
     updatedAt: z.string().min(1),
     createdAt: z.string().min(1)
   })

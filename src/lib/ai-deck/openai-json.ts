@@ -52,20 +52,24 @@ export class AiJsonError extends Error {
 }
 
 class JsonCompletionError extends Error {
+  responseContent?: string;
   responseSnippet?: string;
   stage: AiJsonAttemptStage;
 
   constructor({
     message,
+    responseContent,
     responseSnippet,
     stage
   }: {
     message: string;
+    responseContent?: string;
     responseSnippet?: string;
     stage: AiJsonAttemptStage;
   }) {
     super(message);
     this.name = "JsonCompletionError";
+    this.responseContent = responseContent;
     this.responseSnippet = responseSnippet;
     this.stage = stage;
   }
@@ -76,9 +80,14 @@ function formatErrorMessage(error: unknown) {
 }
 
 const responseSnippetMaxLength = 2000;
+const responseRepairContentMaxLength = 60000;
 
 function toResponseSnippet(content: string) {
   return content.trim().slice(0, responseSnippetMaxLength);
+}
+
+function toResponseRepairContent(content: string) {
+  return content.trim().slice(0, responseRepairContentMaxLength);
 }
 
 function formatZodIssues(error: unknown) {
@@ -190,8 +199,21 @@ function escapeControlCharactersInJsonStrings(content: string) {
   return repaired;
 }
 
-function parseJsonContent(content: string) {
+function stripJsonMarkdownFence(content: string) {
   const trimmed = content.trim();
+  const match = /^```(?:json|JSON)?\s*([\s\S]*?)\s*```$/.exec(trimmed);
+
+  return match ? match[1].trim() : trimmed;
+}
+
+function isJsonLikeContent(content: string) {
+  const trimmed = stripJsonMarkdownFence(content);
+
+  return trimmed.startsWith("{") || trimmed.startsWith("[");
+}
+
+function parseJsonContent(content: string) {
+  const trimmed = stripJsonMarkdownFence(content);
 
   if (trimmed.startsWith("```")) {
     throw new Error("AI response used Markdown fences instead of pure JSON.");
@@ -290,6 +312,7 @@ async function createJsonCompletion({
   } catch (error) {
     throw new JsonCompletionError({
       message: formatErrorMessage(error),
+      responseContent: toResponseRepairContent(content),
       responseSnippet: toResponseSnippet(content),
       stage: "parse"
     });
@@ -301,6 +324,7 @@ export async function generateValidatedJson<T>({
   messages,
   model,
   normalize,
+  retryValidation = true,
   temperature = 0.2,
   schema,
   schemaName
@@ -309,12 +333,14 @@ export async function generateValidatedJson<T>({
   messages: ChatMessage[];
   model: string;
   normalize?: (value: unknown) => unknown;
+  retryValidation?: boolean;
   temperature?: number;
   schema: ZodType<T>;
   schemaName: string;
 }) {
   const attempts: AiJsonAttemptDiagnostic[] = [];
   let firstError: unknown;
+  let lastRepairableParseError: JsonCompletionError | undefined;
   let retryError: unknown;
   const schemaInstruction = `目标 JSON Schema（必须完整符合，且不要输出 schema 之外的字段）：\n${JSON.stringify(
     z.toJSONSchema(schema),
@@ -363,10 +389,53 @@ export async function generateValidatedJson<T>({
             : {}),
           stage: error.stage
         });
+
+        if (
+          error.stage === "parse" &&
+          error.responseContent &&
+          isJsonLikeContent(error.responseContent)
+        ) {
+          lastRepairableParseError = error;
+        }
       }
 
       throw error;
     }
+  }
+
+  async function runModelJsonRepairAttempt(parseError: JsonCompletionError) {
+    const responseContent = parseError.responseContent;
+
+    if (!responseContent) {
+      throw new Error("No JSON repair content available.");
+    }
+
+    return runAttempt({
+      attemptMessages: [
+        {
+          role: "system",
+          content:
+            "你是 JSON 格式修复器。你只修复 JSON 语法和字符串转义，不改写字段含义，不新增解释。"
+        },
+        {
+          role: "user",
+          content: `上一轮模型输出看起来像 JSON，但不是合法 JSON。解析错误：${parseError.message}
+
+请基于下面原始输出修复为严格 JSON：
+- 只输出 JSON 对象或数组，不要 Markdown，不要代码围栏，不要解释。
+- 不要改变字段含义、字段名、页数或内容结构。
+- 字符串里的换行、制表符、回车和英文双引号必须使用合法 JSON 转义。
+- typographyRules.scale.*.usage 这类用途说明保持单行短句。
+- 输出必须完整符合目标 schema。
+
+原始输出：
+${responseContent}
+
+${schemaInstruction}`
+        }
+      ],
+      responseFormatMode: "plain"
+    });
   }
 
   function buildError(message: string) {
@@ -390,21 +459,25 @@ export async function generateValidatedJson<T>({
     firstError = error;
   }
 
-  try {
-    return await runAttempt({
-      attemptMessages: [
-        ...messages,
-        {
-          role: "user",
-          content: `上一次输出未通过结构化校验。请修复为一个严格 JSON 对象：不要 Markdown，不要代码围栏，不要解释，不要在 JSON 前后添加任何文字，字段必须完整并符合 schema。
+  if (retryValidation) {
+    try {
+      return await runAttempt({
+        attemptMessages: [
+          ...messages,
+          {
+            role: "user",
+            content: `上一次输出未通过结构化校验。请修复为一个严格 JSON 对象：不要 Markdown，不要代码围栏，不要解释，不要在 JSON 前后添加任何文字，字段必须完整并符合 schema。所有字符串里的换行、制表符、回车和英文双引号必须使用合法 JSON 转义。
 
 ${schemaInstruction}`
-        }
-      ],
-      responseFormatMode: "json_object"
-    });
-  } catch (error) {
-    retryError = error;
+          }
+        ],
+        responseFormatMode: "json_object"
+      });
+    } catch (error) {
+      retryError = error;
+    }
+  } else {
+    retryError = firstError;
   }
 
   if (
@@ -416,8 +489,8 @@ ${schemaInstruction}`
         attemptMessages: [
           ...messages,
           {
-          role: "user",
-            content: `当前模型服务可能不支持 response_format。请仍然只输出一个严格 JSON 对象：不要 Markdown，不要代码围栏，不要解释，不要在 JSON 前后添加任何文字，字符串中的换行和制表符必须使用 JSON 转义。
+            role: "user",
+            content: `当前模型服务可能不支持 response_format。请仍然只输出一个严格 JSON 对象：不要 Markdown，不要代码围栏，不要解释，不要在 JSON 前后添加任何文字。所有字符串里的换行、制表符、回车和英文双引号必须使用合法 JSON 转义。
 
 ${schemaInstruction}`
           }
@@ -425,6 +498,14 @@ ${schemaInstruction}`
         responseFormatMode: "plain"
       });
     } catch (error) {
+      if (lastRepairableParseError?.responseContent) {
+        try {
+          return await runModelJsonRepairAttempt(lastRepairableParseError);
+        } catch {
+          // Keep the compatibility fallback error in the final summary.
+        }
+      }
+
       const message = `AI JSON output failed validation after compatibility fallback. First error: ${formatErrorMessage(
         firstError
       )}. Retry error: ${formatErrorMessage(
@@ -432,6 +513,14 @@ ${schemaInstruction}`
       )}. Last error: ${formatErrorMessage(error)}`;
 
       throw buildError(message);
+    }
+  }
+
+  if (lastRepairableParseError?.responseContent) {
+    try {
+      return await runModelJsonRepairAttempt(lastRepairableParseError);
+    } catch {
+      // Keep the normal retry error in the final summary.
     }
   }
 

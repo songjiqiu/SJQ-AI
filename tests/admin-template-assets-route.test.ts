@@ -17,12 +17,12 @@ const auth = vi.hoisted(() => {
 });
 
 const assets = vi.hoisted(() => ({
-  createTemplateElementAsset: vi.fn(),
-  deleteTemplateElementAsset: vi.fn(),
-  getTemplateElementAsset: vi.fn(),
-  listTemplateElementAssets: vi.fn(),
-  searchTemplateElementAssetsForAi: vi.fn(),
-  updateTemplateElementAsset: vi.fn()
+  createTemplateAssetByKind: vi.fn(),
+  deleteTemplateAssetByKind: vi.fn(),
+  getTemplateAssetByKind: vi.fn(),
+  listTemplateAssetsByKind: vi.fn(),
+  searchTemplateAssetsForAiByKind: vi.fn(),
+  updateTemplateAssetByKind: vi.fn()
 }));
 
 vi.mock("@/lib/auth/session", () => ({
@@ -35,21 +35,22 @@ vi.mock("@/lib/admin/template-assets/service", () => ({
     class TemplateElementAssetNotFoundError extends Error {},
   TemplateElementAssetValidationError:
     class TemplateElementAssetValidationError extends Error {},
-  createTemplateElementAsset: assets.createTemplateElementAsset,
-  deleteTemplateElementAsset: assets.deleteTemplateElementAsset,
-  getTemplateElementAsset: assets.getTemplateElementAsset,
-  listTemplateElementAssets: assets.listTemplateElementAssets,
-  searchTemplateElementAssetsForAi: assets.searchTemplateElementAssetsForAi,
-  updateTemplateElementAsset: assets.updateTemplateElementAsset
+  createTemplateAssetByKind: assets.createTemplateAssetByKind,
+  deleteTemplateAssetByKind: assets.deleteTemplateAssetByKind,
+  getTemplateAssetByKind: assets.getTemplateAssetByKind,
+  listTemplateAssetsByKind: assets.listTemplateAssetsByKind,
+  searchTemplateAssetsForAiByKind: assets.searchTemplateAssetsForAiByKind,
+  updateTemplateAssetByKind: assets.updateTemplateAssetByKind
 }));
 
 import {
   DELETE,
   GET as GET_ONE,
   PATCH
-} from "@/app/api/admin/template-assets/[id]/route";
-import { POST as AI_SEARCH } from "@/app/api/admin/template-assets/ai-search/route";
-import { GET, POST } from "@/app/api/admin/template-assets/route";
+} from "@/app/api/admin/template-icons/[id]/route";
+import { POST as AI_SEARCH } from "@/app/api/admin/template-icons/ai-search/route";
+import { GET, POST } from "@/app/api/admin/template-icons/route";
+import { GET as DEPRECATED_GET } from "@/app/api/admin/template-assets/route";
 import { ForbiddenError } from "@/lib/auth/access";
 
 const adminUser = {
@@ -72,6 +73,14 @@ const asset = {
   colorTags: ["blue"],
   createdAt: "2026-06-02T00:00:00.000Z",
   description: "线性图标",
+  detail: {
+    cornerRadius: 12,
+    fillMode: "none",
+    iconName: "idea",
+    iconStyle: "line",
+    strokeColor: "#2563eb",
+    strokeWidth: 2
+  },
   id: "asset-1",
   isEnabled: true,
   kind: TemplateElementAssetKind.ICON,
@@ -102,16 +111,24 @@ const asset = {
   variantKey: "warning"
 };
 
-describe("admin template element asset routes", () => {
+describe("split admin template asset routes", () => {
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("returns 410 for the deprecated unified route", async () => {
+    const response = await DEPRECATED_GET();
+    const payload = await response.json();
+
+    expect(response.status).toBe(410);
+    expect(payload.error).toBe("TEMPLATE_ASSETS_API_DEPRECATED");
   });
 
   it("rejects unauthenticated list requests", async () => {
     auth.requireAdminUser.mockRejectedValue(new auth.UnauthorizedError());
 
     const response = await GET(
-      new Request("http://localhost/api/admin/template-assets")
+      new Request("http://localhost/api/admin/template-icons")
     );
     const payload = await response.json();
 
@@ -123,7 +140,7 @@ describe("admin template element asset routes", () => {
     auth.requireAdminUser.mockRejectedValue(new ForbiddenError());
 
     const response = await GET(
-      new Request("http://localhost/api/admin/template-assets")
+      new Request("http://localhost/api/admin/template-icons")
     );
     const payload = await response.json();
 
@@ -131,54 +148,54 @@ describe("admin template element asset routes", () => {
     expect(payload.error).toBe("FORBIDDEN");
   });
 
-  it("lists assets for administrators", async () => {
+  it("lists icon assets for administrators", async () => {
     auth.requireAdminUser.mockResolvedValue(adminUser);
-    assets.listTemplateElementAssets.mockResolvedValue([asset]);
+    assets.listTemplateAssetsByKind.mockResolvedValue([asset]);
 
     const response = await GET(
       new Request(
-        "http://localhost/api/admin/template-assets?kind=ICON&includeDisabled=false&includeUnapproved=false&query=idea&primaryCategory=status-feedback&secondaryCategory=result-status&variantKey=warning&setKind=COMMON&setKey=common&pageType=title-body-points&styleTag=minimal&backgroundMode=light&reviewStatus=APPROVED"
+        "http://localhost/api/admin/template-icons?includeDisabled=false&includeUnapproved=false&query=idea&primaryCategory=status-feedback&secondaryCategory=result-status&variantKey=warning&setKind=COMMON&setKey=common&pageType=title-body-points&styleTag=minimal&backgroundMode=light&reviewStatus=APPROVED"
       )
     );
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(assets.listTemplateElementAssets).toHaveBeenCalledWith({
-      includeDisabled: false,
-      includeUnapproved: false,
-      backgroundMode: "light",
-      kind: TemplateElementAssetKind.ICON,
-      pageType: "title-body-points",
-      primaryCategory: "status-feedback",
-      query: "idea",
-      reviewStatus: TemplateAssetReviewStatus.APPROVED,
-      secondaryCategory: "result-status",
-      setKey: "common",
-      setKind: TemplateAssetSetKind.COMMON,
-      styleTag: "minimal",
-      variantKey: "warning"
-    });
+    expect(assets.listTemplateAssetsByKind).toHaveBeenCalledWith(
+      TemplateElementAssetKind.ICON,
+      expect.objectContaining({
+        includeDisabled: false,
+        includeUnapproved: false,
+        backgroundMode: "light",
+        pageType: "title-body-points",
+        primaryCategory: "status-feedback",
+        query: "idea",
+        reviewStatus: TemplateAssetReviewStatus.APPROVED,
+        secondaryCategory: "result-status",
+        setKey: "common",
+        setKind: TemplateAssetSetKind.COMMON,
+        styleTag: "minimal",
+        variantKey: "warning"
+      })
+    );
     expect(payload.assets).toHaveLength(1);
   });
 
-  it("creates assets", async () => {
+  it("creates icon assets", async () => {
     auth.requireAdminUser.mockResolvedValue(adminUser);
-    assets.createTemplateElementAsset.mockResolvedValue(asset);
+    assets.createTemplateAssetByKind.mockResolvedValue(asset);
 
     const response = await POST(
-      new Request("http://localhost/api/admin/template-assets", {
+      new Request("http://localhost/api/admin/template-icons", {
         body: JSON.stringify({
-          kind: "ICON",
-          name: "概念图标",
-          preview: {
-            iconName: "idea"
+          detail: {
+            iconName: "idea",
+            iconStyle: "line",
+            strokeColor: "#2563eb"
           },
+          name: "概念图标",
           primaryCategory: "status-feedback",
           secondaryCategory: "result-status",
           semanticTags: ["idea"],
-          style: {
-            strokeColor: "#2563eb"
-          },
           variantKey: "warning"
         }),
         method: "POST"
@@ -187,28 +204,29 @@ describe("admin template element asset routes", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(201);
-    expect(assets.createTemplateElementAsset).toHaveBeenCalledWith(
+    expect(assets.createTemplateAssetByKind).toHaveBeenCalledWith(
+      TemplateElementAssetKind.ICON,
       expect.objectContaining({
-        kind: TemplateElementAssetKind.ICON,
+        detail: expect.objectContaining({
+          iconName: "idea"
+        }),
         name: "概念图标",
-        primaryCategory: "status-feedback",
-        secondaryCategory: "result-status",
-        variantKey: "warning"
+        primaryCategory: "status-feedback"
       })
     );
     expect(payload.asset.id).toBe("asset-1");
   });
 
-  it("reads and updates a single asset", async () => {
+  it("reads and updates a single icon asset", async () => {
     auth.requireAdminUser.mockResolvedValue(adminUser);
-    assets.getTemplateElementAsset.mockResolvedValue(asset);
-    assets.updateTemplateElementAsset.mockResolvedValue({
+    assets.getTemplateAssetByKind.mockResolvedValue(asset);
+    assets.updateTemplateAssetByKind.mockResolvedValue({
       ...asset,
       isEnabled: false
     });
 
     const readResponse = await GET_ONE(
-      new Request("http://localhost/api/admin/template-assets/asset-1"),
+      new Request("http://localhost/api/admin/template-icons/asset-1"),
       {
         params: Promise.resolve({
           id: "asset-1"
@@ -221,13 +239,10 @@ describe("admin template element asset routes", () => {
     expect(readPayload.asset.id).toBe("asset-1");
 
     const patchResponse = await PATCH(
-      new Request("http://localhost/api/admin/template-assets/asset-1", {
+      new Request("http://localhost/api/admin/template-icons/asset-1", {
         body: JSON.stringify({
           isEnabled: false,
-          primaryCategory: "time-progress",
-          reviewStatus: "PENDING_REVIEW",
-          secondaryCategory: "time-object",
-          variantKey: "calendar"
+          reviewStatus: "PENDING_REVIEW"
         }),
         method: "PATCH"
       }),
@@ -240,25 +255,23 @@ describe("admin template element asset routes", () => {
     const patchPayload = await patchResponse.json();
 
     expect(patchResponse.status).toBe(200);
-    expect(assets.updateTemplateElementAsset).toHaveBeenCalledWith(
+    expect(assets.updateTemplateAssetByKind).toHaveBeenCalledWith(
+      TemplateElementAssetKind.ICON,
       "asset-1",
       {
         isEnabled: false,
-        primaryCategory: "time-progress",
-        reviewStatus: TemplateAssetReviewStatus.PENDING_REVIEW,
-        secondaryCategory: "time-object",
-        variantKey: "calendar"
+        reviewStatus: TemplateAssetReviewStatus.PENDING_REVIEW
       }
     );
     expect(patchPayload.asset.isEnabled).toBe(false);
   });
 
-  it("deletes assets", async () => {
+  it("deletes icon assets", async () => {
     auth.requireAdminUser.mockResolvedValue(adminUser);
-    assets.deleteTemplateElementAsset.mockResolvedValue(undefined);
+    assets.deleteTemplateAssetByKind.mockResolvedValue(undefined);
 
     const response = await DELETE(
-      new Request("http://localhost/api/admin/template-assets/asset-1", {
+      new Request("http://localhost/api/admin/template-icons/asset-1", {
         method: "DELETE"
       }),
       {
@@ -269,19 +282,20 @@ describe("admin template element asset routes", () => {
     );
 
     expect(response.status).toBe(204);
-    expect(assets.deleteTemplateElementAsset).toHaveBeenCalledWith("asset-1");
+    expect(assets.deleteTemplateAssetByKind).toHaveBeenCalledWith(
+      TemplateElementAssetKind.ICON,
+      "asset-1"
+    );
   });
 
   it("returns validation and duplicate errors", async () => {
     auth.requireAdminUser.mockResolvedValue(adminUser);
 
     const validationResponse = await POST(
-      new Request("http://localhost/api/admin/template-assets", {
+      new Request("http://localhost/api/admin/template-icons", {
         body: JSON.stringify({
-          kind: "BAD",
           name: "坏资产",
-          preview: {},
-          style: {}
+          semanticTags: []
         }),
         method: "POST"
       })
@@ -291,7 +305,7 @@ describe("admin template element asset routes", () => {
     expect(validationResponse.status).toBe(400);
     expect(validationPayload.error).toBe("VALIDATION_FAILED");
 
-    assets.createTemplateElementAsset.mockRejectedValue(
+    assets.createTemplateAssetByKind.mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
         clientVersion: "7.8.0",
         code: "P2002"
@@ -299,17 +313,13 @@ describe("admin template element asset routes", () => {
     );
 
     const duplicateResponse = await POST(
-      new Request("http://localhost/api/admin/template-assets", {
+      new Request("http://localhost/api/admin/template-icons", {
         body: JSON.stringify({
-          kind: "ICON",
-          name: "概念图标",
-          preview: {
+          detail: {
             iconName: "idea"
           },
-          semanticTags: ["idea"],
-          style: {
-            strokeColor: "#2563eb"
-          }
+          name: "概念图标",
+          semanticTags: ["idea"]
         }),
         method: "POST"
       })
@@ -320,9 +330,9 @@ describe("admin template element asset routes", () => {
     expect(duplicatePayload.error).toBe("DUPLICATE_RECORD");
   });
 
-  it("searches AI assets for administrators", async () => {
+  it("searches AI icon assets for administrators", async () => {
     auth.requireAdminUser.mockResolvedValue(adminUser);
-    assets.searchTemplateElementAssetsForAi.mockResolvedValue([
+    assets.searchTemplateAssetsForAiByKind.mockResolvedValue([
       {
         ...asset,
         matchScore: 42,
@@ -331,10 +341,9 @@ describe("admin template element asset routes", () => {
     ]);
 
     const response = await AI_SEARCH(
-      new Request("http://localhost/api/admin/template-assets/ai-search", {
+      new Request("http://localhost/api/admin/template-icons/ai-search", {
         body: JSON.stringify({
           backgroundMode: "light",
-          kind: "ICON",
           pageType: "title-body-points",
           semanticTags: ["idea"],
           setKey: "common",
@@ -346,15 +355,17 @@ describe("admin template element asset routes", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(assets.searchTemplateElementAssetsForAi).toHaveBeenCalledWith({
-      backgroundMode: "light",
-      kind: TemplateElementAssetKind.ICON,
-      limit: 12,
-      pageType: "title-body-points",
-      semanticTags: ["idea"],
-      setKey: "common",
-      styleTags: ["minimal"]
-    });
+    expect(assets.searchTemplateAssetsForAiByKind).toHaveBeenCalledWith(
+      TemplateElementAssetKind.ICON,
+      {
+        backgroundMode: "light",
+        limit: 12,
+        pageType: "title-body-points",
+        semanticTags: ["idea"],
+        setKey: "common",
+        styleTags: ["minimal"]
+      }
+    );
     expect(payload.assets[0].matchScore).toBe(42);
   });
 });

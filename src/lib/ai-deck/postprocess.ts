@@ -6,14 +6,23 @@ import type {
   SlideDesignQualityScore,
   SlideCompositionPlan,
   SlideElement,
-  SlideMotionPlan
+  SlideMotionPlan,
+  UnifiedVisualSpec
 } from "./schema";
+import {
+  bindElementsToContentBlocks,
+  completeElementsForContentBlocks,
+  dedupeSlideContentBlocksForComposition,
+  getMissingContentBlockIndexes
+} from "./content-block-bindings";
 import {
   slideCanvasHeight,
   slideCanvasSafeMargin,
   slideCanvasUnit,
   slideCanvasWidth
 } from "./schema";
+import { extractPaletteHexColors } from "./visual-colors";
+import { bindSlideElementColorsToVisualSpec } from "./visual-element-colors";
 
 const sensitivePatterns = [
   /违法|暴力|仇恨|歧视|色情|诈骗|洗钱|自杀|恐怖/i,
@@ -104,9 +113,10 @@ export function buildConsistencyReport(
   deck: AnalyzedDeckResult
 ): ConsistencyReport {
   const zh = isChinese(input.locale);
+  const paletteColors = extractPaletteHexColors(deck.unifiedVisualSpec.colorPalette);
   const paletteScore =
-    deck.unifiedVisualSpec.colorPalette.length >= 3 &&
-    deck.unifiedVisualSpec.colorPalette.length <= 6
+    paletteColors.length >= 10 &&
+    paletteColors.length <= 18
       ? 96
       : 78;
   const slideCountScore = deck.slides.length === input.pageCount ? 100 : 60;
@@ -214,9 +224,19 @@ export function buildConsistencyReport(
 }
 
 export function normalizeSlideCompositionPlan(
-  slide: SlideCompositionPlan
+  slide: SlideCompositionPlan,
+  options: {
+    completeContentBlocks?: boolean;
+    unifiedVisualSpec?: Pick<UnifiedVisualSpec, "colorPalette" | "colorRoles">;
+  } = {}
 ): SlideCompositionPlan {
-  const convertedElements = slide.elements.map((element) => ({
+  const dedupedSlide = normalizeCompositionContentLayers(
+    dedupeSlideContentBlocksForComposition(slide)
+  );
+  const sourceElements = options.completeContentBlocks
+    ? completeElementsForContentBlocks(dedupedSlide)
+    : bindElementsToContentBlocks(dedupedSlide);
+  const convertedElements = sourceElements.map((element) => ({
     ...element,
     bounds: normalizeBounds(element.bounds)
   }));
@@ -224,21 +244,124 @@ export function normalizeSlideCompositionPlan(
     elements: convertedElements
   });
   const normalizedSlide = {
-    ...slide,
+    ...dedupedSlide,
     canvas: normalizedCanvas(),
+    designPlan: {
+      ...dedupedSlide.designPlan,
+      readingOrder: mergeReadingOrder(
+        dedupedSlide.designPlan.readingOrder.filter((id) =>
+          convertedElements.some((element) => element.id === id)
+        ),
+        convertedElements.map((element) => element.id)
+      )
+    },
     elements: convertedElements.map((element) =>
       fitTextElementWithinBounds(element, diagnostics.hasOverflow)
     ),
     layoutDiagnostics: mergeLayoutDiagnostics(slide.layoutDiagnostics, diagnostics)
   };
+  const colorBoundSlide = options.unifiedVisualSpec
+    ? bindSlideElementColorsToVisualSpec(
+        normalizedSlide,
+        options.unifiedVisualSpec,
+        {
+          addDiagnostic: true
+        }
+      )
+    : normalizedSlide;
 
   return {
-    ...normalizedSlide,
+    ...colorBoundSlide,
     designQualityScore: buildSlideDesignQualityScore(
-      normalizedSlide,
+      colorBoundSlide,
       slide.designQualityScore?.repairStatus ?? "not-needed"
     )
   };
+}
+
+function normalizeCompositionContentLayers(slide: SlideCompositionPlan): SlideCompositionPlan {
+  const used = new Set<number>();
+  const layers: SlideCompositionPlan["content"]["contentLayers"] = {
+    primary: [],
+    supporting: [],
+    supplementary: []
+  };
+
+  for (const group of ["primary", "supporting", "supplementary"] as const) {
+    const maxItems = group === "primary" ? 4 : group === "supporting" ? 6 : 5;
+
+    for (const index of slide.content.contentLayers[group]) {
+      if (
+        Number.isInteger(index) &&
+        index >= 0 &&
+        index < slide.content.contentBlocks.length &&
+        !used.has(index) &&
+        layers[group].length < maxItems
+      ) {
+        used.add(index);
+        layers[group].push(index);
+      }
+    }
+  }
+
+  const ordered = slide.content.contentBlocks
+    .map((block, index) => ({ index, priority: block.priority }))
+    .sort((left, right) => left.priority - right.priority || left.index - right.index);
+  const add = (group: keyof SlideCompositionPlan["content"]["contentLayers"], index: number) => {
+    const maxItems = group === "primary" ? 4 : group === "supporting" ? 6 : 5;
+
+    if (used.has(index) || layers[group].length >= maxItems) {
+      return false;
+    }
+
+    used.add(index);
+    layers[group].push(index);
+    return true;
+  };
+
+  if (layers.primary.length === 0) {
+    ordered.some(({ index }) => add("primary", index));
+  }
+
+  if (layers.supporting.length === 0) {
+    ordered.some(({ index }) => add("supporting", index));
+  }
+
+  for (const { index, priority } of ordered) {
+    if (used.has(index)) {
+      continue;
+    }
+
+    if (priority <= 1 && add("primary", index)) {
+      continue;
+    }
+
+    if (priority <= 3 && add("supporting", index)) {
+      continue;
+    }
+
+    if (add("supplementary", index)) {
+      continue;
+    }
+
+    if (add("supporting", index)) {
+      continue;
+    }
+
+    add("primary", index);
+  }
+
+  return {
+    ...slide,
+    content: {
+      ...slide.content,
+      contentLayers: layers
+    }
+  };
+}
+
+function mergeReadingOrder(current: string[], elementIds: string[]) {
+  return Array.from(new Set([...current, ...elementIds])).slice(0, 24);
 }
 
 export function analyzeSlideLayout(slide: Pick<SlideCompositionPlan, "elements">) {
@@ -382,6 +505,9 @@ export function buildSlideDesignQualityScore(
     diagnostics.warnings.filter((warning) => warning.includes("重叠")).length * 10 +
     diagnostics.warnings.filter((warning) => warning.includes("溢出")).length * 10 +
     slide.layoutDiagnostics.warnings.filter((warning) => warning.includes("溢出")).length * 10;
+  const missingContentBlockCount = getMissingContentBlockIndexes(slide).length;
+  const contentBlockPenalty =
+    missingContentBlockCount > 0 ? Math.min(34, 14 + missingContentBlockCount * 6) : 0;
   const hierarchyScore = clampScore(
     96 -
       (titleCount === 1 ? 0 : 22) -
@@ -402,12 +528,16 @@ export function buildSlideDesignQualityScore(
     94 -
       (slide.content.bodyPoints.length >= 2 ? 0 : 14) -
       (slide.pageIntent.audienceTakeaway.trim().length >= 4 ? 0 : 12) -
-      (slide.content.viewerObjective.description.trim().length >= 4 ? 0 : 10)
+      (slide.content.viewerObjective.description.trim().length >= 4 ? 0 : 10) -
+      contentBlockPenalty
   );
   const issues = [
     ...(titleCount === 1 ? [] : ["主标题数量不是唯一。"]),
     ...(hasCoreMessage ? [] : ["核心信息未稳定进入一级信息层级。"]),
     ...(hasVisualAnchor ? [] : ["页面缺少明确视觉锚点。"]),
+    ...(missingContentBlockCount > 0
+      ? [`页面可展示内容未完全落版：${missingContentBlockCount} 个内容块没有对应元素。`]
+      : []),
     ...diagnostics.warnings,
     ...slide.layoutDiagnostics.warnings
   ].slice(0, 10);
@@ -416,6 +546,7 @@ export function buildSlideDesignQualityScore(
     ...(visualConsistencyScore < 80 ? ["统一视觉锚点、图片避让和版式候选理由。"] : []),
     ...(contentDensityScore < 80 ? ["压缩正文或改用更紧凑的信息图结构。"] : []),
     ...(renderabilityScore < 80 ? ["调整元素位置、字号或卡片宽度，避免溢出和重叠。"] : []),
+    ...(missingContentBlockCount > 0 ? ["为每个可展示内容块补充对应画布元素。"] : []),
     ...(expressionScore < 80 ? ["补足观众记忆点和表达完整性。"] : [])
   ].slice(0, 10);
   const dimensions = {
@@ -425,7 +556,12 @@ export function buildSlideDesignQualityScore(
     },
     expressionCompleteness: {
       score: expressionScore,
-      summary: expressionScore >= 80 ? "表达链路完整。" : "表达目标或观众记忆点不够完整。"
+      summary:
+        missingContentBlockCount > 0
+          ? "部分可展示内容未落版。"
+          : expressionScore >= 80
+            ? "表达链路完整。"
+            : "表达目标或观众记忆点不够完整。"
     },
     informationHierarchy: {
       score: hierarchyScore,

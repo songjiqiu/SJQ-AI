@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { ZodError } from "zod";
 
 import {
   getPptTemplateCategoryQueryValues,
@@ -16,10 +17,14 @@ import {
 } from "@/lib/admin/templates/schemas";
 import type { PptTemplateDto } from "@/lib/admin/templates/types";
 import {
+  type AnalyzeDeckRequest,
+  type SemanticSlidePlan,
   slideCompositionPlanSchema,
-  type SlideCompositionPlan
+  type SlideCompositionPlan,
+  type UnifiedVisualSpec
 } from "@/lib/ai-deck/schema";
 import { prisma } from "@/lib/db/prisma";
+import { isMissingPrismaModelStorageError } from "@/lib/db/prisma-errors";
 
 const universalTemplatePackageDir = path.join(
   process.cwd(),
@@ -42,6 +47,9 @@ export class PptTemplatePackageImportError extends Error {
     this.name = "PptTemplatePackageImportError";
   }
 }
+
+export const legacyPptTemplateSlideCompatibilityWarning =
+  "Template slide JSON is incompatible with the current schema and was loaded from the category default.";
 
 type PptTemplateRecord = {
   category: string;
@@ -82,8 +90,13 @@ export function serializePptTemplate(
     throw new PptTemplateNotFoundError("Unsupported PPT template category");
   }
 
+  const slideResult = normalizeStoredSlideForCategory(template.slide, category);
+
   return {
     category,
+    ...(slideResult.warning
+      ? { compatibilityWarning: slideResult.warning }
+      : {}),
     createdAt: template.createdAt.toISOString(),
     customCategoryKey: template.customCategoryKey,
     customCategoryName: template.customCategoryName,
@@ -91,7 +104,7 @@ export function serializePptTemplate(
     id: template.id,
     isEnabled: template.isEnabled,
     name: template.name,
-    slide: normalizeSlideForCategory(template.slide, category),
+    slide: slideResult.slide,
     sortOrder: template.sortOrder,
     tags: parseTags(template.tags),
     updatedAt: template.updatedAt.toISOString()
@@ -126,6 +139,58 @@ export async function listPptTemplates({
   });
 
   return templates.map(serializePptTemplate);
+}
+
+export async function selectPptTemplateForSlide({
+  input,
+  semanticPlan,
+  unifiedVisualSpec
+}: {
+  input: AnalyzeDeckRequest;
+  semanticPlan: SemanticSlidePlan;
+  unifiedVisualSpec: UnifiedVisualSpec;
+}): Promise<PptTemplateDto | null> {
+  const categories = getTemplateCandidateCategories(semanticPlan);
+
+  if (categories.length === 0) {
+    return null;
+  }
+
+  try {
+    const templates = await listPptTemplates({
+      includeDisabled: false
+    });
+    const candidates = templates.filter((template) =>
+      categories.includes(template.category)
+    );
+
+    if (candidates.length === 0) {
+      return null;
+    }
+
+    return candidates
+      .map((template) => ({
+        score: scoreTemplateForSlide(template, {
+          categories,
+          input,
+          semanticPlan,
+          unifiedVisualSpec
+        }),
+        template
+      }))
+      .sort(
+        (first, second) =>
+          second.score - first.score ||
+          first.template.sortOrder - second.template.sortOrder ||
+          Date.parse(first.template.createdAt) - Date.parse(second.template.createdAt)
+      )[0]?.template ?? null;
+  } catch (error) {
+    if (isMissingPrismaModelStorageError(error, "PptTemplate")) {
+      return null;
+    }
+
+    throw error;
+  }
 }
 
 export async function getPptTemplate(templateId: string) {
@@ -322,6 +387,26 @@ function normalizeSlideForCategory(
   return normalizedSlide;
 }
 
+function normalizeStoredSlideForCategory(
+  slide: unknown,
+  category: PptTemplateCategoryId
+) {
+  try {
+    return {
+      slide: normalizeSlideForCategory(slide, category)
+    };
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return {
+        slide: buildDefaultTemplateSlide(category),
+        warning: legacyPptTemplateSlideCompatibilityWarning
+      };
+    }
+
+    throw error;
+  }
+}
+
 async function assertPptTemplateExists(templateId: string) {
   const template = await prisma.pptTemplate.findUnique({
     where: {
@@ -343,6 +428,119 @@ function parseTags(value: unknown) {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
     : [];
+}
+
+function getTemplateCandidateCategories(semanticPlan: SemanticSlidePlan) {
+  return Array.from(
+    new Set([
+      semanticPlan.layoutSelection.selectedLayoutType,
+      ...semanticPlan.layoutSelection.candidates
+        .sort((first, second) => second.score - first.score)
+        .map((candidate) => candidate.layoutType)
+    ])
+  );
+}
+
+function scoreTemplateForSlide(
+  template: PptTemplateDto,
+  {
+    categories,
+    input,
+    semanticPlan,
+    unifiedVisualSpec
+  }: {
+    categories: PptTemplateCategoryId[];
+    input: AnalyzeDeckRequest;
+    semanticPlan: SemanticSlidePlan;
+    unifiedVisualSpec: UnifiedVisualSpec;
+  }
+) {
+  const categoryIndex = categories.indexOf(template.category);
+  const preferredStyle = getPreferredTemplateStyle(input.deckType);
+  const haystack = normalizeSearchTerms([
+    template.name,
+    template.description ?? "",
+    template.category,
+    template.slide.pageIntent.pageRole,
+    template.slide.pageIntent.contentDensity,
+    template.slide.designPlan.visualStrategy,
+    ...template.tags,
+    ...unifiedVisualSpec.pptTypeVisualTone.visualKeywords,
+    unifiedVisualSpec.pptTypeVisualTone.recommendedTone,
+    semanticPlan.pageIntent.pageRole,
+    semanticPlan.pageIntent.contentDensity,
+    semanticPlan.pageIntent.primaryGoal,
+    semanticPlan.pageIntent.coreMessage
+  ]);
+  const semanticTerms = normalizeSearchTerms([
+    semanticPlan.content.title,
+    semanticPlan.content.visualIntent,
+    semanticPlan.pageIntent.coreMessage,
+    semanticPlan.pageIntent.pageRole,
+    semanticPlan.pageIntent.contentDensity,
+    ...semanticPlan.content.bodyPoints,
+    ...unifiedVisualSpec.pptTypeVisualTone.visualKeywords,
+    unifiedVisualSpec.pptTypeVisualTone.recommendedTone
+  ]);
+  let score = Math.max(0, 120 - Math.max(0, categoryIndex) * 24);
+
+  if (template.category === semanticPlan.layoutSelection.selectedLayoutType) {
+    score += 36;
+  }
+
+  if (preferredStyle && haystack.includes(preferredStyle.toLowerCase())) {
+    score += 34;
+  }
+
+  if (template.slide.pageIntent.pageRole === semanticPlan.pageIntent.pageRole) {
+    score += 16;
+  }
+
+  if (
+    template.slide.pageIntent.contentDensity ===
+    semanticPlan.pageIntent.contentDensity
+  ) {
+    score += 10;
+  }
+
+  for (const term of semanticTerms) {
+    if (term.length >= 2 && haystack.includes(term)) {
+      score += 4;
+    }
+  }
+
+  score += Math.max(0, 100000 - template.sortOrder) / 100000;
+
+  return Number(score.toFixed(4));
+}
+
+function getPreferredTemplateStyle(deckType: AnalyzeDeckRequest["deckType"]) {
+  if (
+    deckType === "product-launch" ||
+    deckType === "fundraising-pitch" ||
+    deckType === "growth-experiment" ||
+    deckType === "industry-insight"
+  ) {
+    return "AI 科技感";
+  }
+
+  if (
+    deckType === "research-report" ||
+    deckType === "data-analysis" ||
+    deckType === "personal-review" ||
+    deckType === "portfolio"
+  ) {
+    return "极简咨询风";
+  }
+
+  return "中国商务通用";
+}
+
+function normalizeSearchTerms(values: string[]) {
+  return values
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean)
+    .join(" ");
 }
 
 async function readUniversalTemplatePackage() {
@@ -370,7 +568,21 @@ async function readUniversalTemplatePackage() {
         );
       }
 
-      const filePath = path.join(process.cwd(), ...normalizedFile.split("/"));
+      const packageRelativeFile = normalizedFile.slice(expectedPrefix.length);
+
+      if (
+        !packageRelativeFile ||
+        packageRelativeFile.split("/").some((segment) => !segment || segment === "..")
+      ) {
+        throw new PptTemplatePackageImportError(
+          `Unexpected template path: ${item.file}`
+        );
+      }
+
+      const filePath = path.join(
+        universalTemplatePackageDir,
+        ...packageRelativeFile.split("/")
+      );
       const template = await readJsonFile<unknown>(filePath);
       const input = pptTemplateCreateSchema.parse(
         isRecord(template)

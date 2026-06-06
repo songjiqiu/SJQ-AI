@@ -6,12 +6,34 @@ import {
   deckInputMaxFileCount,
   deckInputMaxFileSize
 } from "@/lib/create-deck/file-options";
+import {
+  deckInputSourceSchema,
+  deckPageCountMax,
+  deckPageCountMin,
+  generationInputSchema,
+  parsedDeckInputFileSchema,
+  semanticContentBlockTypeIds
+} from "@/lib/deck-input/schema";
 
 export const canvasAspectRatio = "16:9";
 export const slideCanvasUnit = "inch";
 export const slideCanvasWidth = 13.333;
 export const slideCanvasHeight = 7.5;
 export const slideCanvasSafeMargin = 0.5;
+export const slideCanvasPixelWidth = 1920;
+export const slideCanvasPixelHeight = 1080;
+export const slideCanvasGridGutterPx = 24;
+export const slideContentBlockMaxCount = 12;
+export const slideElementMaxCount = 24;
+
+export {
+  deckInputSourceSchema,
+  deckPageCountMax,
+  deckPageCountMin,
+  generationInputSchema,
+  parsedDeckInputFileSchema,
+  semanticContentBlockTypeIds
+};
 
 export const deckTextFileInputSchema = z
   .object({
@@ -45,7 +67,17 @@ export const deckOutlineIntentInputSchema = z
       .max(deckInputMaxFileCount)
       .optional()
       .default([]),
-    pageCount: z.coerce.number().int().min(3).max(18).optional(),
+    parsedFiles: z
+      .array(parsedDeckInputFileSchema)
+      .max(deckInputMaxFileCount)
+      .optional(),
+    sources: z.array(deckInputSourceSchema).max(1000).optional(),
+    pageCount: z.coerce
+      .number()
+      .int()
+      .min(deckPageCountMin)
+      .max(deckPageCountMax)
+      .optional(),
     deckType: z.enum(deckTypeIds).default("business-report"),
     palette: z.enum(paletteIds),
     locale: z.enum(["zh-CN", "en-US"])
@@ -58,7 +90,7 @@ export const confirmedDeckIntentSchema = z
     audience: z.string().trim().min(2).max(120),
     goal: z.string().trim().min(2).max(160),
     coreMessage: z.string().trim().min(2).max(300),
-    recommendedPageCount: z.number().int().min(3).max(18)
+    recommendedPageCount: z.number().int().min(deckPageCountMin).max(deckPageCountMax)
   })
   .strip();
 
@@ -73,30 +105,102 @@ export const analyzeDeckRequestSchema = z
       .min(2)
       .max(300)
       .default("围绕输入内容提炼核心信息"),
-    pageCount: z.coerce.number().int().min(3).max(18),
+    pageCount: z.coerce.number().int().min(deckPageCountMin).max(deckPageCountMax),
     deckType: z.enum(deckTypeIds).default("business-report"),
     palette: z.enum(paletteIds),
-    locale: z.enum(["zh-CN", "en-US"])
+    locale: z.enum(["zh-CN", "en-US"]),
+    parsedFiles: z
+      .array(parsedDeckInputFileSchema)
+      .max(deckInputMaxFileCount)
+      .optional(),
+    sources: z.array(deckInputSourceSchema).max(1000).optional()
   })
   .strip();
 
+const hexColorSchema = z
+  .string()
+  .regex(/^#[0-9A-F]{6}$/, "HEX color must be uppercase #RRGGBB");
+
+const paletteColorSchema = z
+  .object({
+    hex: hexColorSchema,
+    name: z.string().min(1).max(40),
+    usage: z.string().min(4).max(160)
+  })
+  .strict();
+
+const typographyTextLimitsSchema = z
+  .object({
+    bodyBulletMaxChineseChars: z.literal(24),
+    bodyModuleBulletCount: z.string().min(4).max(120),
+    coverTitleMaxLines: z.literal(2),
+    iconLabelMaxChineseChars: z.literal(10),
+    noteMaxChineseChars: z.literal(32),
+    pageTitleMaxLines: z.literal(2),
+    sectionTitleMaxLines: z.string().min(4).max(80),
+    textBoxRule: z.string().min(4).max(180)
+  })
+  .strict();
+
+const transparencyRuleSchema = z
+  .object({
+    baseHex: hexColorSchema,
+    opacity: z.number().min(0.04).max(0.95),
+    usage: z.string().min(4).max(160)
+  })
+  .strict();
+
+const componentRulesSchema = z
+  .object({
+    card: z.string().min(6).max(320),
+    chart: z.string().min(6).max(360),
+    icon: z.string().min(6).max(260),
+    metric: z.string().min(6).max(260),
+    table: z.string().min(6).max(320),
+    tag: z.string().min(6).max(260)
+  })
+  .strict();
+
 export const unifiedVisualSpecSchema = z
   .object({
+    componentRules: componentRulesSchema,
     themeName: z.string().min(2).max(80),
+    designIntent: z.string().min(6).max(240),
+    usageConvenience: z.string().min(4).max(180),
     visualStyle: z.string().min(6).max(240),
-    colorPalette: z.array(z.string().min(3).max(40)).min(3).max(6),
+    colorPalette: z
+      .object({
+        accent: z.array(paletteColorSchema).min(1).max(2),
+        chart: z.array(paletteColorSchema).min(4).max(8),
+        neutral: z.array(paletteColorSchema).min(2).max(4),
+        primary: z.array(paletteColorSchema).length(1),
+        secondary: z.array(paletteColorSchema).min(2).max(3)
+      })
+      .strict(),
     typography: z.string().min(6).max(160),
     imageStyle: z.string().min(6).max(240),
-    layoutRules: z.array(z.string().min(4).max(160)).min(2).max(6),
     consistencyRules: z.array(z.string().min(4).max(180)).min(2).max(8),
     forbiddenRules: z.array(z.string().min(4).max(160)).min(1).max(6),
     pageSpec: z
       .object({
         aspectRatio: z.literal(canvasAspectRatio),
+        canvasPixels: z
+          .object({
+            height: z.literal(slideCanvasPixelHeight),
+            width: z.literal(slideCanvasPixelWidth)
+          })
+          .strict(),
         gridColumns: z.literal(12),
+        gridGutterPx: z.literal(slideCanvasGridGutterPx),
         height: z.literal(slideCanvasHeight),
         layoutInstruction: z.string().min(8).max(240),
         safeMargin: z.literal(slideCanvasSafeMargin),
+        safeMarginPxRange: z
+          .object({
+            horizontal: z.string().min(4).max(40),
+            vertical: z.string().min(4).max(40)
+          })
+          .strict(),
         unit: z.literal(slideCanvasUnit),
         width: z.literal(slideCanvasWidth)
       })
@@ -111,12 +215,16 @@ export const unifiedVisualSpecSchema = z
         scale: z
           .object({
             coverTitle: typographyRuleScaleItemSchema(),
+            coverSubtitle: typographyRuleScaleItemSchema(),
             pageTitle: typographyRuleScaleItemSchema(),
+            sectionTitle: typographyRuleScaleItemSchema(),
             body: typographyRuleScaleItemSchema(),
             annotation: typographyRuleScaleItemSchema(),
-            chartLabel: typographyRuleScaleItemSchema()
+            chartLabel: typographyRuleScaleItemSchema(),
+            iconLabel: typographyRuleScaleItemSchema()
           })
-          .strict()
+          .strict(),
+        textLimits: typographyTextLimitsSchema
       })
       .strict(),
     colorRoles: z
@@ -124,6 +232,7 @@ export const unifiedVisualSpecSchema = z
         accent: z.string().min(3).max(180),
         background: z.string().min(3).max(180),
         bodyText: z.string().min(3).max(180),
+        borderDivider: z.string().min(3).max(180),
         chart: z.string().min(3).max(180),
         contrastRequirement: z.string().min(6).max(180),
         decorative: z.string().min(3).max(180),
@@ -132,9 +241,22 @@ export const unifiedVisualSpecSchema = z
         titleText: z.string().min(3).max(180)
       })
       .strict(),
+    transparencyRules: z.array(transparencyRuleSchema).min(2).max(8),
     imageRules: z
       .object({
+        aspectRatio: z.enum(["16:9", "4:3", "1:1", "3:4", "9:16"]),
         backgroundAvoidsHighContrastTextArea: z.boolean(),
+        forbiddenItems: z.array(z.string().min(2).max(120)).min(2).max(8),
+        imagePromptStyle: z.string().min(12).max(500),
+        imageType: z.enum([
+          "photo",
+          "illustration",
+          "icon",
+          "diagram",
+          "texture",
+          "background",
+          "cutout"
+        ]),
         subjectAvoidsTitleArea: z.boolean(),
         usageNotes: z.array(z.string().min(4).max(180)).min(2).max(6)
       })
@@ -156,7 +278,7 @@ export const unifiedVisualSpecSchema = z
         researchReport: z.string().min(6).max(220)
       })
       .strict(),
-    spacingRules: z
+    layoutRules: z
       .object({
         pageMargin: z.string().min(4).max(180),
         sectionGap: z.string().min(4).max(180),
@@ -199,12 +321,46 @@ export const unifiedVisualSpecSchema = z
       .strict(),
     forbiddenVisualRules: z.array(z.string().min(4).max(180)).min(3).max(10)
   })
-  .strict();
+  .strict()
+  .superRefine((spec, ctx) => {
+    const paletteColors = new Set(
+      Object.values(spec.colorPalette)
+        .flat()
+        .map((color) => color.hex)
+    );
+    const allowedColors = new Set([...paletteColors, "#000000", "#FFFFFF"]);
+    const roleValues = Object.entries(spec.colorRoles);
+    const hexPattern = /#[0-9A-Fa-f]{6}\b/g;
+
+    for (const [role, value] of roleValues) {
+      for (const rawColor of value.match(hexPattern) ?? []) {
+        const color = rawColor.toUpperCase();
+
+        if (!allowedColors.has(color)) {
+          ctx.addIssue({
+            code: "custom",
+            message: "color role references a color outside the palette",
+            path: ["colorRoles", role]
+          });
+        }
+      }
+    }
+
+    for (const [index, rule] of spec.transparencyRules.entries()) {
+      if (!paletteColors.has(rule.baseHex)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "transparency baseHex must come from colorPalette",
+          path: ["transparencyRules", index, "baseHex"]
+        });
+      }
+    }
+  });
 
 function typographyRuleScaleItemSchema() {
   return z
     .object({
-      fontSize: z.number().min(6).max(60),
+      fontSize: z.number().min(6).max(72),
       fontWeight: z.enum(["regular", "medium", "semibold", "bold"]),
       lineHeight: z.number().min(1).max(1.8),
       usage: z.string().min(4).max(180)
@@ -252,24 +408,186 @@ export const slideViewerObjectiveTypeSchema = z.enum([
   "act"
 ]);
 
-export const slideContentSchema = z
+export const slidePageRoleSchema = z.enum([
+  "cover",
+  "agenda",
+  "section",
+  "content",
+  "data",
+  "comparison",
+  "process",
+  "summary"
+]);
+
+export const legacySlideContentBlockTypeSchema = z.enum([
+  "title",
+  "body",
+  "metric",
+  "chart",
+  "quote",
+  "tag",
+  "step",
+  "comparison",
+  "conclusion",
+  "note"
+]);
+
+export const slideContentBlockTypeSchema = z.enum(semanticContentBlockTypeIds);
+
+const legacyToSemanticContentBlockTypeMap: Record<
+  z.infer<typeof legacySlideContentBlockTypeSchema>,
+  z.infer<typeof slideContentBlockTypeSchema>
+> = {
+  body: "text",
+  chart: "chart",
+  comparison: "comparison",
+  conclusion: "conclusion",
+  metric: "metric",
+  note: "source",
+  quote: "quote",
+  step: "steps",
+  tag: "callout",
+  title: "heading"
+};
+
+const semanticToLegacyContentBlockTypeMap: Record<
+  z.infer<typeof slideContentBlockTypeSchema>,
+  z.infer<typeof legacySlideContentBlockTypeSchema>
+> = {
+  callout: "tag",
+  chart: "chart",
+  comparison: "comparison",
+  conclusion: "conclusion",
+  heading: "title",
+  image: "note",
+  list: "body",
+  metric: "metric",
+  quote: "quote",
+  source: "note",
+  steps: "step",
+  summary: "conclusion",
+  table: "chart",
+  text: "body",
+  timeline: "step"
+};
+
+const slideContentBlockSchema = z.preprocess((value) => {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return value;
+  }
+
+  const record = value as Record<string, unknown>;
+  const rawType = record.type ?? record.blockType;
+  const semanticType = slideContentBlockTypeSchema.safeParse(rawType).success
+    ? rawType
+    : legacySlideContentBlockTypeSchema.safeParse(rawType).success
+      ? legacyToSemanticContentBlockTypeMap[
+          rawType as z.infer<typeof legacySlideContentBlockTypeSchema>
+        ]
+      : undefined;
+  const content = record.content ?? record.text;
+  const legacyType =
+    semanticType && slideContentBlockTypeSchema.safeParse(semanticType).success
+      ? semanticToLegacyContentBlockTypeMap[
+          semanticType as z.infer<typeof slideContentBlockTypeSchema>
+        ]
+      : record.blockType;
+
+  return {
+    ...record,
+    blockType: legacyType,
+    content,
+    sourceIds: Array.isArray(record.sourceIds) ? record.sourceIds : [],
+    text: content,
+    type: semanticType ?? rawType
+  };
+}, z
+  .object({
+    blockType: legacySlideContentBlockTypeSchema,
+    content: z.string().min(2).max(500).optional(),
+    priority: z.number().int().min(1).max(5),
+    sourceIds: z.array(z.string().min(6).max(80)).max(24).optional(),
+    text: z.string().min(2).max(500),
+    type: slideContentBlockTypeSchema.optional()
+  })
+  .strict());
+
+export const slideContentBlocksSchema = z
+  .array(slideContentBlockSchema)
+  .min(3)
+  .max(slideContentBlockMaxCount);
+
+export const slideContentLayerIndexSchema = z.number().int().min(0).max(slideContentBlockMaxCount - 1);
+
+export const slideContentLayersSchema = z
+  .object({
+    primary: z.array(slideContentLayerIndexSchema).min(1).max(4),
+    supporting: z.array(slideContentLayerIndexSchema).min(1).max(6),
+    supplementary: z.array(slideContentLayerIndexSchema).max(5)
+  })
+  .strict()
+  .superRefine((layers, ctx) => {
+    const seen = new Map<number, string>();
+
+    for (const group of ["primary", "supporting", "supplementary"] as const) {
+      layers[group].forEach((index, itemIndex) => {
+        const existing = seen.get(index);
+
+        if (existing) {
+          ctx.addIssue({
+            code: "custom",
+            message: "contentLayers indexes must be unique across layers",
+            path: [group, itemIndex]
+          });
+          return;
+        }
+
+        seen.set(index, group);
+      });
+    }
+  });
+
+const slideContentBaseSchema = z
   .object({
     slideId: z.string().min(3).max(60),
-    index: z.number().int().min(1).max(18),
+    index: z.number().int().min(1).max(deckPageCountMax),
     title: z.string().min(2).max(80),
+    pageType: slidePageRoleSchema.optional(),
     subtitle: z.string().max(120).optional(),
     bodyPoints: z.array(z.string().min(2).max(120)).min(2).max(5),
+    contentBlocks: slideContentBlocksSchema
+      .optional()
+      .default([
+        {
+          blockType: "title",
+          content: "页面标题",
+          priority: 1,
+          sourceIds: [],
+          text: "页面标题",
+          type: "heading"
+        },
+        {
+          blockType: "conclusion",
+          content: "页面核心结论",
+          priority: 1,
+          sourceIds: [],
+          text: "页面核心结论",
+          type: "conclusion"
+        },
+        {
+          blockType: "body",
+          content: "页面正文要点",
+          priority: 2,
+          sourceIds: [],
+          text: "页面正文要点",
+          type: "text"
+        }
+      ]),
     speakerGoal: z.string().min(6).max(180),
     visualIntent: z.string().min(6).max(220),
     coreStatement: z.string().min(4).max(220),
     narrativeRole: slideNarrativeRoleSchema,
-    contentLayers: z
-      .object({
-        primary: z.array(z.string().min(2).max(160)).min(1).max(4),
-        supporting: z.array(z.string().min(2).max(160)).min(1).max(6),
-        supplementary: z.array(z.string().min(2).max(160)).max(5)
-      })
-      .strict(),
+    contentLayers: slideContentLayersSchema,
     slideTransition: z
       .object({
         fromPrevious: z.string().min(4).max(220),
@@ -315,6 +633,35 @@ export const slideContentSchema = z
       .strict()
   })
   .strict();
+
+export const slideContentSchema = slideContentBaseSchema.superRefine((slide, ctx) => {
+    const assigned = new Set<number>();
+
+    for (const group of ["primary", "supporting", "supplementary"] as const) {
+      slide.contentLayers[group].forEach((blockIndex, layerIndex) => {
+        if (blockIndex >= slide.contentBlocks.length) {
+          ctx.addIssue({
+            code: "custom",
+            message: "contentLayers index must reference contentBlocks",
+            path: ["contentLayers", group, layerIndex]
+          });
+          return;
+        }
+
+        assigned.add(blockIndex);
+      });
+    }
+
+    slide.contentBlocks.forEach((_, blockIndex) => {
+      if (!assigned.has(blockIndex)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "every contentBlock must be assigned to contentLayers",
+          path: ["contentBlocks", blockIndex]
+        });
+      }
+    });
+});
 
 const inchBoundsSchema = z
   .object({
@@ -375,17 +722,6 @@ export const slideElementSemanticTypeSchema = z.enum([
   "footer"
 ]);
 
-export const slidePageRoleSchema = z.enum([
-  "cover",
-  "agenda",
-  "section",
-  "content",
-  "data",
-  "comparison",
-  "process",
-  "summary"
-]);
-
 export const slidePrimaryGoalSchema = z.enum([
   "inform",
   "explain",
@@ -426,6 +762,19 @@ export const slideLayoutTypeIds = [
 ] as const;
 
 export const slideLayoutTypeSchema = z.enum(slideLayoutTypeIds);
+
+export const lightweightNarrativeStyleIds = [
+  "problem-solution",
+  "insight-evidence",
+  "teaching-progressive",
+  "proposal-persuasive",
+  "review-summary",
+  "portfolio-showcase"
+] as const;
+
+export const lightweightNarrativeStyleSchema = z.enum(
+  lightweightNarrativeStyleIds
+);
 
 export const slideLayoutSelectionSchema = z
   .object({
@@ -514,6 +863,50 @@ export const slideElementTextStyleSchema = z
   })
   .strict();
 
+export const slideElementAssetBindingSchema = z
+  .object({
+    assetId: z.string().min(3).max(100),
+    kind: z.enum([
+      "ICON",
+      "SHAPE",
+      "LINE",
+      "TEXT_STYLE",
+      "CONTAINER",
+      "NAVIGATION"
+    ]),
+    matchScore: z.number().min(0).max(200).optional(),
+    name: z.string().min(1).max(120),
+    semanticKey: z.string().min(1).max(100).optional(),
+    setKey: z.string().min(1).max(80),
+    setKind: z.enum(["COMMON", "TEMPLATE"]),
+    usageSuggestion: z.string().min(2).max(180).optional(),
+    variantKey: z.string().min(1).max(100).optional()
+  })
+  .strict();
+
+export const slideElementAssetStyleSchema = z
+  .object({
+    activeColor: z.string().min(3).max(40).optional(),
+    containerRole: z.string().min(1).max(100).optional(),
+    cornerRadius: z.number().min(0).max(80).optional(),
+    dash: z.enum(["solid", "dashed", "dotted"]).optional(),
+    displayMode: z.string().min(1).max(80).optional(),
+    endArrowType: z.string().min(1).max(80).optional(),
+    fillColor: z.string().min(3).max(40).optional(),
+    iconName: z.string().min(1).max(100).optional(),
+    inactiveColor: z.string().min(3).max(40).optional(),
+    lineHeight: z.number().min(1).max(1.8).optional(),
+    lineType: z.string().min(1).max(80).optional(),
+    navigationRole: z.string().min(1).max(100).optional(),
+    opacity: z.number().min(0).max(1).optional(),
+    shapeType: z.string().min(1).max(80).optional(),
+    startArrowType: z.string().min(1).max(80).optional(),
+    strokeColor: z.string().min(3).max(40).optional(),
+    strokeWidth: z.number().min(0).max(12).optional(),
+    textRole: z.string().min(1).max(100).optional()
+  })
+  .strict();
+
 export const slideElementSchema = z
   .object({
     id: z.string().min(3).max(60),
@@ -528,7 +921,15 @@ export const slideElementSchema = z
     styleNotes: z.string().min(2).max(220),
     requiresImageGeneration: z.boolean(),
     textStyle: slideElementTextStyleSchema.optional(),
-    imageRequestId: z.string().min(3).max(80).optional()
+    imageRequestId: z.string().min(3).max(80).optional(),
+    contentBlockIndex: z
+      .number()
+      .int()
+      .min(0)
+      .max(slideContentBlockMaxCount - 1)
+      .optional(),
+    assetBinding: slideElementAssetBindingSchema.optional(),
+    assetStyle: slideElementAssetStyleSchema.optional()
   })
   .strict()
   .superRefine((element, ctx) => {
@@ -659,12 +1060,19 @@ export const semanticSlideElementSchema = z
     category: semanticElementCategorySchema,
     constraints: z.array(z.string().min(2).max(160)).max(6).default([]),
     content: z.string().max(500).optional(),
+    contentBlockIndex: z
+      .number()
+      .int()
+      .min(0)
+      .max(slideContentBlockMaxCount - 1)
+      .optional(),
     elementType: slideElementTypeSchema,
     hierarchyLevel: z.number().int().min(1).max(3),
     id: z.string().min(3).max(80),
     priority: z.number().int().min(1).max(5),
     role: z.string().min(2).max(100),
-    semanticType: slideElementSemanticTypeSchema
+    semanticType: slideElementSemanticTypeSchema,
+    styleRole: z.string().min(1).max(100).optional()
   })
   .strict();
 
@@ -673,7 +1081,7 @@ export const slidePageDesignSchema = z
     expressionIntent: z.string().min(4).max(240),
     layoutTemplate: z.string().min(2).max(120),
     visualStrategy: z.string().min(4).max(240),
-    readingOrder: z.array(z.string().min(1).max(80)).min(1).max(10)
+    readingOrder: z.array(z.string().min(1).max(80)).min(1).max(24)
   })
   .strict();
 
@@ -717,7 +1125,7 @@ export const slideMotionPlanSchema = z
           })
           .strict()
       )
-      .max(12)
+      .max(slideElementMaxCount)
   })
   .strict();
 
@@ -756,17 +1164,23 @@ export const deckAnalysisResultSchema = z
     deckTitle: z.string().min(2).max(100),
     deckSummary: z.string().min(8).max(300),
     unifiedVisualSpec: unifiedVisualSpecSchema,
-    slides: z.array(slideContentSchema).min(3).max(18)
+    slides: z.array(slideContentSchema).min(deckPageCountMin).max(deckPageCountMax)
   })
   .strict();
 
 export const deckStructureSlideSchema = z
   .object({
+    chapterId: z.string().min(3).max(60).optional(),
     slideId: z.string().min(3).max(60),
-    index: z.number().int().min(1).max(18),
+    index: z.number().int().min(1).max(deckPageCountMax),
+    layoutType: slideLayoutTypeSchema.optional(),
+    narrativeRole: slideNarrativeRoleSchema.optional(),
+    pageNumber: z.number().int().min(1).max(deckPageCountMax).optional(),
+    pageType: slidePageRoleSchema.optional(),
     title: z.string().min(2).max(80),
     purpose: z.string().min(6).max(180),
     keyMessage: z.string().min(4).max(180),
+    sourceIds: z.array(z.string().min(6).max(80)).max(24).optional(),
     visualDirection: z.string().min(6).max(220)
   })
   .strict();
@@ -775,7 +1189,7 @@ export const deckStructureOutlineSchema = z
   .object({
     deckTitle: z.string().min(2).max(100),
     deckSummary: z.string().min(8).max(300),
-    slides: z.array(deckStructureSlideSchema).min(3).max(18)
+    slides: z.array(deckStructureSlideSchema).min(deckPageCountMin).max(deckPageCountMax)
   })
   .strict();
 
@@ -784,18 +1198,558 @@ export const deckStructureOutlineResultSchema = z
     deckType: z.enum(deckTypeIds),
     deckTitle: z.string().min(2).max(100),
     deckSummary: z.string().min(8).max(300),
-    slides: z.array(deckStructureSlideSchema).min(3).max(18)
+    slides: z.array(deckStructureSlideSchema).min(deckPageCountMin).max(deckPageCountMax)
   })
   .strip();
 
-export const deckIntentAnalysisResultSchema = confirmedDeckIntentSchema
-  .extend({
-    input: deckOutlineIntentInputSchema,
-    fileSummaries: z.array(deckOutlineFileSummarySchema).max(deckInputMaxFileCount),
-    structureOutline: deckStructureOutlineSchema
+const lightweightOutlineForbiddenFields = new Set([
+  "bodyPoints",
+  "bounds",
+  "chartData",
+  "chartSeries",
+  "children",
+  "contentBlocks",
+  "dataPoints",
+  "elementHierarchy",
+  "elements",
+  "height",
+  "hierarchyLevel",
+  "imageKeywords",
+  "imageLayerRequests",
+  "imagePrompt",
+  "keywords",
+  "layers",
+  "level",
+  "prompt",
+  "style",
+  "textStyle",
+  "visualDirection",
+  "visualIntent",
+  "visualStyle",
+  "width",
+  "x",
+  "y",
+  "zIndex"
+]);
+
+function collectForbiddenLightweightOutlineFields(
+  value: unknown,
+  path: Array<string | number> = [],
+  issues: Array<{ path: Array<string | number>; key: string }> = []
+) {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) =>
+      collectForbiddenLightweightOutlineFields(item, [...path, index], issues)
+    );
+
+    return issues;
+  }
+
+  if (typeof value !== "object" || value === null) {
+    return issues;
+  }
+
+  for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+    if (lightweightOutlineForbiddenFields.has(key)) {
+      issues.push({
+        key,
+        path: [...path, key]
+      });
+    }
+
+    collectForbiddenLightweightOutlineFields(item, [...path, key], issues);
+  }
+
+  return issues;
+}
+
+function inferLegacyLightweightNarrativeStyle(deckType: unknown) {
+  if (
+    deckType === "training-course" ||
+    deckType === "teaching-deck" ||
+    deckType === "knowledge-sharing"
+  ) {
+    return "teaching-progressive";
+  }
+
+  if (
+    deckType === "research-report" ||
+    deckType === "data-analysis" ||
+    deckType === "industry-insight"
+  ) {
+    return "insight-evidence";
+  }
+
+  if (
+    deckType === "sales-proposal" ||
+    deckType === "proposal" ||
+    deckType === "fundraising-pitch"
+  ) {
+    return "proposal-persuasive";
+  }
+
+  if (deckType === "portfolio") {
+    return "portfolio-showcase";
+  }
+
+  if (deckType === "personal-review" || deckType === "retrospective-summary") {
+    return "review-summary";
+  }
+
+  return "problem-solution";
+}
+
+function normalizeLegacyLightweightOutline(value: unknown) {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return value;
+  }
+
+  const record = value as Record<string, unknown>;
+
+  if ("pages" in record || !("slides" in record)) {
+    return value;
+  }
+
+  const slides = Array.isArray(record.slides) ? record.slides : [];
+  const pageCount = slides.length;
+  const isChinese = String(record.deckTitle ?? "").match(/[\u4e00-\u9fa5]/);
+
+  return {
+    deckTitle: record.deckTitle,
+    deckType: record.deckType,
+    narrativeStyle: inferLegacyLightweightNarrativeStyle(record.deckType),
+    pageCount,
+    globalTheme: {
+      theme: record.deckTitle ?? (isChinese ? "结构大纲" : "Structure outline"),
+      objective:
+        record.deckSummary ??
+        (isChinese
+          ? "围绕输入内容形成清晰的演示结构。"
+          : "Create a clear presentation structure from the input.")
+    },
+    chapters: [
+      {
+        chapterId: "chapter-1",
+        pageRange: {
+          end: pageCount,
+          start: 1
+        },
+        purpose:
+          record.deckSummary ??
+          (isChinese
+            ? "组织整套演示的核心结构。"
+            : "Organize the core structure of the deck."),
+        title: record.deckTitle ?? (isChinese ? "整体结构" : "Overall Structure")
+      }
+    ],
+    pages: slides.map((slide, index) => {
+      const slideRecord =
+        typeof slide === "object" && slide !== null && !Array.isArray(slide)
+          ? (slide as Record<string, unknown>)
+          : {};
+      const pageNumber =
+        typeof slideRecord.index === "number" ? slideRecord.index : index + 1;
+      const pageType =
+        slidePageRoleSchema.safeParse(slideRecord.pageType).success
+          ? slideRecord.pageType
+          : pageNumber === 1
+            ? "cover"
+            : pageNumber === pageCount
+              ? "summary"
+              : "content";
+
+      return {
+        chapterId: "chapter-1",
+        keyMessage: slideRecord.keyMessage,
+        layoutType:
+          slideLayoutTypeSchema.safeParse(slideRecord.layoutType).success
+            ? slideRecord.layoutType
+            : pageNumber === 1
+            ? "cover-title"
+            : pageNumber === pageCount
+              ? "ending"
+              : "title-body-points",
+        narrativeRole:
+          pageNumber === 1
+            ? "setup"
+            : pageNumber === pageCount
+              ? "call-to-action"
+              : "argument",
+        pageNumber,
+        pageType,
+        purpose: slideRecord.purpose,
+        sourceIds: slideRecord.sourceIds,
+        title: slideRecord.title
+      };
+    })
+  };
+}
+
+const lightweightPageRangeSchema = z
+  .object({
+    end: z.number().int().min(1).max(deckPageCountMax),
+    start: z.number().int().min(1).max(deckPageCountMax)
   })
-  .strip()
-  .superRefine((result, ctx) => {
+  .strict()
+  .refine((range) => range.end >= range.start, {
+    message: "chapter pageRange.end must be greater than or equal to start",
+    path: ["end"]
+  });
+
+export const lightweightOutlineChapterSchema = z
+  .object({
+    chapterId: z.string().min(3).max(60),
+    pageRange: lightweightPageRangeSchema,
+    purpose: z.string().min(6).max(180),
+    title: z.string().min(2).max(80)
+  })
+  .strict();
+
+export const lightweightOutlinePageSchema = z
+  .object({
+    chapterId: z.string().min(3).max(60),
+    keyMessage: z.string().min(4).max(180),
+    layoutType: slideLayoutTypeSchema,
+    narrativeRole: slideNarrativeRoleSchema,
+    pageNumber: z.number().int().min(1).max(deckPageCountMax),
+    pageType: slidePageRoleSchema,
+    purpose: z.string().min(6).max(180),
+    sourceIds: z.array(z.string().min(6).max(80)).max(24).default([]),
+    title: z.string().min(2).max(80)
+  })
+  .strict();
+
+export const lightweightOutlineSchema = z.preprocess(
+  normalizeLegacyLightweightOutline,
+  z
+    .object({
+      chapters: z
+        .array(lightweightOutlineChapterSchema)
+        .min(1)
+        .max(deckPageCountMax),
+      deckTitle: z.string().min(2).max(100),
+      deckType: z.enum(deckTypeIds),
+      globalTheme: z
+        .object({
+          objective: z.string().min(6).max(220),
+          theme: z.string().min(2).max(100)
+        })
+        .strict(),
+      narrativeStyle: lightweightNarrativeStyleSchema,
+      pageCount: z.number().int().min(deckPageCountMin).max(deckPageCountMax),
+      pages: z
+        .array(lightweightOutlinePageSchema)
+        .min(deckPageCountMin)
+        .max(deckPageCountMax)
+    })
+    .strict()
+    .superRefine((outline, ctx) => {
+      const forbiddenIssues = collectForbiddenLightweightOutlineFields(outline);
+
+      for (const issue of forbiddenIssues) {
+        ctx.addIssue({
+          code: "custom",
+          message: `lightweight outline must not include ${issue.key}`,
+          path: issue.path
+        });
+      }
+
+      if (outline.pages.length !== outline.pageCount) {
+        ctx.addIssue({
+          code: "custom",
+          message: "pageCount must equal pages.length",
+          path: ["pages"]
+        });
+      }
+
+      const pageNumbers = new Set<number>();
+
+      for (const page of outline.pages) {
+        if (pageNumbers.has(page.pageNumber)) {
+          ctx.addIssue({
+            code: "custom",
+            message: "pageNumber must not repeat",
+            path: ["pages", outline.pages.indexOf(page), "pageNumber"]
+          });
+        }
+
+        pageNumbers.add(page.pageNumber);
+      }
+
+      for (let pageNumber = 1; pageNumber <= outline.pageCount; pageNumber += 1) {
+        if (!pageNumbers.has(pageNumber)) {
+          ctx.addIssue({
+            code: "custom",
+            message: "pageNumber must be continuous from 1 to pageCount",
+            path: ["pages"]
+          });
+          break;
+        }
+      }
+
+      const chapterIds = new Set(outline.chapters.map((chapter) => chapter.chapterId));
+      const coveredPages = new Set<number>();
+
+      for (const [chapterIndex, chapter] of outline.chapters.entries()) {
+        if (chapter.pageRange.end > outline.pageCount) {
+          ctx.addIssue({
+            code: "custom",
+            message: "chapter pageRange must stay within pageCount",
+            path: ["chapters", chapterIndex, "pageRange"]
+          });
+        }
+
+        for (
+          let pageNumber = chapter.pageRange.start;
+          pageNumber <= chapter.pageRange.end;
+          pageNumber += 1
+        ) {
+          if (coveredPages.has(pageNumber)) {
+            ctx.addIssue({
+              code: "custom",
+              message: "chapter pageRange must not overlap",
+              path: ["chapters", chapterIndex, "pageRange"]
+            });
+          }
+
+          coveredPages.add(pageNumber);
+        }
+      }
+
+      for (let pageNumber = 1; pageNumber <= outline.pageCount; pageNumber += 1) {
+        if (!coveredPages.has(pageNumber)) {
+          ctx.addIssue({
+            code: "custom",
+            message: "chapter pageRange must cover every page",
+            path: ["chapters"]
+          });
+          break;
+        }
+      }
+
+      for (const [pageIndex, page] of outline.pages.entries()) {
+        if (!chapterIds.has(page.chapterId)) {
+          ctx.addIssue({
+            code: "custom",
+            message: "page.chapterId must reference an existing chapter",
+            path: ["pages", pageIndex, "chapterId"]
+          });
+        }
+
+        const chapter = outline.chapters.find(
+          (item) => item.chapterId === page.chapterId
+        );
+
+        if (
+          chapter &&
+          (page.pageNumber < chapter.pageRange.start ||
+            page.pageNumber > chapter.pageRange.end)
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            message: "pageNumber must be inside its chapter pageRange",
+            path: ["pages", pageIndex, "chapterId"]
+          });
+        }
+      }
+
+      const firstPage = outline.pages.find((page) => page.pageNumber === 1);
+      const lastPage = outline.pages.find(
+        (page) => page.pageNumber === outline.pageCount
+      );
+
+      if (firstPage && firstPage.pageType !== "cover") {
+        ctx.addIssue({
+          code: "custom",
+          message: "first page must use pageType cover",
+          path: ["pages", 0, "pageType"]
+        });
+      }
+
+      if (
+        lastPage &&
+        !["summary", "content"].includes(lastPage.pageType) &&
+        lastPage.narrativeRole !== "call-to-action"
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: "last page must close the narrative",
+          path: ["pages", outline.pages.indexOf(lastPage), "pageType"]
+        });
+      }
+
+      const roleOrder: Record<z.infer<typeof slideNarrativeRoleSchema>, number> = {
+        argument: 1,
+        "call-to-action": 5,
+        climax: 3,
+        setup: 0,
+        summary: 4,
+        "turning-point": 2
+      };
+      let previousRoleOrder = -1;
+
+      for (const page of [...outline.pages].sort(
+        (left, right) => left.pageNumber - right.pageNumber
+      )) {
+        const currentRoleOrder = roleOrder[page.narrativeRole];
+
+        if (currentRoleOrder < previousRoleOrder) {
+          ctx.addIssue({
+            code: "custom",
+            message: "narrativeRole order must not go backwards",
+            path: ["pages", outline.pages.indexOf(page), "narrativeRole"]
+          });
+        }
+
+        previousRoleOrder = Math.max(previousRoleOrder, currentRoleOrder);
+      }
+    })
+);
+
+function buildStructureOutlineFromLightweightOutline(
+  outline: z.infer<typeof lightweightOutlineSchema>
+) {
+  return {
+    deckSummary: outline.globalTheme.objective,
+    deckTitle: outline.deckTitle,
+    slides: [...outline.pages]
+      .sort((left, right) => left.pageNumber - right.pageNumber)
+      .map((page) => ({
+        index: page.pageNumber,
+        keyMessage: page.keyMessage,
+        layoutType: page.layoutType,
+        narrativeRole: page.narrativeRole,
+        pageType: page.pageType,
+        purpose: page.purpose,
+        sourceIds: page.sourceIds,
+        slideId: `slide-${page.pageNumber}`,
+        title: page.title,
+        visualDirection:
+          page.pageType === "cover"
+            ? "承接轻量大纲主题，后续统一视觉阶段再定义具体视觉表达。"
+            : "承接轻量大纲结构，后续详细大纲阶段再定义视觉意图。"
+      }))
+  };
+}
+
+export const detailedSlideOutlineSchema = slideContentBaseSchema
+  .pick({
+    adaptationRules: true,
+    audienceFocus: true,
+    contentBoundary: true,
+    coreStatement: true,
+    explanationDepth: true,
+    index: true,
+    narrativeRole: true,
+    pageType: true,
+    slideId: true,
+    slideTransition: true,
+    sourceRequirement: true,
+    speakerGoal: true,
+    title: true,
+    viewerObjective: true,
+    visualIntent: true
+  })
+  .extend({
+    pageType: slidePageRoleSchema
+  })
+  .strict();
+
+export const slideDisplayContentSchema = z
+  .object({
+    slideId: z.string().min(3).max(60),
+    index: z.number().int().min(1).max(deckPageCountMax),
+    title: z.string().min(2).max(80),
+    subtitle: z.string().max(120).optional(),
+    bodyPoints: z.array(z.string().min(2).max(120)).min(2).max(5),
+    contentBlocks: slideContentBlocksSchema,
+    contentLayers: slideContentLayersSchema
+  })
+  .strict()
+  .superRefine((slide, ctx) => {
+    const assigned = new Set<number>();
+
+    for (const group of ["primary", "supporting", "supplementary"] as const) {
+      slide.contentLayers[group].forEach((blockIndex, layerIndex) => {
+        if (blockIndex >= slide.contentBlocks.length) {
+          ctx.addIssue({
+            code: "custom",
+            message: "contentLayers index must reference contentBlocks",
+            path: ["contentLayers", group, layerIndex]
+          });
+          return;
+        }
+
+        assigned.add(blockIndex);
+      });
+    }
+
+    slide.contentBlocks.forEach((_, blockIndex) => {
+      if (!assigned.has(blockIndex)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "every contentBlock must be assigned to contentLayers",
+          path: ["contentBlocks", blockIndex]
+        });
+      }
+    });
+  });
+
+function normalizeDeckIntentAnalysisResult(value: unknown) {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return value;
+  }
+
+  const record = value as Record<string, unknown>;
+  const rawLightweightOutline =
+    record.lightweightOutline ??
+    (typeof record.structureOutline === "object" &&
+    record.structureOutline !== null &&
+    !Array.isArray(record.structureOutline)
+      ? {
+          ...(record.structureOutline as Record<string, unknown>),
+          deckType: record.deckType
+        }
+      : record.structureOutline);
+  const parsedLightweightOutline =
+    lightweightOutlineSchema.safeParse(rawLightweightOutline);
+
+  if (!parsedLightweightOutline.success) {
+    return value;
+  }
+
+  const lightweightOutline = parsedLightweightOutline.data;
+  const structureOutline =
+    "structureOutline" in record &&
+    deckStructureOutlineSchema.safeParse(record.structureOutline).success
+      ? record.structureOutline
+      : buildStructureOutlineFromLightweightOutline(lightweightOutline);
+
+  return {
+    ...record,
+    deckType: record.deckType ?? lightweightOutline.deckType,
+    lightweightOutline,
+    recommendedPageCount:
+      typeof record.recommendedPageCount === "number"
+        ? record.recommendedPageCount
+        : lightweightOutline.pageCount,
+    structureOutline
+  };
+}
+
+export const deckIntentAnalysisResultSchema = z.preprocess(
+  normalizeDeckIntentAnalysisResult,
+  confirmedDeckIntentSchema
+    .extend({
+      input: deckOutlineIntentInputSchema,
+      fileSummaries: z
+        .array(deckOutlineFileSummarySchema)
+        .max(deckInputMaxFileCount),
+      lightweightOutline: lightweightOutlineSchema,
+      structureOutline: deckStructureOutlineSchema
+    })
+    .strip()
+).superRefine((result, ctx) => {
     if (
       result.input.pageCount !== undefined &&
       result.recommendedPageCount !== result.input.pageCount
@@ -814,13 +1768,62 @@ export const deckIntentAnalysisResultSchema = confirmedDeckIntentSchema
         path: ["structureOutline", "slides"]
       });
     }
+
+    if (result.lightweightOutline.pageCount !== result.recommendedPageCount) {
+      ctx.addIssue({
+        code: "custom",
+        message: "lightweightOutline.pageCount must match recommendedPageCount",
+        path: ["lightweightOutline", "pageCount"]
+      });
+    }
+
+    if (result.lightweightOutline.deckType !== result.deckType) {
+      ctx.addIssue({
+        code: "custom",
+        message: "lightweightOutline.deckType must match deckType",
+        path: ["lightweightOutline", "deckType"]
+      });
+    }
+
+    const allowedSourceIds = new Set(
+      (result.input.sources ?? []).map((source) => source.sourceId)
+    );
+
+    for (const [pageIndex, page] of result.lightweightOutline.pages.entries()) {
+      for (const sourceId of page.sourceIds) {
+        if (!allowedSourceIds.has(sourceId)) {
+          ctx.addIssue({
+            code: "custom",
+            message: "lightweightOutline sourceIds must reference existing sources",
+            path: ["lightweightOutline", "pages", pageIndex, "sourceIds"]
+          });
+        }
+      }
+    }
   });
+
+export const deckDetailedOutlineResultSchema = z
+  .object({
+    deckType: z.enum(deckTypeIds),
+    unifiedVisualSpec: unifiedVisualSpecSchema,
+    slides: z.array(detailedSlideOutlineSchema).min(deckPageCountMin).max(deckPageCountMax)
+  })
+  .strict();
+
+export const deckDisplayContentResultSchema = z
+  .object({
+    deckType: z.enum(deckTypeIds),
+    unifiedVisualSpec: unifiedVisualSpecSchema,
+    detailedOutline: z.array(detailedSlideOutlineSchema).min(deckPageCountMin).max(deckPageCountMax),
+    slides: z.array(slideDisplayContentSchema).min(deckPageCountMin).max(deckPageCountMax)
+  })
+  .strict();
 
 export const deckPageCopyResultSchema = z
   .object({
     deckType: z.enum(deckTypeIds),
     unifiedVisualSpec: unifiedVisualSpecSchema,
-    slides: z.array(slideContentSchema).min(3).max(18)
+    slides: z.array(slideContentSchema).min(deckPageCountMin).max(deckPageCountMax)
   })
   .strip();
 
@@ -833,7 +1836,7 @@ export const deckOutlineResultSchema = deckAnalysisResultSchema
 export const slideCompositionPlanSchema = z
   .object({
     slideId: z.string().min(3).max(60),
-    index: z.number().int().min(1).max(18),
+    index: z.number().int().min(1).max(deckPageCountMax),
     content: slideContentSchema,
     pageIntent: slidePageIntentSchema,
     contentHierarchy: slideContentHierarchySchema,
@@ -844,7 +1847,7 @@ export const slideCompositionPlanSchema = z
     designPlan: slidePageDesignSchema,
     layoutDiagnostics: slideLayoutDiagnosticsSchema,
     semanticElements: z.array(semanticSlideElementSchema).min(3).max(14),
-    elements: z.array(slideElementSchema).min(3).max(10),
+    elements: z.array(slideElementSchema).min(3).max(slideElementMaxCount),
     imageLayerRequests: z.array(imageLayerRequestSchema).max(5),
     canvas: slideCanvasSchema
   })
@@ -920,7 +1923,7 @@ export const slideCompositionPlanSchema = z
 export const semanticSlidePlanSchema = z
   .object({
     slideId: z.string().min(3).max(60),
-    index: z.number().int().min(1).max(18),
+    index: z.number().int().min(1).max(deckPageCountMax),
     content: slideContentSchema,
     pageIntent: slidePageIntentSchema,
     contentHierarchy: slideContentHierarchySchema,
@@ -939,7 +1942,7 @@ export const analyzedDeckResultSchema = z
     deckTitle: z.string().min(2).max(100),
     deckSummary: z.string().min(8).max(300),
     unifiedVisualSpec: unifiedVisualSpecSchema,
-    slides: z.array(slideCompositionPlanSchema).min(3).max(18)
+    slides: z.array(slideCompositionPlanSchema).min(deckPageCountMin).max(deckPageCountMax)
   })
   .strict();
 
@@ -959,7 +1962,7 @@ export const generatedDeckResultSchema = z
     unifiedVisualSpec: unifiedVisualSpecSchema,
     contentReview: contentReviewSchema,
     consistencyReport: consistencyReportSchema,
-    slides: z.array(generatedSlideResultSchema).min(3).max(18),
+    slides: z.array(generatedSlideResultSchema).min(deckPageCountMin).max(deckPageCountMax),
     pptxUrl: z.string().min(1).max(2048).optional(),
     createdAt: z.string().min(1),
     updatedAt: z.string().min(1)
@@ -993,12 +1996,30 @@ export type SlideMotionPlan = z.infer<typeof slideMotionPlanSchema>;
 export type ContentReview = z.infer<typeof contentReviewSchema>;
 export type ConsistencyReport = z.infer<typeof consistencyReportSchema>;
 export type DeckAnalysisResult = z.infer<typeof deckAnalysisResultSchema>;
+export type LightweightNarrativeStyle = z.infer<
+  typeof lightweightNarrativeStyleSchema
+>;
+export type LightweightOutline = z.infer<typeof lightweightOutlineSchema>;
+export type LightweightOutlineChapter = z.infer<
+  typeof lightweightOutlineChapterSchema
+>;
+export type LightweightOutlinePage = z.infer<
+  typeof lightweightOutlinePageSchema
+>;
 export type DeckStructureSlide = z.infer<typeof deckStructureSlideSchema>;
 export type DeckStructureOutline = z.infer<
   typeof deckStructureOutlineSchema
 >;
 export type DeckStructureOutlineResult = z.infer<
   typeof deckStructureOutlineResultSchema
+>;
+export type DetailedSlideOutline = z.infer<typeof detailedSlideOutlineSchema>;
+export type SlideDisplayContent = z.infer<typeof slideDisplayContentSchema>;
+export type DeckDetailedOutlineResult = z.infer<
+  typeof deckDetailedOutlineResultSchema
+>;
+export type DeckDisplayContentResult = z.infer<
+  typeof deckDisplayContentResultSchema
 >;
 export type DeckPageCopyResult = z.infer<typeof deckPageCopyResultSchema>;
 export type DeckOutlineResult = z.infer<typeof deckOutlineResultSchema>;

@@ -1,12 +1,14 @@
 import {
   TemplateAssetReviewStatus,
   TemplateAssetSetKind,
-  TemplateAssetSource,
   TemplateElementAssetKind,
   type Prisma
 } from "@prisma/client";
 
 import {
+  buildDefaultAiModifyPermissions,
+  buildDetailFromLegacyFields,
+  parseDetailForKind,
   templateElementAssetAiSearchSchema,
   templateElementAssetCreateSchema,
   templateElementAssetUpdateSchema,
@@ -18,85 +20,109 @@ import {
   type TemplateElementAssetUpdatePayload
 } from "@/lib/admin/template-assets/schemas";
 import type {
+  TemplateAssetAiResult,
+  TemplateAssetDetail,
+  TemplateAssetDto,
   TemplateAssetModifyPermissions,
-  TemplateElementAssetAiResult,
-  TemplateElementAssetDto
+  TemplateContainerAssetDetail,
+  TemplateIconAssetDetail,
+  TemplateLineAssetDetail,
+  TemplateNavigationAssetDetail,
+  TemplateShapeAssetDetail,
+  TemplateTextStyleAssetDetail
 } from "@/lib/admin/template-assets/types";
 import { prisma } from "@/lib/db/prisma";
 
-type TemplateElementAssetRecord = {
-  aiModifyPermissions: Prisma.JsonValue;
-  backgroundModes: Prisma.JsonValue;
-  colorTags: Prisma.JsonValue;
-  createdAt: Date;
-  description: string | null;
-  id: string;
-  isEnabled: boolean;
-  kind: TemplateElementAssetKind;
-  keywords: Prisma.JsonValue;
-  name: string;
-  pageTypes: Prisma.JsonValue;
-  preview: Prisma.JsonValue;
-  primaryCategory: string | null;
-  resource: Prisma.JsonValue;
-  reviewStatus: TemplateAssetReviewStatus;
-  semanticTags: Prisma.JsonValue;
-  secondaryCategory: string | null;
-  setKey: string;
-  setKind: TemplateAssetSetKind;
-  setName: string;
-  sortOrder: number;
-  source: TemplateAssetSource;
-  style: Prisma.JsonValue;
-  styleTags: Prisma.JsonValue;
-  synonyms: Prisma.JsonValue;
-  tags: Prisma.JsonValue;
-  updatedAt: Date;
-  usageScenarios: Prisma.JsonValue;
-  variantKey: string | null;
+type DetailModelName =
+  | "templateContainerAsset"
+  | "templateIconAsset"
+  | "templateLineAsset"
+  | "templateNavigationAsset"
+  | "templateShapeAsset"
+  | "templateTextStyleAsset";
+
+type TemplateAssetWithDetails = Prisma.TemplateAssetGetPayload<{
+  include: typeof templateAssetDetailInclude;
+}>;
+
+const templateAssetDetailInclude = {
+  container: true,
+  icon: true,
+  line: true,
+  navigation: true,
+  shape: true,
+  textStyle: true
+} satisfies Prisma.TemplateAssetInclude;
+
+const detailModelByKind: Record<TemplateElementAssetKind, DetailModelName> = {
+  [TemplateElementAssetKind.CONTAINER]: "templateContainerAsset",
+  [TemplateElementAssetKind.ICON]: "templateIconAsset",
+  [TemplateElementAssetKind.LINE]: "templateLineAsset",
+  [TemplateElementAssetKind.NAVIGATION]: "templateNavigationAsset",
+  [TemplateElementAssetKind.SHAPE]: "templateShapeAsset",
+  [TemplateElementAssetKind.TEXT_STYLE]: "templateTextStyleAsset"
 };
 
-export class TemplateElementAssetNotFoundError extends Error {
-  constructor(message = "Template element asset not found") {
+export class TemplateAssetNotFoundError extends Error {
+  constructor(message = "Template asset not found") {
+    super(message);
+    this.name = "TemplateAssetNotFoundError";
+  }
+}
+
+export class TemplateAssetValidationError extends Error {
+  constructor(message = "Template asset is invalid") {
+    super(message);
+    this.name = "TemplateAssetValidationError";
+  }
+}
+
+export class TemplateElementAssetNotFoundError extends TemplateAssetNotFoundError {
+  constructor(message = "Template asset not found") {
     super(message);
     this.name = "TemplateElementAssetNotFoundError";
   }
 }
 
-export class TemplateElementAssetValidationError extends Error {
-  constructor(message = "Template element asset is invalid") {
+export class TemplateElementAssetValidationError extends TemplateAssetValidationError {
+  constructor(message = "Template asset is invalid") {
     super(message);
     this.name = "TemplateElementAssetValidationError";
   }
 }
 
-export function serializeTemplateElementAsset(
-  asset: TemplateElementAssetRecord
-): TemplateElementAssetDto {
+export function serializeTemplateAsset(
+  asset: TemplateAssetWithDetails
+): TemplateAssetDto {
+  const detail = serializeDetail(asset);
+  const style = buildStyleFromDetail(asset.kind, detail);
+  const resource = buildResourceFromDetail(asset.kind, detail, asset);
+
   return {
     aiModifyPermissions: parseAiModifyPermissions(asset.aiModifyPermissions),
     backgroundModes: parseStringList(asset.backgroundModes),
     colorTags: parseStringList(asset.colorTags),
     createdAt: asset.createdAt.toISOString(),
     description: asset.description,
+    detail,
     id: asset.id,
     isEnabled: asset.isEnabled,
-    kind: asset.kind,
     keywords: parseStringList(asset.keywords),
+    kind: asset.kind,
     name: asset.name,
     pageTypes: parseStringList(asset.pageTypes),
     preview: parseJsonObject(asset.preview),
     primaryCategory: asset.primaryCategory,
-    resource: parseJsonObject(asset.resource),
+    resource,
     reviewStatus: asset.reviewStatus,
-    semanticTags: parseStringList(asset.semanticTags),
     secondaryCategory: asset.secondaryCategory,
+    semanticTags: parseStringList(asset.semanticTags),
     setKey: asset.setKey,
     setKind: asset.setKind,
     setName: asset.setName,
     sortOrder: asset.sortOrder,
     source: asset.source,
-    style: parseJsonObject(asset.style),
+    style,
     styleTags: parseStringList(asset.styleTags),
     synonyms: parseStringList(asset.synonyms),
     tags: parseStringList(asset.tags),
@@ -106,38 +132,41 @@ export function serializeTemplateElementAsset(
   };
 }
 
-export async function listTemplateElementAssets({
-  backgroundMode,
-  includeDisabled = true,
-  includeUnapproved = true,
-  kind,
-  pageType,
-  primaryCategory,
-  query,
-  reviewStatus,
-  secondaryCategory,
-  setKey,
-  setKind,
-  styleTag,
-  variantKey
-}: {
-  backgroundMode?: string;
-  includeDisabled?: boolean;
-  includeUnapproved?: boolean;
-  kind?: TemplateElementAssetKind;
-  pageType?: string;
-  primaryCategory?: string;
-  query?: string;
-  reviewStatus?: TemplateAssetReviewStatus;
-  secondaryCategory?: string;
-  setKey?: string;
-  setKind?: TemplateAssetSetKind;
-  styleTag?: string;
-  variantKey?: string;
-} = {}) {
+export async function listTemplateAssetsByKind(
+  kind: TemplateElementAssetKind,
+  filters: {
+    backgroundMode?: string;
+    includeDisabled?: boolean;
+    includeUnapproved?: boolean;
+    pageType?: string;
+    primaryCategory?: string;
+    query?: string;
+    reviewStatus?: TemplateAssetReviewStatus;
+    secondaryCategory?: string;
+    setKey?: string;
+    setKind?: TemplateAssetSetKind;
+    styleTag?: string;
+    variantKey?: string;
+  } = {}
+) {
+  const {
+    backgroundMode,
+    includeDisabled = true,
+    includeUnapproved = true,
+    pageType,
+    primaryCategory,
+    query,
+    reviewStatus,
+    secondaryCategory,
+    setKey,
+    setKind,
+    styleTag,
+    variantKey
+  } = filters;
   const keyword = query?.trim();
   const needsJsonFilter = Boolean(backgroundMode || pageType || styleTag);
-  const assets = await prisma.templateElementAsset.findMany({
+  const assets = await prisma.templateAsset.findMany({
+    include: templateAssetDetailInclude,
     orderBy: [
       {
         kind: "asc"
@@ -150,7 +179,7 @@ export async function listTemplateElementAssets({
       }
     ],
     where: {
-      ...(kind ? { kind } : {}),
+      kind,
       ...(includeDisabled ? {} : { isEnabled: true }),
       ...(includeUnapproved || reviewStatus
         ? {}
@@ -179,7 +208,7 @@ export async function listTemplateElementAssets({
         : {})
     }
   });
-  const serializedAssets = assets.map(serializeTemplateElementAsset);
+  const serializedAssets = assets.map(serializeTemplateAsset);
 
   const filteredAssets = needsJsonFilter
     ? serializedAssets.filter((asset) =>
@@ -216,20 +245,20 @@ export async function listTemplateElementAssets({
   );
 }
 
-export async function searchTemplateElementAssetsForAi(
+export async function searchTemplateAssetsForAiByKind(
+  kind: TemplateElementAssetKind,
   input: TemplateElementAssetAiSearchInput
-): Promise<TemplateElementAssetAiResult[]> {
+): Promise<TemplateAssetAiResult[]> {
   const parsedInput: TemplateElementAssetAiSearchPayload =
     templateElementAssetAiSearchSchema.parse(input);
   const candidateSets = buildAiCandidateSetFilters(parsedInput.setKey);
-  const allCandidates: TemplateElementAssetDto[] = [];
+  const allCandidates: TemplateAssetDto[] = [];
 
   for (const setFilter of candidateSets) {
-    const assets = await listTemplateElementAssets({
+    const assets = await listTemplateAssetsByKind(kind, {
       backgroundMode: parsedInput.backgroundMode,
       includeDisabled: false,
       includeUnapproved: false,
-      kind: parsedInput.kind,
       pageType: parsedInput.pageType,
       setKey: setFilter.setKey,
       setKind: setFilter.setKind
@@ -245,7 +274,7 @@ export async function searchTemplateElementAssetsForAi(
   return allCandidates
     .map((asset) => ({
       ...asset,
-      matchScore: scoreTemplateElementAssetForAi(asset, parsedInput),
+      matchScore: scoreTemplateAssetForAi(asset, parsedInput),
       usageSuggestion: buildUsageSuggestion(asset, parsedInput)
     }))
     .filter(
@@ -263,8 +292,316 @@ export async function searchTemplateElementAssetsForAi(
     .slice(0, parsedInput.limit);
 }
 
+export async function getTemplateAssetByKind(
+  kind: TemplateElementAssetKind,
+  assetId: string
+) {
+  const asset = await prisma.templateAsset.findFirst({
+    include: templateAssetDetailInclude,
+    where: {
+      id: assetId,
+      kind
+    }
+  });
+
+  if (!asset) {
+    throw new TemplateElementAssetNotFoundError();
+  }
+
+  return serializeTemplateAsset(asset);
+}
+
+export async function createTemplateAssetByKind(
+  kind: TemplateElementAssetKind,
+  input: Omit<TemplateElementAssetCreateInput, "kind"> &
+    Partial<Pick<TemplateElementAssetCreateInput, "kind">>
+) {
+  const parsedInput: TemplateElementAssetCreatePayload =
+    templateElementAssetCreateSchema.parse({
+      ...input,
+      kind
+    });
+  const detail = normalizeDetailForKind(kind, parsedInput.detail);
+  const asset = await prisma.$transaction(async (tx) => {
+    const createdAsset = await tx.templateAsset.create({
+      data: {
+        aiModifyPermissions: toInputJson(parsedInput.aiModifyPermissions),
+        backgroundModes: toInputJson(parsedInput.backgroundModes),
+        colorTags: toInputJson(parsedInput.colorTags),
+        description: parsedInput.description,
+        isEnabled: parsedInput.isEnabled,
+        keywords: toInputJson(parsedInput.keywords),
+        kind,
+        name: parsedInput.name,
+        pageTypes: toInputJson(parsedInput.pageTypes),
+        preview: toInputJson(
+          Object.keys(parsedInput.preview).length > 0
+            ? parsedInput.preview
+            : buildPreviewFromDetail(kind, detail)
+        ),
+        primaryCategory: parsedInput.primaryCategory ?? null,
+        reviewStatus: parsedInput.reviewStatus,
+        secondaryCategory: parsedInput.secondaryCategory ?? null,
+        semanticTags: toInputJson(parsedInput.semanticTags),
+        setKey: parsedInput.setKey,
+        setKind: parsedInput.setKind,
+        setName: parsedInput.setName,
+        sortOrder: parsedInput.sortOrder,
+        source: parsedInput.source,
+        styleTags: toInputJson(parsedInput.styleTags),
+        synonyms: toInputJson(parsedInput.synonyms),
+        tags: toInputJson(parsedInput.tags),
+        usageScenarios: toInputJson(parsedInput.usageScenarios),
+        variantKey: parsedInput.variantKey ?? null
+      }
+    });
+
+    await createDetail(tx, kind, createdAsset.id, detail);
+
+    return tx.templateAsset.findUniqueOrThrow({
+      include: templateAssetDetailInclude,
+      where: {
+        id: createdAsset.id
+      }
+    });
+  });
+
+  return serializeTemplateAsset(asset);
+}
+
+export async function updateTemplateAssetByKind(
+  kind: TemplateElementAssetKind,
+  assetId: string,
+  input: TemplateElementAssetUpdateInput
+) {
+  const parsedInput: TemplateElementAssetUpdatePayload =
+    templateElementAssetUpdateSchema.parse(input);
+  const existingAsset = await assertTemplateAssetExists(kind, assetId);
+  const nextDetailInput =
+    parsedInput.detail ??
+    (parsedInput.style || parsedInput.resource || parsedInput.preview
+      ? buildDetailFromLegacyFields(
+          kind,
+          parsedInput.style ?? buildStyleFromDetail(kind, serializeDetail(existingAsset)),
+          parsedInput.resource ?? buildResourceFromDetail(kind, serializeDetail(existingAsset), existingAsset),
+          parsedInput.preview ?? parseJsonObject(existingAsset.preview)
+        )
+      : undefined);
+
+  if (parsedInput.aiModifyPermissions) {
+    assertTypeSpecificAiModifyPermissions(kind, parsedInput.aiModifyPermissions);
+  }
+
+  const updatedAsset = await prisma.$transaction(async (tx) => {
+    const data: Prisma.TemplateAssetUpdateInput = {};
+
+    if (parsedInput.aiModifyPermissions !== undefined) {
+      data.aiModifyPermissions = toInputJson(parsedInput.aiModifyPermissions);
+    }
+
+    if (parsedInput.backgroundModes !== undefined) {
+      data.backgroundModes = toInputJson(parsedInput.backgroundModes);
+    }
+
+    if (parsedInput.colorTags !== undefined) {
+      data.colorTags = toInputJson(parsedInput.colorTags);
+    }
+
+    if ("description" in parsedInput) {
+      data.description = parsedInput.description;
+    }
+
+    if (parsedInput.isEnabled !== undefined) {
+      data.isEnabled = parsedInput.isEnabled;
+    }
+
+    if (parsedInput.keywords !== undefined) {
+      data.keywords = toInputJson(parsedInput.keywords);
+    }
+
+    if (parsedInput.name !== undefined) {
+      data.name = parsedInput.name;
+    }
+
+    if (parsedInput.pageTypes !== undefined) {
+      data.pageTypes = toInputJson(parsedInput.pageTypes);
+    }
+
+    if (parsedInput.preview !== undefined) {
+      data.preview = toInputJson(parsedInput.preview);
+    }
+
+    if ("primaryCategory" in parsedInput) {
+      data.primaryCategory = parsedInput.primaryCategory ?? null;
+    }
+
+    if (parsedInput.reviewStatus !== undefined) {
+      data.reviewStatus = parsedInput.reviewStatus;
+    }
+
+    if ("secondaryCategory" in parsedInput) {
+      data.secondaryCategory = parsedInput.secondaryCategory ?? null;
+    }
+
+    if (parsedInput.semanticTags !== undefined) {
+      data.semanticTags = toInputJson(parsedInput.semanticTags);
+    }
+
+    if (parsedInput.setKey !== undefined) {
+      data.setKey = parsedInput.setKey;
+    }
+
+    if (parsedInput.setKind !== undefined) {
+      data.setKind = parsedInput.setKind;
+    }
+
+    if (parsedInput.setName !== undefined) {
+      data.setName = parsedInput.setName;
+    }
+
+    if (parsedInput.sortOrder !== undefined) {
+      data.sortOrder = parsedInput.sortOrder;
+    }
+
+    if (parsedInput.source !== undefined) {
+      data.source = parsedInput.source;
+    }
+
+    if (parsedInput.styleTags !== undefined) {
+      data.styleTags = toInputJson(parsedInput.styleTags);
+    }
+
+    if (parsedInput.synonyms !== undefined) {
+      data.synonyms = toInputJson(parsedInput.synonyms);
+    }
+
+    if (parsedInput.tags !== undefined) {
+      data.tags = toInputJson(parsedInput.tags);
+    }
+
+    if (parsedInput.usageScenarios !== undefined) {
+      data.usageScenarios = toInputJson(parsedInput.usageScenarios);
+    }
+
+    if ("variantKey" in parsedInput) {
+      data.variantKey = parsedInput.variantKey ?? null;
+    }
+
+    await tx.templateAsset.update({
+      data,
+      where: {
+        id: assetId
+      }
+    });
+
+    if (nextDetailInput) {
+      await updateDetail(
+        tx,
+        kind,
+        assetId,
+        normalizeDetailForKind(kind, parseDetailForKind(kind, nextDetailInput))
+      );
+    }
+
+    return tx.templateAsset.findUniqueOrThrow({
+      include: templateAssetDetailInclude,
+      where: {
+        id: assetId
+      }
+    });
+  });
+
+  return serializeTemplateAsset(updatedAsset);
+}
+
+export async function deleteTemplateAssetByKind(
+  kind: TemplateElementAssetKind,
+  assetId: string
+) {
+  const result = await prisma.templateAsset.deleteMany({
+    where: {
+      id: assetId,
+      kind
+    }
+  });
+
+  if (result.count === 0) {
+    throw new TemplateElementAssetNotFoundError();
+  }
+}
+
+export const listTemplateIconAssets = (filters = {}) =>
+  listTemplateAssetsByKind(TemplateElementAssetKind.ICON, filters);
+export const listTemplateShapeAssets = (filters = {}) =>
+  listTemplateAssetsByKind(TemplateElementAssetKind.SHAPE, filters);
+export const listTemplateLineAssets = (filters = {}) =>
+  listTemplateAssetsByKind(TemplateElementAssetKind.LINE, filters);
+export const listTemplateTextStyleAssets = (filters = {}) =>
+  listTemplateAssetsByKind(TemplateElementAssetKind.TEXT_STYLE, filters);
+export const listTemplateContainerAssets = (filters = {}) =>
+  listTemplateAssetsByKind(TemplateElementAssetKind.CONTAINER, filters);
+export const listTemplateNavigationAssets = (filters = {}) =>
+  listTemplateAssetsByKind(TemplateElementAssetKind.NAVIGATION, filters);
+
+export const searchTemplateIconAssetsForAi = (input: TemplateElementAssetAiSearchInput) =>
+  searchTemplateAssetsForAiByKind(TemplateElementAssetKind.ICON, input);
+export const searchTemplateShapeAssetsForAi = (input: TemplateElementAssetAiSearchInput) =>
+  searchTemplateAssetsForAiByKind(TemplateElementAssetKind.SHAPE, input);
+export const searchTemplateLineAssetsForAi = (input: TemplateElementAssetAiSearchInput) =>
+  searchTemplateAssetsForAiByKind(TemplateElementAssetKind.LINE, input);
+export const searchTemplateTextStyleAssetsForAi = (
+  input: TemplateElementAssetAiSearchInput
+) => searchTemplateAssetsForAiByKind(TemplateElementAssetKind.TEXT_STYLE, input);
+export const searchTemplateContainerAssetsForAi = (
+  input: TemplateElementAssetAiSearchInput
+) => searchTemplateAssetsForAiByKind(TemplateElementAssetKind.CONTAINER, input);
+export const searchTemplateNavigationAssetsForAi = (
+  input: TemplateElementAssetAiSearchInput
+) => searchTemplateAssetsForAiByKind(TemplateElementAssetKind.NAVIGATION, input);
+
+export async function listTemplateElementAssets({
+  kind,
+  ...filters
+}: Parameters<typeof listTemplateAssetsByKind>[1] & {
+  kind?: TemplateElementAssetKind;
+} = {}) {
+  if (!kind) {
+    const entries = await Promise.all(
+      Object.values(TemplateElementAssetKind).map((assetKind) =>
+        listTemplateAssetsByKind(assetKind, filters)
+      )
+    );
+
+    return entries.flat().sort(compareAssets);
+  }
+
+  return listTemplateAssetsByKind(kind, filters);
+}
+
+export async function searchTemplateElementAssetsForAi(
+  input: TemplateElementAssetAiSearchInput & {
+    kind?: TemplateElementAssetKind;
+  }
+) {
+  if (!input.kind) {
+    const entries = await Promise.all(
+      Object.values(TemplateElementAssetKind).map((kind) =>
+        searchTemplateAssetsForAiByKind(kind, input)
+      )
+    );
+
+    return entries
+      .flat()
+      .sort(compareAiAssets)
+      .slice(0, typeof input.limit === "number" ? input.limit : 12);
+  }
+
+  return searchTemplateAssetsForAiByKind(input.kind, input);
+}
+
 export async function getTemplateElementAsset(assetId: string) {
-  const asset = await prisma.templateElementAsset.findUnique({
+  const asset = await prisma.templateAsset.findUnique({
+    include: templateAssetDetailInclude,
     where: {
       id: assetId
     }
@@ -274,182 +611,26 @@ export async function getTemplateElementAsset(assetId: string) {
     throw new TemplateElementAssetNotFoundError();
   }
 
-  return serializeTemplateElementAsset(asset);
+  return serializeTemplateAsset(asset);
 }
 
 export async function createTemplateElementAsset(
   input: TemplateElementAssetCreateInput
 ) {
-  const parsedInput: TemplateElementAssetCreatePayload =
-    templateElementAssetCreateSchema.parse(input);
-  const asset = await prisma.templateElementAsset.create({
-    data: {
-      aiModifyPermissions: toInputJson(parsedInput.aiModifyPermissions),
-      backgroundModes: toInputJson(parsedInput.backgroundModes),
-      colorTags: toInputJson(parsedInput.colorTags),
-      description: parsedInput.description,
-      isEnabled: parsedInput.isEnabled,
-      kind: parsedInput.kind,
-      keywords: toInputJson(parsedInput.keywords),
-      name: parsedInput.name,
-      pageTypes: toInputJson(parsedInput.pageTypes),
-      preview: toInputJson(parsedInput.preview),
-      primaryCategory: parsedInput.primaryCategory ?? null,
-      resource: toInputJson(parsedInput.resource),
-      reviewStatus: parsedInput.reviewStatus,
-      semanticTags: toInputJson(parsedInput.semanticTags),
-      secondaryCategory: parsedInput.secondaryCategory ?? null,
-      setKey: parsedInput.setKey,
-      setKind: parsedInput.setKind,
-      setName: parsedInput.setName,
-      sortOrder: parsedInput.sortOrder,
-      source: parsedInput.source,
-      style: toInputJson(parsedInput.style),
-      styleTags: toInputJson(parsedInput.styleTags),
-      synonyms: toInputJson(parsedInput.synonyms),
-      tags: toInputJson(parsedInput.tags),
-      usageScenarios: toInputJson(parsedInput.usageScenarios),
-      variantKey: parsedInput.variantKey ?? null
-    }
-  });
-
-  return serializeTemplateElementAsset(asset);
+  return createTemplateAssetByKind(input.kind, input);
 }
 
 export async function updateTemplateElementAsset(
   assetId: string,
   input: TemplateElementAssetUpdateInput
 ) {
-  const parsedInput: TemplateElementAssetUpdatePayload =
-    templateElementAssetUpdateSchema.parse(input);
+  const existingAsset = await getTemplateElementAsset(assetId);
 
-  const existingAsset = await assertTemplateElementAssetExists(assetId);
-
-  if (parsedInput.aiModifyPermissions) {
-    assertTypeSpecificAiModifyPermissions(
-      parsedInput.kind ?? existingAsset.kind,
-      parsedInput.aiModifyPermissions
-    );
-  }
-
-  const data: Prisma.TemplateElementAssetUpdateInput = {};
-
-  if (parsedInput.aiModifyPermissions !== undefined) {
-    data.aiModifyPermissions = toInputJson(parsedInput.aiModifyPermissions);
-  }
-
-  if (parsedInput.backgroundModes !== undefined) {
-    data.backgroundModes = toInputJson(parsedInput.backgroundModes);
-  }
-
-  if (parsedInput.colorTags !== undefined) {
-    data.colorTags = toInputJson(parsedInput.colorTags);
-  }
-
-  if ("description" in parsedInput) {
-    data.description = parsedInput.description;
-  }
-
-  if (parsedInput.isEnabled !== undefined) {
-    data.isEnabled = parsedInput.isEnabled;
-  }
-
-  if (parsedInput.kind !== undefined) {
-    data.kind = parsedInput.kind;
-  }
-
-  if (parsedInput.keywords !== undefined) {
-    data.keywords = toInputJson(parsedInput.keywords);
-  }
-
-  if (parsedInput.name !== undefined) {
-    data.name = parsedInput.name;
-  }
-
-  if (parsedInput.pageTypes !== undefined) {
-    data.pageTypes = toInputJson(parsedInput.pageTypes);
-  }
-
-  if (parsedInput.preview !== undefined) {
-    data.preview = toInputJson(parsedInput.preview);
-  }
-
-  if ("primaryCategory" in parsedInput) {
-    data.primaryCategory = parsedInput.primaryCategory ?? null;
-  }
-
-  if (parsedInput.semanticTags !== undefined) {
-    data.semanticTags = toInputJson(parsedInput.semanticTags);
-  }
-
-  if (parsedInput.resource !== undefined) {
-    data.resource = toInputJson(parsedInput.resource);
-  }
-
-  if (parsedInput.reviewStatus !== undefined) {
-    data.reviewStatus = parsedInput.reviewStatus;
-  }
-
-  if ("secondaryCategory" in parsedInput) {
-    data.secondaryCategory = parsedInput.secondaryCategory ?? null;
-  }
-
-  if (parsedInput.setKey !== undefined) {
-    data.setKey = parsedInput.setKey;
-  }
-
-  if (parsedInput.setKind !== undefined) {
-    data.setKind = parsedInput.setKind;
-  }
-
-  if (parsedInput.setName !== undefined) {
-    data.setName = parsedInput.setName;
-  }
-
-  if (parsedInput.sortOrder !== undefined) {
-    data.sortOrder = parsedInput.sortOrder;
-  }
-
-  if (parsedInput.source !== undefined) {
-    data.source = parsedInput.source;
-  }
-
-  if (parsedInput.style !== undefined) {
-    data.style = toInputJson(parsedInput.style);
-  }
-
-  if (parsedInput.styleTags !== undefined) {
-    data.styleTags = toInputJson(parsedInput.styleTags);
-  }
-
-  if (parsedInput.synonyms !== undefined) {
-    data.synonyms = toInputJson(parsedInput.synonyms);
-  }
-
-  if (parsedInput.tags !== undefined) {
-    data.tags = toInputJson(parsedInput.tags);
-  }
-
-  if (parsedInput.usageScenarios !== undefined) {
-    data.usageScenarios = toInputJson(parsedInput.usageScenarios);
-  }
-
-  if ("variantKey" in parsedInput) {
-    data.variantKey = parsedInput.variantKey ?? null;
-  }
-
-  const asset = await prisma.templateElementAsset.update({
-    data,
-    where: {
-      id: assetId
-    }
-  });
-
-  return serializeTemplateElementAsset(asset);
+  return updateTemplateAssetByKind(existingAsset.kind, assetId, input);
 }
 
 export async function deleteTemplateElementAsset(assetId: string) {
-  const result = await prisma.templateElementAsset.deleteMany({
+  const result = await prisma.templateAsset.deleteMany({
     where: {
       id: assetId
     }
@@ -460,10 +641,15 @@ export async function deleteTemplateElementAsset(assetId: string) {
   }
 }
 
-async function assertTemplateElementAssetExists(assetId: string) {
-  const asset = await prisma.templateElementAsset.findUnique({
+async function assertTemplateAssetExists(
+  kind: TemplateElementAssetKind,
+  assetId: string
+) {
+  const asset = await prisma.templateAsset.findFirst({
+    include: templateAssetDetailInclude,
     where: {
-      id: assetId
+      id: assetId,
+      kind
     }
   });
 
@@ -472,6 +658,491 @@ async function assertTemplateElementAssetExists(assetId: string) {
   }
 
   return asset;
+}
+
+async function createDetail(
+  tx: Prisma.TransactionClient,
+  kind: TemplateElementAssetKind,
+  assetId: string,
+  detail: TemplateAssetDetail
+) {
+  const modelName = detailModelByKind[kind];
+
+  await (tx[modelName] as unknown as DetailModelDelegate).create({
+    data: {
+      ...toDetailCreateData(kind, detail),
+      assetId
+    }
+  });
+}
+
+async function updateDetail(
+  tx: Prisma.TransactionClient,
+  kind: TemplateElementAssetKind,
+  assetId: string,
+  detail: TemplateAssetDetail
+) {
+  const modelName = detailModelByKind[kind];
+
+  await (tx[modelName] as unknown as DetailModelDelegate).upsert({
+    create: {
+      ...toDetailCreateData(kind, detail),
+      assetId
+    },
+    update: toDetailCreateData(kind, detail),
+    where: {
+      assetId
+    }
+  });
+}
+
+type DetailModelDelegate = {
+  create(input: { data: Record<string, unknown> }): Promise<unknown>;
+  upsert(input: {
+    create: Record<string, unknown>;
+    update: Record<string, unknown>;
+    where: { assetId: string };
+  }): Promise<unknown>;
+};
+
+function toDetailCreateData(
+  kind: TemplateElementAssetKind,
+  detail: TemplateAssetDetail
+) {
+  if (kind === TemplateElementAssetKind.ICON) {
+    const value = detail as TemplateIconAssetDetail;
+
+    return value;
+  }
+
+  if (kind === TemplateElementAssetKind.SHAPE) {
+    const value = detail as TemplateShapeAssetDetail;
+
+    return value;
+  }
+
+  if (kind === TemplateElementAssetKind.LINE) {
+    const value = detail as TemplateLineAssetDetail;
+
+    return value;
+  }
+
+  if (kind === TemplateElementAssetKind.TEXT_STYLE) {
+    const value = detail as TemplateTextStyleAssetDetail;
+
+    return value;
+  }
+
+  if (kind === TemplateElementAssetKind.CONTAINER) {
+    const value = detail as TemplateContainerAssetDetail;
+
+    return {
+      ...value,
+      allowedContentTypes: toInputJson(value.allowedContentTypes)
+    };
+  }
+
+  const value = detail as TemplateNavigationAssetDetail;
+
+  return value;
+}
+
+function normalizeDetailForKind(
+  kind: TemplateElementAssetKind,
+  detail: ReturnType<typeof parseDetailForKind>
+): TemplateAssetDetail {
+  if (kind === TemplateElementAssetKind.ICON) {
+    const value = detail as Partial<TemplateIconAssetDetail>;
+
+    return {
+      cornerRadius: value.cornerRadius ?? null,
+      fillMode: value.fillMode ?? null,
+      iconName: value.iconName ?? "semantic-icon",
+      iconStyle: value.iconStyle ?? "line",
+      strokeColor: value.strokeColor ?? null,
+      strokeWidth: value.strokeWidth ?? null
+    };
+  }
+
+  if (kind === TemplateElementAssetKind.SHAPE) {
+    const value = detail as Partial<TemplateShapeAssetDetail>;
+
+    return {
+      cornerRadius: value.cornerRadius ?? null,
+      fillColor: value.fillColor ?? null,
+      opacity: value.opacity ?? null,
+      shadow: value.shadow ?? false,
+      shapeType: value.shapeType ?? "roundedRect",
+      strokeColor: value.strokeColor ?? null,
+      strokeWidth: value.strokeWidth ?? null
+    };
+  }
+
+  if (kind === TemplateElementAssetKind.LINE) {
+    const value = detail as Partial<TemplateLineAssetDetail>;
+
+    return {
+      cap: value.cap ?? "round",
+      connectorType: value.connectorType ?? "straight",
+      dash: value.dash ?? "solid",
+      direction: value.direction ?? "horizontal",
+      endArrowType: value.endArrowType ?? "none",
+      startArrowType: value.startArrowType ?? "none",
+      strokeColor: value.strokeColor ?? null,
+      strokeWidth: value.strokeWidth ?? null
+    };
+  }
+
+  if (kind === TemplateElementAssetKind.TEXT_STYLE) {
+    const value = detail as Partial<TemplateTextStyleAssetDetail>;
+
+    return {
+      color: value.color ?? null,
+      fontFamily: value.fontFamily ?? null,
+      fontSize: value.fontSize ?? null,
+      fontWeight: value.fontWeight ?? null,
+      letterSpacing: value.letterSpacing ?? null,
+      lineHeight: value.lineHeight ?? null,
+      maxLines: value.maxLines ?? null,
+      textRole: value.textRole ?? "body"
+    };
+  }
+
+  if (kind === TemplateElementAssetKind.CONTAINER) {
+    const value = detail as Partial<TemplateContainerAssetDetail>;
+
+    return {
+      allowedContentTypes: value.allowedContentTypes ?? ["text"],
+      autoLayout: value.autoLayout ?? false,
+      containerRole: value.containerRole ?? "container",
+      fillColor: value.fillColor ?? null,
+      gap: value.gap ?? null,
+      padding: value.padding ?? null,
+      recommendedHeight: value.recommendedHeight ?? null,
+      recommendedWidth: value.recommendedWidth ?? null,
+      strokeColor: value.strokeColor ?? null,
+      strokeWidth: value.strokeWidth ?? null
+    };
+  }
+
+  const value = detail as Partial<TemplateNavigationAssetDetail>;
+
+  return {
+    activeColor: value.activeColor ?? null,
+    displayMode: value.displayMode ?? "label",
+    fixedPosition: value.fixedPosition ?? "bottom",
+    inactiveColor: value.inactiveColor ?? null,
+    navigationRole: value.navigationRole ?? "page-number",
+    showOnCover: value.showOnCover ?? false,
+    showOnEnding: value.showOnEnding ?? false
+  };
+}
+
+function serializeDetail(asset: TemplateAssetWithDetails): TemplateAssetDetail {
+  if (asset.kind === TemplateElementAssetKind.ICON && asset.icon) {
+    return {
+      cornerRadius: asset.icon.cornerRadius,
+      fillMode: asset.icon.fillMode,
+      iconName: asset.icon.iconName,
+      iconStyle: asset.icon.iconStyle,
+      strokeColor: asset.icon.strokeColor,
+      strokeWidth: asset.icon.strokeWidth
+    };
+  }
+
+  if (asset.kind === TemplateElementAssetKind.SHAPE && asset.shape) {
+    return {
+      cornerRadius: asset.shape.cornerRadius,
+      fillColor: asset.shape.fillColor,
+      opacity: asset.shape.opacity,
+      shadow: asset.shape.shadow,
+      shapeType: asset.shape.shapeType,
+      strokeColor: asset.shape.strokeColor,
+      strokeWidth: asset.shape.strokeWidth
+    };
+  }
+
+  if (asset.kind === TemplateElementAssetKind.LINE && asset.line) {
+    return {
+      cap: asset.line.cap,
+      connectorType: asset.line.connectorType,
+      dash: asset.line.dash,
+      direction: asset.line.direction,
+      endArrowType: asset.line.endArrowType,
+      startArrowType: asset.line.startArrowType,
+      strokeColor: asset.line.strokeColor,
+      strokeWidth: asset.line.strokeWidth
+    };
+  }
+
+  if (asset.kind === TemplateElementAssetKind.TEXT_STYLE && asset.textStyle) {
+    return {
+      color: asset.textStyle.color,
+      fontFamily: asset.textStyle.fontFamily,
+      fontSize: asset.textStyle.fontSize,
+      fontWeight: asset.textStyle.fontWeight,
+      letterSpacing: asset.textStyle.letterSpacing,
+      lineHeight: asset.textStyle.lineHeight,
+      maxLines: asset.textStyle.maxLines,
+      textRole: asset.textStyle.textRole
+    };
+  }
+
+  if (asset.kind === TemplateElementAssetKind.CONTAINER && asset.container) {
+    return {
+      allowedContentTypes: parseStringList(asset.container.allowedContentTypes),
+      autoLayout: asset.container.autoLayout,
+      containerRole: asset.container.containerRole,
+      fillColor: asset.container.fillColor,
+      gap: asset.container.gap,
+      padding: asset.container.padding,
+      recommendedHeight: asset.container.recommendedHeight,
+      recommendedWidth: asset.container.recommendedWidth,
+      strokeColor: asset.container.strokeColor,
+      strokeWidth: asset.container.strokeWidth
+    };
+  }
+
+  if (asset.kind === TemplateElementAssetKind.NAVIGATION && asset.navigation) {
+    return {
+      activeColor: asset.navigation.activeColor,
+      displayMode: asset.navigation.displayMode,
+      fixedPosition: asset.navigation.fixedPosition,
+      inactiveColor: asset.navigation.inactiveColor,
+      navigationRole: asset.navigation.navigationRole,
+      showOnCover: asset.navigation.showOnCover,
+      showOnEnding: asset.navigation.showOnEnding
+    };
+  }
+
+  throw new TemplateElementAssetValidationError(
+    `Missing ${asset.kind} detail record`
+  );
+}
+
+function buildStyleFromDetail(
+  kind: TemplateElementAssetKind,
+  detail: TemplateAssetDetail
+) {
+  if (kind === TemplateElementAssetKind.ICON) {
+    const value = detail as TemplateIconAssetDetail;
+
+    return removeNullish({
+      cornerRadius: value.cornerRadius,
+      fillMode: value.fillMode,
+      iconStyle: value.iconStyle,
+      strokeColor: value.strokeColor,
+      strokeWidth: value.strokeWidth
+    });
+  }
+
+  if (kind === TemplateElementAssetKind.SHAPE) {
+    const value = detail as TemplateShapeAssetDetail;
+
+    return removeNullish({
+      cornerRadius: value.cornerRadius,
+      fillColor: value.fillColor,
+      opacity: value.opacity,
+      shadow: value.shadow,
+      shapeType: value.shapeType,
+      strokeColor: value.strokeColor,
+      strokeWidth: value.strokeWidth
+    });
+  }
+
+  if (kind === TemplateElementAssetKind.LINE) {
+    const value = detail as TemplateLineAssetDetail;
+
+    return removeNullish({
+      cap: value.cap,
+      connectorType: value.connectorType,
+      dash: value.dash,
+      direction: value.direction,
+      endArrowType: value.endArrowType,
+      startArrowType: value.startArrowType,
+      strokeColor: value.strokeColor,
+      strokeWidth: value.strokeWidth
+    });
+  }
+
+  if (kind === TemplateElementAssetKind.TEXT_STYLE) {
+    const value = detail as TemplateTextStyleAssetDetail;
+
+    return removeNullish({
+      color: value.color,
+      fontFamily: value.fontFamily,
+      fontSize: value.fontSize,
+      fontWeight: value.fontWeight,
+      letterSpacing: value.letterSpacing,
+      lineHeight: value.lineHeight,
+      maxLines: value.maxLines,
+      textRole: value.textRole
+    });
+  }
+
+  if (kind === TemplateElementAssetKind.CONTAINER) {
+    const value = detail as TemplateContainerAssetDetail;
+
+    return removeNullish({
+      allowedContentTypes: value.allowedContentTypes,
+      autoLayout: value.autoLayout,
+      containerRole: value.containerRole,
+      fillColor: value.fillColor,
+      gap: value.gap,
+      padding: value.padding,
+      recommendedHeight: value.recommendedHeight,
+      recommendedWidth: value.recommendedWidth,
+      strokeColor: value.strokeColor,
+      strokeWidth: value.strokeWidth
+    });
+  }
+
+  const value = detail as TemplateNavigationAssetDetail;
+
+  return removeNullish({
+    activeColor: value.activeColor,
+    displayMode: value.displayMode,
+    fixedPosition: value.fixedPosition,
+    inactiveColor: value.inactiveColor,
+    navigationRole: value.navigationRole,
+    showOnCover: value.showOnCover,
+    showOnEnding: value.showOnEnding
+  });
+}
+
+function buildResourceFromDetail(
+  kind: TemplateElementAssetKind,
+  detail: TemplateAssetDetail,
+  asset: Pick<
+    TemplateAssetWithDetails,
+    "primaryCategory" | "secondaryCategory" | "variantKey"
+  >
+) {
+  const base = removeNullish({
+    primaryCategory: asset.primaryCategory,
+    secondaryCategory: asset.secondaryCategory,
+    semanticKey: asset.variantKey,
+    variantKey: asset.variantKey
+  });
+
+  if (kind === TemplateElementAssetKind.ICON) {
+    const value = detail as TemplateIconAssetDetail;
+
+    return {
+      ...base,
+      iconName: value.iconName,
+      type: "line-icon"
+    };
+  }
+
+  if (kind === TemplateElementAssetKind.SHAPE) {
+    const value = detail as TemplateShapeAssetDetail;
+
+    return {
+      ...base,
+      shapeType: value.shapeType,
+      type: "ppt-shape"
+    };
+  }
+
+  if (kind === TemplateElementAssetKind.LINE) {
+    const value = detail as TemplateLineAssetDetail;
+
+    return {
+      ...base,
+      connectorType: value.connectorType,
+      direction: value.direction,
+      endArrowType: value.endArrowType,
+      startArrowType: value.startArrowType,
+      type: "ppt-line"
+    };
+  }
+
+  if (kind === TemplateElementAssetKind.TEXT_STYLE) {
+    const value = detail as TemplateTextStyleAssetDetail;
+
+    return {
+      ...base,
+      textRole: value.textRole,
+      type: "typography-token"
+    };
+  }
+
+  if (kind === TemplateElementAssetKind.CONTAINER) {
+    const value = detail as TemplateContainerAssetDetail;
+
+    return {
+      ...base,
+      containerRole: value.containerRole,
+      type: "layout-container"
+    };
+  }
+
+  const value = detail as TemplateNavigationAssetDetail;
+
+  return {
+    ...base,
+    displayMode: value.displayMode,
+    navigationRole: value.navigationRole,
+    type: "deck-navigation"
+  };
+}
+
+function buildPreviewFromDetail(
+  kind: TemplateElementAssetKind,
+  detail: TemplateAssetDetail
+) {
+  if (kind === TemplateElementAssetKind.ICON) {
+    const value = detail as TemplateIconAssetDetail;
+
+    return {
+      iconName: value.iconName,
+      shape: "lineIcon"
+    };
+  }
+
+  if (kind === TemplateElementAssetKind.SHAPE) {
+    const value = detail as TemplateShapeAssetDetail;
+
+    return {
+      shape: value.shapeType
+    };
+  }
+
+  if (kind === TemplateElementAssetKind.LINE) {
+    const value = detail as TemplateLineAssetDetail;
+
+    return {
+      direction: value.direction,
+      lineType: value.connectorType
+    };
+  }
+
+  if (kind === TemplateElementAssetKind.TEXT_STYLE) {
+    const value = detail as TemplateTextStyleAssetDetail;
+
+    return {
+      shape: "textStyle",
+      textRole: value.textRole
+    };
+  }
+
+  if (kind === TemplateElementAssetKind.CONTAINER) {
+    const value = detail as TemplateContainerAssetDetail;
+
+    return {
+      containerRole: value.containerRole,
+      shape: "container"
+    };
+  }
+
+  const value = detail as TemplateNavigationAssetDetail;
+
+  return {
+    displayMode: value.displayMode,
+    navigationRole: value.navigationRole,
+    shape: "navigation"
+  };
 }
 
 function parseStringList(value: Prisma.JsonValue): string[] {
@@ -544,8 +1215,8 @@ function buildAiCandidateSetFilters(setKey?: string) {
   ];
 }
 
-function scoreTemplateElementAssetForAi(
-  asset: TemplateElementAssetDto,
+function scoreTemplateAssetForAi(
+  asset: TemplateAssetDto,
   input: TemplateElementAssetAiSearchPayload
 ) {
   let score = asset.setKind === TemplateAssetSetKind.TEMPLATE ? 30 : 10;
@@ -596,7 +1267,7 @@ function scoreTemplateElementAssetForAi(
 }
 
 function buildUsageSuggestion(
-  asset: TemplateElementAssetDto,
+  asset: TemplateAssetDto,
   input: TemplateElementAssetAiSearchPayload
 ) {
   const pageTypeText = input.pageType ? `用于 ${input.pageType} 页面` : "用于当前页面";
@@ -620,6 +1291,26 @@ function uniqueLowercase(values: Array<string | undefined>) {
   );
 }
 
+function removeNullish<T extends Record<string, unknown>>(value: T) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, item]) => item !== null && item !== undefined)
+  );
+}
+
+function compareAssets(first: TemplateAssetDto, second: TemplateAssetDto) {
+  return first.kind.localeCompare(second.kind) || first.sortOrder - second.sortOrder;
+}
+
+function compareAiAssets(first: TemplateAssetAiResult, second: TemplateAssetAiResult) {
+  return (
+    second.matchScore - first.matchScore ||
+    first.sortOrder - second.sortOrder ||
+    Date.parse(second.updatedAt) - Date.parse(first.updatedAt)
+  );
+}
+
 function toInputJson(value: unknown) {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
+
+export { buildDefaultAiModifyPermissions };

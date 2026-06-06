@@ -1,0 +1,1102 @@
+{
+  "assetCount": 18,
+  "assets": [
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": false,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": false,
+        "allowTextShrink": false
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["blue"],
+      "description": "用于表达结论、指标或重点观点的通用线性图标。",
+      "detail": {
+        "cornerRadius": 10,
+        "fillMode": "none",
+        "iconName": "sparkles",
+        "iconStyle": "line",
+        "strokeColor": "#2563EB",
+        "strokeWidth": 2
+      },
+      "isEnabled": true,
+      "keywords": ["idea", "insight", "metric"],
+      "kind": "ICON",
+      "name": "洞察图标",
+      "pageTypes": ["cover-title", "title-body-points", "key-metrics"],
+      "preview": {
+        "iconName": "sparkles",
+        "shape": "lineIcon"
+      },
+      "primaryCategory": "status-feedback",
+      "resource": {
+        "iconName": "sparkles",
+        "semanticKey": "insight",
+        "type": "line-icon"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "result-status",
+      "semanticTags": ["洞察", "重点", "结论"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 20010,
+      "source": "MANUAL",
+      "style": {
+        "cornerRadius": 10,
+        "fillMode": "none",
+        "iconStyle": "line",
+        "strokeColor": "#2563EB",
+        "strokeWidth": 2
+      },
+      "styleTags": ["minimal", "business"],
+      "synonyms": ["idea", "insight"],
+      "tags": ["图标", "线性"],
+      "usageScenarios": ["重点提示", "指标说明"],
+      "variantKey": "info"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": false,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": false,
+        "allowTextShrink": false
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["green"],
+      "description": "用于表达增长、趋势和正向指标的通用线性图标。",
+      "detail": {
+        "cornerRadius": 10,
+        "fillMode": "none",
+        "iconName": "trending-up",
+        "iconStyle": "line",
+        "strokeColor": "#16A34A",
+        "strokeWidth": 2
+      },
+      "isEnabled": true,
+      "keywords": ["growth", "trend", "kpi"],
+      "kind": "ICON",
+      "name": "增长趋势图标",
+      "pageTypes": ["big-chart", "key-metrics", "title-body-points"],
+      "preview": {
+        "iconName": "trending-up",
+        "shape": "lineIcon"
+      },
+      "primaryCategory": "data-metrics",
+      "resource": {
+        "iconName": "trending-up",
+        "semanticKey": "growth",
+        "type": "line-icon"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "metric-meaning",
+      "semanticTags": ["增长", "趋势", "指标"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 20020,
+      "source": "MANUAL",
+      "style": {
+        "cornerRadius": 10,
+        "fillMode": "none",
+        "iconStyle": "line",
+        "strokeColor": "#16A34A",
+        "strokeWidth": 2
+      },
+      "styleTags": ["data", "business"],
+      "synonyms": ["growth", "trend"],
+      "tags": ["图标", "数据"],
+      "usageScenarios": ["数据指标", "趋势说明"],
+      "variantKey": "growth"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": false,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": false,
+        "allowTextShrink": false
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["slate"],
+      "description": "用于表达流程、步骤和连接关系的通用线性图标。",
+      "detail": {
+        "cornerRadius": 10,
+        "fillMode": "none",
+        "iconName": "workflow",
+        "iconStyle": "line",
+        "strokeColor": "#475569",
+        "strokeWidth": 2
+      },
+      "isEnabled": true,
+      "keywords": ["process", "workflow", "step"],
+      "kind": "ICON",
+      "name": "流程图标",
+      "pageTypes": ["process-steps", "time-axis", "title-body-points"],
+      "preview": {
+        "iconName": "workflow",
+        "shape": "lineIcon"
+      },
+      "primaryCategory": "process-structure",
+      "resource": {
+        "iconName": "workflow",
+        "semanticKey": "workflow",
+        "type": "line-icon"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "flow-io",
+      "semanticTags": ["流程", "步骤", "连接"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 20030,
+      "source": "MANUAL",
+      "style": {
+        "cornerRadius": 10,
+        "fillMode": "none",
+        "iconStyle": "line",
+        "strokeColor": "#475569",
+        "strokeWidth": 2
+      },
+      "styleTags": ["process", "minimal"],
+      "synonyms": ["workflow", "process"],
+      "tags": ["图标", "流程"],
+      "usageScenarios": ["流程步骤", "关系说明"],
+      "variantKey": "workflow"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": false,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": true,
+        "allowTextShrink": false
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["slate"],
+      "description": "通用圆角矩形，适合作为正文卡片或浅色承载底。",
+      "detail": {
+        "cornerRadius": 12,
+        "fillColor": "#F8FAFC",
+        "opacity": 1,
+        "shadow": false,
+        "shapeType": "roundedRect",
+        "strokeColor": "#CBD5E1",
+        "strokeWidth": 1
+      },
+      "isEnabled": true,
+      "keywords": ["card", "container", "shape"],
+      "kind": "SHAPE",
+      "name": "圆角矩形图形",
+      "pageTypes": ["title-body-points", "two-column-compare", "key-metrics"],
+      "preview": {
+        "shape": "roundedRect"
+      },
+      "primaryCategory": "basic-geometry",
+      "resource": {
+        "semanticKey": "rounded-rect",
+        "shapeType": "roundedRect",
+        "type": "ppt-shape"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "rect-geometry",
+      "semanticTags": ["卡片", "容器", "正文"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 50010,
+      "source": "MANUAL",
+      "style": {
+        "cornerRadius": 12,
+        "fillColor": "#F8FAFC",
+        "opacity": 1,
+        "shadow": false,
+        "shapeType": "roundedRect",
+        "strokeColor": "#CBD5E1",
+        "strokeWidth": 1
+      },
+      "styleTags": ["minimal", "business"],
+      "synonyms": ["card", "panel"],
+      "tags": ["图形", "基础几何"],
+      "usageScenarios": ["正文承载", "信息卡片"],
+      "variantKey": "rounded-rect"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": false,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": true,
+        "allowTextShrink": false
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["blue"],
+      "description": "用于强调关键数字、结论或页面焦点的圆形图形。",
+      "detail": {
+        "cornerRadius": 999,
+        "fillColor": "#DBEAFE",
+        "opacity": 1,
+        "shadow": false,
+        "shapeType": "circle",
+        "strokeColor": "#2563EB",
+        "strokeWidth": 1
+      },
+      "isEnabled": true,
+      "keywords": ["metric", "focus", "circle"],
+      "kind": "SHAPE",
+      "name": "指标圆形图形",
+      "pageTypes": ["key-metrics", "cover-title", "big-chart"],
+      "preview": {
+        "shape": "circle"
+      },
+      "primaryCategory": "basic-geometry",
+      "resource": {
+        "semanticKey": "circle",
+        "shapeType": "circle",
+        "type": "ppt-shape"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "round-geometry",
+      "semanticTags": ["指标", "强调", "焦点"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 50020,
+      "source": "MANUAL",
+      "style": {
+        "cornerRadius": 999,
+        "fillColor": "#DBEAFE",
+        "opacity": 1,
+        "shadow": false,
+        "shapeType": "circle",
+        "strokeColor": "#2563EB",
+        "strokeWidth": 1
+      },
+      "styleTags": ["data", "minimal"],
+      "synonyms": ["metric", "badge"],
+      "tags": ["图形", "指标"],
+      "usageScenarios": ["指标强调", "视觉焦点"],
+      "variantKey": "circle"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": false,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": true,
+        "allowTextShrink": false
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["amber"],
+      "description": "用于流程判断、分岔和对比节点的菱形图形。",
+      "detail": {
+        "cornerRadius": 0,
+        "fillColor": "#FEF3C7",
+        "opacity": 1,
+        "shadow": false,
+        "shapeType": "diamond",
+        "strokeColor": "#D97706",
+        "strokeWidth": 1
+      },
+      "isEnabled": true,
+      "keywords": ["decision", "branch", "process"],
+      "kind": "SHAPE",
+      "name": "判断菱形图形",
+      "pageTypes": ["process-steps", "quadrant-matrix", "two-column-compare"],
+      "preview": {
+        "shape": "diamond"
+      },
+      "primaryCategory": "process-node",
+      "resource": {
+        "semanticKey": "decision",
+        "shapeType": "diamond",
+        "type": "ppt-shape"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "decision-node",
+      "semanticTags": ["判断", "分支", "流程"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 50030,
+      "source": "MANUAL",
+      "style": {
+        "cornerRadius": 0,
+        "fillColor": "#FEF3C7",
+        "opacity": 1,
+        "shadow": false,
+        "shapeType": "diamond",
+        "strokeColor": "#D97706",
+        "strokeWidth": 1
+      },
+      "styleTags": ["process", "business"],
+      "synonyms": ["decision", "branch"],
+      "tags": ["图形", "流程"],
+      "usageScenarios": ["流程判断", "结构分岔"],
+      "variantKey": "diamond"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": false,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": false,
+        "allowTextShrink": false
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["blue"],
+      "description": "用于标题下方或模块之间的基础分割线。",
+      "detail": {
+        "cap": "round",
+        "connectorType": "straight",
+        "dash": "solid",
+        "direction": "horizontal",
+        "endArrowType": "none",
+        "startArrowType": "none",
+        "strokeColor": "#2563EB",
+        "strokeWidth": 2
+      },
+      "isEnabled": true,
+      "keywords": ["divider", "line", "accent"],
+      "kind": "LINE",
+      "name": "标题强调线",
+      "pageTypes": ["cover-title", "chapter", "title-body-points"],
+      "preview": {
+        "direction": "horizontal",
+        "lineType": "straight"
+      },
+      "primaryCategory": "basic-line",
+      "resource": {
+        "connectorType": "straight",
+        "direction": "horizontal",
+        "semanticKey": "divider",
+        "type": "ppt-line"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "straight-line",
+      "semanticTags": ["分割", "强调", "标题"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 30010,
+      "source": "MANUAL",
+      "style": {
+        "cap": "round",
+        "connectorType": "straight",
+        "dash": "solid",
+        "direction": "horizontal",
+        "endArrowType": "none",
+        "startArrowType": "none",
+        "strokeColor": "#2563EB",
+        "strokeWidth": 2
+      },
+      "styleTags": ["minimal", "business"],
+      "synonyms": ["divider", "accent"],
+      "tags": ["线条", "强调"],
+      "usageScenarios": ["标题强调", "模块分隔"],
+      "variantKey": "straight-line"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": false,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": false,
+        "allowTextShrink": false
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["slate"],
+      "description": "用于流程步骤或因果关系连接的单向箭头线。",
+      "detail": {
+        "cap": "round",
+        "connectorType": "straight",
+        "dash": "solid",
+        "direction": "right",
+        "endArrowType": "triangle",
+        "startArrowType": "none",
+        "strokeColor": "#475569",
+        "strokeWidth": 2
+      },
+      "isEnabled": true,
+      "keywords": ["arrow", "process", "next"],
+      "kind": "LINE",
+      "name": "单向流程箭头",
+      "pageTypes": ["process-steps", "time-axis", "left-image-right-text"],
+      "preview": {
+        "direction": "right",
+        "lineType": "arrow"
+      },
+      "primaryCategory": "arrow-line",
+      "resource": {
+        "connectorType": "straight",
+        "direction": "right",
+        "endArrowType": "triangle",
+        "semanticKey": "one-way-arrow",
+        "startArrowType": "none",
+        "type": "ppt-line"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "flow-arrow",
+      "semanticTags": ["箭头", "流程", "下一步"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 30020,
+      "source": "MANUAL",
+      "style": {
+        "cap": "round",
+        "connectorType": "straight",
+        "dash": "solid",
+        "direction": "right",
+        "endArrowType": "triangle",
+        "startArrowType": "none",
+        "strokeColor": "#475569",
+        "strokeWidth": 2
+      },
+      "styleTags": ["process", "minimal"],
+      "synonyms": ["arrow", "next"],
+      "tags": ["线条", "箭头"],
+      "usageScenarios": ["流程连接", "方向指示"],
+      "variantKey": "one-way-arrow"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": false,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": false,
+        "allowTextShrink": false
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["slate"],
+      "description": "用于辅助参考、占位和弱连接关系的虚线。",
+      "detail": {
+        "cap": "round",
+        "connectorType": "straight",
+        "dash": "dashed",
+        "direction": "horizontal",
+        "endArrowType": "none",
+        "startArrowType": "none",
+        "strokeColor": "#94A3B8",
+        "strokeWidth": 1
+      },
+      "isEnabled": true,
+      "keywords": ["dashed", "guide", "placeholder"],
+      "kind": "LINE",
+      "name": "弱连接虚线",
+      "pageTypes": ["title-body-points", "two-column-compare", "quadrant-matrix"],
+      "preview": {
+        "direction": "horizontal",
+        "lineType": "straight"
+      },
+      "primaryCategory": "divider-line",
+      "resource": {
+        "connectorType": "straight",
+        "direction": "horizontal",
+        "semanticKey": "dashed-line",
+        "type": "ppt-line"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "dash-line",
+      "semanticTags": ["虚线", "辅助", "占位"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 30030,
+      "source": "MANUAL",
+      "style": {
+        "cap": "round",
+        "connectorType": "straight",
+        "dash": "dashed",
+        "direction": "horizontal",
+        "endArrowType": "none",
+        "startArrowType": "none",
+        "strokeColor": "#94A3B8",
+        "strokeWidth": 1
+      },
+      "styleTags": ["minimal", "supporting"],
+      "synonyms": ["dashed", "guide"],
+      "tags": ["线条", "虚线"],
+      "usageScenarios": ["辅助分隔", "弱关系连接"],
+      "variantKey": "dashed-line"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": false,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": false,
+        "allowTextShrink": true
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["slate"],
+      "description": "封面与章节页可用的大标题样式。",
+      "detail": {
+        "color": "#111827",
+        "fontFamily": "Microsoft YaHei",
+        "fontSize": 42,
+        "fontWeight": 700,
+        "letterSpacing": 0,
+        "lineHeight": 1.15,
+        "maxLines": 2,
+        "textRole": "cover-title"
+      },
+      "isEnabled": true,
+      "keywords": ["title", "cover", "heading"],
+      "kind": "TEXT_STYLE",
+      "name": "封面主标题样式",
+      "pageTypes": ["cover-title", "chapter"],
+      "preview": {
+        "sampleText": "战略简报标题",
+        "shape": "textStyle",
+        "textRole": "cover-title"
+      },
+      "primaryCategory": "title-hierarchy",
+      "resource": {
+        "semanticKey": "cover-title",
+        "textRole": "cover-title",
+        "type": "typography-token"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "deck-title",
+      "semanticTags": ["标题", "封面", "主标题"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 60010,
+      "source": "MANUAL",
+      "style": {
+        "color": "#111827",
+        "fontFamily": "Microsoft YaHei",
+        "fontSize": 42,
+        "fontWeight": 700,
+        "letterSpacing": 0,
+        "lineHeight": 1.15,
+        "maxLines": 2,
+        "textRole": "cover-title"
+      },
+      "styleTags": ["business", "minimal"],
+      "synonyms": ["heading", "title"],
+      "tags": ["文本样式", "标题"],
+      "usageScenarios": ["封面标题", "章节标题"],
+      "variantKey": "cover-title"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": false,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": false,
+        "allowTextShrink": true
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["slate"],
+      "description": "用于正文段落和要点说明的基础文本样式。",
+      "detail": {
+        "color": "#334155",
+        "fontFamily": "Microsoft YaHei",
+        "fontSize": 18,
+        "fontWeight": 400,
+        "letterSpacing": 0,
+        "lineHeight": 1.35,
+        "maxLines": 5,
+        "textRole": "body"
+      },
+      "isEnabled": true,
+      "keywords": ["body", "paragraph", "bullet"],
+      "kind": "TEXT_STYLE",
+      "name": "正文段落样式",
+      "pageTypes": ["title-body-points", "left-image-right-text", "two-column-compare"],
+      "preview": {
+        "sampleText": "关键要点说明文本",
+        "shape": "textStyle",
+        "textRole": "body"
+      },
+      "primaryCategory": "body-hierarchy",
+      "resource": {
+        "semanticKey": "paragraph",
+        "textRole": "body",
+        "type": "typography-token"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "body-text",
+      "semanticTags": ["正文", "段落", "要点"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 60020,
+      "source": "MANUAL",
+      "style": {
+        "color": "#334155",
+        "fontFamily": "Microsoft YaHei",
+        "fontSize": 18,
+        "fontWeight": 400,
+        "letterSpacing": 0,
+        "lineHeight": 1.35,
+        "maxLines": 5,
+        "textRole": "body"
+      },
+      "styleTags": ["readable", "business"],
+      "synonyms": ["body", "paragraph"],
+      "tags": ["文本样式", "正文"],
+      "usageScenarios": ["正文说明", "要点列表"],
+      "variantKey": "paragraph"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": false,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": false,
+        "allowTextShrink": true
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["blue"],
+      "description": "用于关键数字、百分比和指标值的强调文本样式。",
+      "detail": {
+        "color": "#2563EB",
+        "fontFamily": "Microsoft YaHei",
+        "fontSize": 38,
+        "fontWeight": 700,
+        "letterSpacing": 0,
+        "lineHeight": 1.05,
+        "maxLines": 1,
+        "textRole": "number-emphasis"
+      },
+      "isEnabled": true,
+      "keywords": ["number", "metric", "kpi"],
+      "kind": "TEXT_STYLE",
+      "name": "数字强调样式",
+      "pageTypes": ["key-metrics", "big-chart", "title-body-points"],
+      "preview": {
+        "sampleText": "128%",
+        "shape": "textStyle",
+        "textRole": "number-emphasis"
+      },
+      "primaryCategory": "emphasis-text",
+      "resource": {
+        "semanticKey": "number-emphasis",
+        "textRole": "number-emphasis",
+        "type": "typography-token"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "special-text",
+      "semanticTags": ["数字", "指标", "强调"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 60030,
+      "source": "MANUAL",
+      "style": {
+        "color": "#2563EB",
+        "fontFamily": "Microsoft YaHei",
+        "fontSize": 38,
+        "fontWeight": 700,
+        "letterSpacing": 0,
+        "lineHeight": 1.05,
+        "maxLines": 1,
+        "textRole": "number-emphasis"
+      },
+      "styleTags": ["data", "emphasis"],
+      "synonyms": ["number", "metric"],
+      "tags": ["文本样式", "数字"],
+      "usageScenarios": ["关键指标", "数据强调"],
+      "variantKey": "number-emphasis"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": true,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": true,
+        "allowTextShrink": false
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["slate"],
+      "description": "用于承载正文段落和要点列表的基础内容容器。",
+      "detail": {
+        "allowedContentTypes": ["text"],
+        "autoLayout": false,
+        "containerRole": "body-text-area",
+        "fillColor": "#F8FAFC",
+        "gap": 12,
+        "padding": 18,
+        "recommendedHeight": 180,
+        "recommendedWidth": 420,
+        "strokeColor": "#E2E8F0",
+        "strokeWidth": 1
+      },
+      "isEnabled": true,
+      "keywords": ["body", "container", "card"],
+      "kind": "CONTAINER",
+      "name": "正文内容容器",
+      "pageTypes": ["title-body-points", "left-image-right-text", "two-column-compare"],
+      "preview": {
+        "containerRole": "body-text-area",
+        "shape": "container"
+      },
+      "primaryCategory": "content-carrier",
+      "resource": {
+        "containerRole": "body-text-area",
+        "semanticKey": "body-text-area",
+        "type": "layout-container"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "text-container",
+      "semanticTags": ["正文", "容器", "卡片"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 10010,
+      "source": "MANUAL",
+      "style": {
+        "allowedContentTypes": ["text"],
+        "autoLayout": false,
+        "containerRole": "body-text-area",
+        "fillColor": "#F8FAFC",
+        "gap": 12,
+        "padding": 18,
+        "recommendedHeight": 180,
+        "recommendedWidth": 420,
+        "strokeColor": "#E2E8F0",
+        "strokeWidth": 1
+      },
+      "styleTags": ["business", "minimal"],
+      "synonyms": ["card", "panel"],
+      "tags": ["容器", "正文"],
+      "usageScenarios": ["正文承载", "要点容器"],
+      "variantKey": "body-text-area"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": true,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": true,
+        "allowTextShrink": false
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["blue"],
+      "description": "用于关键指标、数字和短说明组合的指标卡片。",
+      "detail": {
+        "allowedContentTypes": ["text", "icon"],
+        "autoLayout": false,
+        "containerRole": "metric-card",
+        "fillColor": "#EFF6FF",
+        "gap": 10,
+        "padding": 16,
+        "recommendedHeight": 140,
+        "recommendedWidth": 260,
+        "strokeColor": "#BFDBFE",
+        "strokeWidth": 1
+      },
+      "isEnabled": true,
+      "keywords": ["metric", "kpi", "card"],
+      "kind": "CONTAINER",
+      "name": "指标卡片容器",
+      "pageTypes": ["key-metrics", "big-chart", "title-body-points"],
+      "preview": {
+        "containerRole": "metric-card",
+        "shape": "metric"
+      },
+      "primaryCategory": "content-carrier",
+      "resource": {
+        "containerRole": "metric-card",
+        "semanticKey": "metric-card",
+        "type": "layout-container"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "hybrid-container",
+      "semanticTags": ["指标", "卡片", "数字"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 10020,
+      "source": "MANUAL",
+      "style": {
+        "allowedContentTypes": ["text", "icon"],
+        "autoLayout": false,
+        "containerRole": "metric-card",
+        "fillColor": "#EFF6FF",
+        "gap": 10,
+        "padding": 16,
+        "recommendedHeight": 140,
+        "recommendedWidth": 260,
+        "strokeColor": "#BFDBFE",
+        "strokeWidth": 1
+      },
+      "styleTags": ["data", "business"],
+      "synonyms": ["kpi", "metric"],
+      "tags": ["容器", "指标"],
+      "usageScenarios": ["关键指标", "数据摘要"],
+      "variantKey": "metric-card"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": true,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": true,
+        "allowTextShrink": false
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["amber"],
+      "description": "用于承载风险、注意事项和强调结论的提示容器。",
+      "detail": {
+        "allowedContentTypes": ["text", "icon"],
+        "autoLayout": false,
+        "containerRole": "warning-box",
+        "fillColor": "#FFFBEB",
+        "gap": 10,
+        "padding": 16,
+        "recommendedHeight": 150,
+        "recommendedWidth": 460,
+        "strokeColor": "#F59E0B",
+        "strokeWidth": 1
+      },
+      "isEnabled": true,
+      "keywords": ["warning", "risk", "highlight"],
+      "kind": "CONTAINER",
+      "name": "警示强调容器",
+      "pageTypes": ["title-body-points", "quote", "two-column-compare"],
+      "preview": {
+        "containerRole": "warning-box",
+        "shape": "warning"
+      },
+      "primaryCategory": "layout-container",
+      "resource": {
+        "containerRole": "warning-box",
+        "semanticKey": "warning-box",
+        "type": "layout-container"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "emphasis-container",
+      "semanticTags": ["警示", "风险", "强调"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 10030,
+      "source": "MANUAL",
+      "style": {
+        "allowedContentTypes": ["text", "icon"],
+        "autoLayout": false,
+        "containerRole": "warning-box",
+        "fillColor": "#FFFBEB",
+        "gap": 10,
+        "padding": 16,
+        "recommendedHeight": 150,
+        "recommendedWidth": 460,
+        "strokeColor": "#F59E0B",
+        "strokeWidth": 1
+      },
+      "styleTags": ["emphasis", "business"],
+      "synonyms": ["warning", "risk"],
+      "tags": ["容器", "强调"],
+      "usageScenarios": ["风险提示", "重点强调"],
+      "variantKey": "warning-box"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": true,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": false,
+        "allowTextShrink": false
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["slate"],
+      "description": "用于普通内容页底部的页码导航。",
+      "detail": {
+        "activeColor": "#2563EB",
+        "displayMode": "label",
+        "fixedPosition": "bottom",
+        "inactiveColor": "#94A3B8",
+        "navigationRole": "page-number",
+        "showOnCover": false,
+        "showOnEnding": false
+      },
+      "isEnabled": true,
+      "keywords": ["page", "number", "navigation"],
+      "kind": "NAVIGATION",
+      "name": "页码导航",
+      "pageTypes": ["title-body-points", "big-chart", "two-column-compare"],
+      "preview": {
+        "displayMode": "label",
+        "navigationRole": "page-number",
+        "shape": "navigation"
+      },
+      "primaryCategory": "deck-navigation",
+      "resource": {
+        "displayMode": "label",
+        "navigationRole": "page-number",
+        "semanticKey": "page-number",
+        "type": "deck-navigation"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "page-index",
+      "semanticTags": ["页码", "导航", "位置"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 40010,
+      "source": "MANUAL",
+      "style": {
+        "activeColor": "#2563EB",
+        "displayMode": "label",
+        "fixedPosition": "bottom",
+        "inactiveColor": "#94A3B8",
+        "navigationRole": "page-number",
+        "showOnCover": false,
+        "showOnEnding": false
+      },
+      "styleTags": ["minimal", "business"],
+      "synonyms": ["page-number", "footer"],
+      "tags": ["导航", "页码"],
+      "usageScenarios": ["页码显示", "页面定位"],
+      "variantKey": "page-number"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": true,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": false,
+        "allowTextShrink": false
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["blue"],
+      "description": "用于表达整套 PPT 进度的底部线性进度条。",
+      "detail": {
+        "activeColor": "#2563EB",
+        "displayMode": "progress",
+        "fixedPosition": "bottom",
+        "inactiveColor": "#CBD5E1",
+        "navigationRole": "linear-progress",
+        "showOnCover": false,
+        "showOnEnding": true
+      },
+      "isEnabled": true,
+      "keywords": ["progress", "navigation", "deck"],
+      "kind": "NAVIGATION",
+      "name": "线性进度导航",
+      "pageTypes": ["chapter", "title-body-points", "process-steps"],
+      "preview": {
+        "displayMode": "progress",
+        "navigationRole": "linear-progress",
+        "shape": "navigation"
+      },
+      "primaryCategory": "progress-navigation",
+      "resource": {
+        "displayMode": "progress",
+        "navigationRole": "linear-progress",
+        "semanticKey": "linear-progress",
+        "type": "deck-navigation"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "progress-bar",
+      "semanticTags": ["进度", "导航", "流程"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 40020,
+      "source": "MANUAL",
+      "style": {
+        "activeColor": "#2563EB",
+        "displayMode": "progress",
+        "fixedPosition": "bottom",
+        "inactiveColor": "#CBD5E1",
+        "navigationRole": "linear-progress",
+        "showOnCover": false,
+        "showOnEnding": true
+      },
+      "styleTags": ["process", "minimal"],
+      "synonyms": ["progress", "timeline"],
+      "tags": ["导航", "进度"],
+      "usageScenarios": ["进度提示", "章节推进"],
+      "variantKey": "linear-progress"
+    },
+    {
+      "aiModifyPermissions": {
+        "allowAutoLayout": true,
+        "allowMove": true,
+        "allowRecolor": true,
+        "allowResize": true,
+        "allowStretch": false,
+        "allowTextShrink": false
+      },
+      "backgroundModes": ["light", "dark"],
+      "colorTags": ["slate"],
+      "description": "用于目录页或章节页的列表式目录导航。",
+      "detail": {
+        "activeColor": "#111827",
+        "displayMode": "list",
+        "fixedPosition": "left",
+        "inactiveColor": "#94A3B8",
+        "navigationRole": "toc-list",
+        "showOnCover": false,
+        "showOnEnding": false
+      },
+      "isEnabled": true,
+      "keywords": ["toc", "chapter", "navigation"],
+      "kind": "NAVIGATION",
+      "name": "目录列表导航",
+      "pageTypes": ["chapter", "cover-title", "ending"],
+      "preview": {
+        "displayMode": "list",
+        "navigationRole": "toc-list",
+        "shape": "navigation"
+      },
+      "primaryCategory": "deck-navigation",
+      "resource": {
+        "displayMode": "list",
+        "navigationRole": "toc-list",
+        "semanticKey": "toc-list",
+        "type": "deck-navigation"
+      },
+      "reviewStatus": "APPROVED",
+      "secondaryCategory": "table-of-contents",
+      "semanticTags": ["目录", "章节", "导航"],
+      "setKey": "common",
+      "setKind": "COMMON",
+      "setName": "通用语义兜底资产 v1",
+      "sortOrder": 40030,
+      "source": "MANUAL",
+      "style": {
+        "activeColor": "#111827",
+        "displayMode": "list",
+        "fixedPosition": "left",
+        "inactiveColor": "#94A3B8",
+        "navigationRole": "toc-list",
+        "showOnCover": false,
+        "showOnEnding": false
+      },
+      "styleTags": ["business", "structure"],
+      "synonyms": ["toc", "chapter"],
+      "tags": ["导航", "目录"],
+      "usageScenarios": ["目录页", "章节导航"],
+      "variantKey": "toc-list"
+    }
+  ],
+  "formatVersion": "template-assets-fallback-package-v1",
+  "packageId": "common-template-assets-fallback-v1",
+  "packageName": "通用语义兜底资产 v1"
+}

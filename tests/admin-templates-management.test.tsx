@@ -103,6 +103,27 @@ describe("AdminTemplatesManagement", () => {
     expect(screen.getByText("章节页模板")).toBeInTheDocument();
   });
 
+  it("shows a compatibility notice for legacy templates loaded with defaults", () => {
+    renderWithIntl(
+      <AdminTemplatesManagement
+        initialTemplates={[
+          {
+            ...baseTemplate,
+            compatibilityWarning:
+              "Template slide JSON is incompatible with the current schema and was loaded from the category default."
+          }
+        ]}
+      />
+    );
+
+    expect(
+      screen.getByText(/检测到部分旧模板 JSON 与当前结构不兼容/)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("旧模板 JSON 已按默认样板兼容加载")
+    ).toBeInTheDocument();
+  });
+
   it("renders top actions without the generic create button", () => {
     renderWithIntl(<AdminTemplatesManagement initialTemplates={[baseTemplate]} />);
 

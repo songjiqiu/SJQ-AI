@@ -166,6 +166,15 @@ const workspaceKindMap: Record<
   TEXT_STYLE: "textStyles"
 };
 
+const assetApiPathByKind: Record<TemplateElementAssetKind, string> = {
+  CONTAINER: "/api/admin/template-containers",
+  ICON: "/api/admin/template-icons",
+  LINE: "/api/admin/template-lines",
+  NAVIGATION: "/api/admin/template-navigation",
+  SHAPE: "/api/admin/template-shapes",
+  TEXT_STYLE: "/api/admin/template-text-styles"
+};
+
 export function AdminTemplateElementAssetsManagement({
   initialAssets,
   kind
@@ -267,7 +276,7 @@ export function AdminTemplateElementAssetsManagement({
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/admin/template-assets?kind=${kind}`);
+      const response = await fetch(assetApiPathByKind[kind]);
 
       if (!response.ok) {
         throw new Error(await readApiError(response, errorMessages));
@@ -318,8 +327,8 @@ export function AdminTemplateElementAssetsManagement({
     try {
       const response = await fetch(
         editingAsset.mode === "edit" && editingAsset.asset
-          ? `/api/admin/template-assets/${editingAsset.asset.id}`
-          : "/api/admin/template-assets",
+          ? `${assetApiPathByKind[kind]}/${editingAsset.asset.id}`
+          : assetApiPathByKind[kind],
         {
           body: JSON.stringify(payload),
           headers: {
@@ -358,7 +367,7 @@ export function AdminTemplateElementAssetsManagement({
     setSavingAssetId(asset.id);
 
     try {
-      const response = await fetch(`/api/admin/template-assets/${asset.id}`, {
+      const response = await fetch(`${assetApiPathByKind[kind]}/${asset.id}`, {
         body: JSON.stringify({
           isEnabled: !asset.isEnabled
         }),
@@ -408,7 +417,7 @@ export function AdminTemplateElementAssetsManagement({
           throw new Error(t("errors.invalidImportJson"));
         }
 
-        const response = await fetch("/api/admin/template-assets", {
+        const response = await fetch(assetApiPathByKind[kind], {
           body: JSON.stringify({
             ...rawAsset,
             kind: typeof rawAsset.kind === "string" ? rawAsset.kind : kind
@@ -454,7 +463,7 @@ export function AdminTemplateElementAssetsManagement({
     setSavingAssetId(deletingAsset.id);
 
     try {
-      const response = await fetch(`/api/admin/template-assets/${deletingAsset.id}`, {
+      const response = await fetch(`${assetApiPathByKind[kind]}/${deletingAsset.id}`, {
         method: "DELETE"
       });
 
@@ -3203,6 +3212,10 @@ function buildPreviewAssetFromForm(
   kind: TemplateElementAssetKind,
   name: string
 ): TemplateElementAssetDto {
+  const preview = readJsonObject(form.previewJson) ?? {};
+  const resource = readJsonObject(form.resourceJson) ?? {};
+  const style = readJsonObject(form.styleJson) ?? {};
+
   return {
     aiModifyPermissions: {
       allowAutoLayout: form.allowAutoLayout,
@@ -3216,15 +3229,16 @@ function buildPreviewAssetFromForm(
     colorTags: readLines(form.colorTagsText),
     createdAt: "",
     description: form.description || null,
+    detail: buildAssetDetailFromForm(kind, style, resource, preview),
     id: "preview",
     isEnabled: form.isEnabled,
     keywords: readLines(form.keywordsText),
     kind,
     name,
     pageTypes: readLines(form.pageTypesText),
-    preview: readJsonObject(form.previewJson) ?? {},
+    preview,
     primaryCategory: form.primaryCategory || null,
-    resource: readJsonObject(form.resourceJson) ?? {},
+    resource,
     reviewStatus: form.reviewStatus as TemplateElementAssetDto["reviewStatus"],
     semanticTags: readLines(form.semanticTagsText),
     secondaryCategory: form.secondaryCategory || null,
@@ -3233,7 +3247,7 @@ function buildPreviewAssetFromForm(
     setName: form.setName,
     sortOrder: Number(form.sortOrder) || 0,
     source: form.source as TemplateElementAssetDto["source"],
-    style: readJsonObject(form.styleJson) ?? {},
+    style,
     styleTags: readLines(form.styleTagsText),
     synonyms: readLines(form.synonymsText),
     tags: readLines(form.tagsText),
@@ -3538,6 +3552,7 @@ function parseAssetForm(form: AssetFormState, kind: TemplateElementAssetKind) {
     backgroundModes: readLines(form.backgroundModesText),
     colorTags: readLines(form.colorTagsText),
     description: form.description.trim() || null,
+    detail: buildAssetDetailFromForm(kind, style, resource, preview),
     isEnabled: form.isEnabled,
     kind,
     keywords: readLines(form.keywordsText),
@@ -3560,6 +3575,124 @@ function parseAssetForm(form: AssetFormState, kind: TemplateElementAssetKind) {
     tags: readLines(form.tagsText),
     usageScenarios: readLines(form.usageScenariosText),
     variantKey: form.variantKey || null
+  };
+}
+
+function buildAssetDetailFromForm(
+  kind: TemplateElementAssetKind,
+  style: Record<string, unknown>,
+  resource: Record<string, unknown>,
+  preview: Record<string, unknown>
+) {
+  if (kind === "ICON") {
+    return {
+      cornerRadius: readNumber(style.cornerRadius) ?? null,
+      fillMode: readString(style.fillMode) ?? null,
+      iconName:
+        readString(preview.iconName) ??
+        readString(resource.iconName) ??
+        readString(resource.semanticKey) ??
+        "semantic-icon",
+      iconStyle: readString(style.iconStyle) ?? "line",
+      strokeColor: readString(style.strokeColor) ?? null,
+      strokeWidth: readNumber(style.strokeWidth) ?? null
+    };
+  }
+
+  if (kind === "SHAPE") {
+    return {
+      cornerRadius: readNumber(style.cornerRadius) ?? null,
+      fillColor: readString(style.fillColor) ?? null,
+      opacity: readNumber(style.opacity) ?? null,
+      shadow: readBoolean(style.shadow),
+      shapeType:
+        readString(resource.shapeType) ??
+        readString(style.shapeType) ??
+        readString(preview.shape) ??
+        "roundedRect",
+      strokeColor: readString(style.strokeColor) ?? null,
+      strokeWidth: readNumber(style.strokeWidth) ?? null
+    };
+  }
+
+  if (kind === "LINE") {
+    return {
+      cap: readString(style.cap) ?? "round",
+      connectorType:
+        readString(resource.connectorType) ??
+        readString(style.connectorType) ??
+        "straight",
+      dash: readString(style.dash) ?? "solid",
+      direction:
+        readString(resource.direction) ??
+        readString(style.direction) ??
+        readString(preview.direction) ??
+        "horizontal",
+      endArrowType:
+        readString(resource.endArrowType) ??
+        readString(style.endArrowType) ??
+        "none",
+      startArrowType:
+        readString(resource.startArrowType) ??
+        readString(style.startArrowType) ??
+        "none",
+      strokeColor: readString(style.strokeColor) ?? null,
+      strokeWidth: readNumber(style.strokeWidth) ?? null
+    };
+  }
+
+  if (kind === "TEXT_STYLE") {
+    return {
+      color: readString(style.color) ?? null,
+      fontFamily: readString(style.fontFamily) ?? null,
+      fontSize: readNumber(style.fontSize) ?? null,
+      fontWeight: readNumber(style.fontWeight) ?? null,
+      letterSpacing: readNumber(style.letterSpacing) ?? null,
+      lineHeight: readNumber(style.lineHeight) ?? null,
+      maxLines: readNumber(style.maxLines) ?? null,
+      textRole:
+        readString(resource.textRole) ??
+        readString(style.textRole) ??
+        readString(preview.textRole) ??
+        "body"
+    };
+  }
+
+  if (kind === "CONTAINER") {
+    return {
+      allowedContentTypes: readStringArray(style.allowedContentTypes),
+      autoLayout: readBoolean(style.autoLayout),
+      containerRole:
+        readString(resource.containerRole) ??
+        readString(style.containerRole) ??
+        readString(preview.containerRole) ??
+        "container",
+      fillColor: readString(style.fillColor) ?? null,
+      gap: readNumber(style.gap) ?? null,
+      padding: readNumber(style.padding) ?? null,
+      recommendedHeight: readNumber(style.recommendedHeight) ?? null,
+      recommendedWidth: readNumber(style.recommendedWidth) ?? null,
+      strokeColor: readString(style.strokeColor) ?? null,
+      strokeWidth: readNumber(style.strokeWidth) ?? null
+    };
+  }
+
+  return {
+    activeColor: readString(style.activeColor) ?? null,
+    displayMode:
+      readString(resource.displayMode) ??
+      readString(style.displayMode) ??
+      readString(preview.displayMode) ??
+      "label",
+    fixedPosition: readString(style.fixedPosition) ?? "bottom",
+    inactiveColor: readString(style.inactiveColor) ?? null,
+    navigationRole:
+      readString(resource.navigationRole) ??
+      readString(style.navigationRole) ??
+      readString(preview.navigationRole) ??
+      "page-number",
+    showOnCover: readBoolean(style.showOnCover),
+    showOnEnding: readBoolean(style.showOnEnding)
   };
 }
 

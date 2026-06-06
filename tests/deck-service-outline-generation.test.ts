@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MockImageLayerGenerator } from "@/lib/ai-deck/image-generator";
 import { buildMockAnalyzedDeck } from "@/lib/ai-deck/fallback";
-import type { AnalyzeDeckRequest } from "@/lib/ai-deck/schema";
+import type { AnalyzeDeckRequest, SlideElement } from "@/lib/ai-deck/schema";
 
 const input: AnalyzeDeckRequest = {
   sourceText:
@@ -10,7 +10,7 @@ const input: AnalyzeDeckRequest = {
   audience: "投资人",
   goal: "获得试点合作意向",
   coreMessage: "用市场机会与试点成果证明合作价值。",
-  pageCount: 3,
+  pageCount: 6,
   deckType: "business-report",
   palette: "star-map",
   locale: "zh-CN"
@@ -20,6 +20,123 @@ const editedSlides = analyzed.slides.map((slide, index) => ({
   ...slide.content,
   title: index === 0 ? "编辑后的开场标题" : slide.content.title
 }));
+
+function buildStoredDeckProjectWithDenseMotion({
+  invalidMotionElementReference = false
+}: {
+  invalidMotionElementReference?: boolean;
+} = {}) {
+  const denseSlides = analyzed.slides.map((slide, slideIndex) => {
+    if (slideIndex > 0) {
+      return slide;
+    }
+
+    const extraElements: SlideElement[] = Array.from(
+      { length: Math.max(0, 13 - slide.elements.length) },
+      (_, index) => ({
+        ...slide.elements.find((element) => element.type === "text")!,
+        id: `${slide.slideId}-extra-body-${index + 1}`,
+        role: `补充正文 ${index + 1}`,
+        content: `补充正文 ${index + 1}`,
+        contentBlockIndex: undefined,
+        semanticType: "body",
+        zIndex: 40 + index
+      })
+    );
+
+    return {
+      ...slide,
+      elements: [...slide.elements, ...extraElements]
+    };
+  });
+  const firstSlide = denseSlides[0];
+
+  return {
+    assets: [
+      {
+        kind: "PPTX",
+        publicUrl: "/api/decks/deck-dense/pptx"
+      }
+    ],
+    contentReview: {
+      riskLevel: "low",
+      score: 96,
+      suggestions: [],
+      summary: "内容风险较低，可进入预览和导出。",
+      warnings: []
+    },
+    consistencyReport: {
+      checks: [
+        { message: "页数正确", name: "页数契约", score: 100 },
+        { message: "配色稳定", name: "配色约束", score: 96 }
+      ],
+      score: 95,
+      suggestions: [],
+      summary: "跨页视觉、页数和层级保持稳定。"
+    },
+    createdAt: new Date("2026-05-30T00:00:00.000Z"),
+    id: "deck-dense",
+    input,
+    mode: "mock",
+    pptxAssetId: "pptx-dense",
+    slides: denseSlides.map((slide, slideIndex) => ({
+      canvas: slide.canvas,
+      content: slide.content,
+      elements: slide.elements,
+      generatedImageLayers: [],
+      id: `deck-slide-${slide.index}`,
+      imageLayerRequests: slide.imageLayerRequests,
+      index: slide.index,
+      motionPlan:
+        slideIndex === 0
+          ? {
+              preset: "fade",
+              durationMs: 520,
+              delayMs: 0,
+              staggerMs: 90,
+              elements: firstSlide.elements.map((element, index) => ({
+                elementId:
+                  invalidMotionElementReference && index === 0
+                    ? "missing-element"
+                    : element.id,
+                preset: "rise",
+                delayMs: 80 + index * 90,
+                durationMs: 480
+              }))
+            }
+          : {
+              preset: "fade",
+              durationMs: 520,
+              delayMs: 0,
+              staggerMs: 90,
+              elements: slide.elements.map((element, index) => ({
+                elementId: element.id,
+                preset: "rise",
+                delayMs: 80 + index * 90,
+                durationMs: 480
+              }))
+            },
+      pageDesign: {
+        constraints: slide.constraints,
+        contentHierarchy: slide.contentHierarchy,
+        designPlan: slide.designPlan,
+        designQualityScore: slide.designQualityScore,
+        expressionIntent: slide.expressionIntent,
+        layoutDiagnostics: slide.layoutDiagnostics,
+        layoutSelection: slide.layoutSelection,
+        pageIntent: slide.pageIntent,
+        semanticElements: slide.semanticElements
+      },
+      slideId: slide.slideId
+    })),
+    status: "READY",
+    summary: analyzed.deckSummary,
+    title: analyzed.deckTitle,
+    unifiedVisualSpec: analyzed.unifiedVisualSpec,
+    updatedAt: new Date("2026-05-30T00:00:00.000Z"),
+    userId: "user-1"
+  };
+}
 
 const prisma = vi.hoisted(() => ({
   deckAsset: {
@@ -71,6 +188,7 @@ import {
   createDeckGenerationTaskForUser,
   deleteDeckProjectForUser,
   generateDeckFromOutlineDraftForUser,
+  getDeckProjectForUser,
   getDeckGenerationStatusForUser,
   listDeckProjects,
   runDeckGenerationTaskForUser
@@ -398,18 +516,18 @@ describe("generateDeckFromOutlineDraftForUser", () => {
         }),
         expect.objectContaining({
           current: 1,
-          message: expect.stringContaining("已完成 1/3 页"),
+          message: expect.stringContaining("已完成 1/6 页"),
           stage: "composing",
           total: input.pageCount
         }),
         expect.objectContaining({
-          current: 3,
-          message: expect.stringContaining("已完成 3/3 页"),
+          current: 6,
+          message: expect.stringContaining("已完成 6/6 页"),
           stage: "images",
           total: input.pageCount
         }),
         expect.objectContaining({
-          current: 3,
+          current: 6,
           message: "正在合成 PPTX 文件。",
           stage: "pptx",
           total: input.pageCount
@@ -641,6 +759,37 @@ describe("generateDeckFromOutlineDraftForUser", () => {
         }
       })
     );
+  });
+
+  it("opens preview when stored motion metadata covers more than twelve elements", async () => {
+    prisma.deckProject.findFirst.mockResolvedValue(
+      buildStoredDeckProjectWithDenseMotion()
+    );
+
+    const project = await getDeckProjectForUser("user-1", "deck-dense");
+
+    expect(project.slides[0].elements.length).toBeGreaterThan(12);
+    expect(project.slides[0].motionPlan.elements).toHaveLength(
+      project.slides[0].elements.length
+    );
+  });
+
+  it("rebuilds stale stored motion metadata with invalid element references", async () => {
+    prisma.deckProject.findFirst.mockResolvedValue(
+      buildStoredDeckProjectWithDenseMotion({
+        invalidMotionElementReference: true
+      })
+    );
+
+    const project = await getDeckProjectForUser("user-1", "deck-dense");
+    const firstElementId = project.slides[0].elements[0].id;
+
+    expect(project.slides[0].motionPlan.elements[0].elementId).toBe(firstElementId);
+    expect(
+      project.slides[0].motionPlan.elements.some(
+        (element) => element.elementId === "missing-element"
+      )
+    ).toBe(false);
   });
 
   it("deletes finished deck history and clears local project files", async () => {

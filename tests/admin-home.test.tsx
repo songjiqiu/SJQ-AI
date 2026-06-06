@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it, vi } from "vitest";
 
@@ -35,17 +35,25 @@ describe("AdminHome", () => {
     expect(
       screen.getByRole("heading", { name: "管理端" })
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /用户管理/ })).toHaveAttribute(
-      "href",
-      "/admin/users"
+    expect(screen.getByLabelText("管理端入口")).toHaveClass(
+      "mx-auto",
+      "md:grid-cols-2",
+      "max-w-[calc((100%-1rem)*2/3+1rem)]"
     );
-    expect(screen.getByRole("link", { name: /模板工作区/ })).toHaveAttribute(
-      "href",
-      "/admin/templates"
-    );
-    expect(screen.getByRole("link", { name: /创作工作台/ })).toHaveAttribute(
-      "href",
-      "/workbench"
-    );
+
+    const entries = [
+      ["用户管理", "/admin/users"],
+      ["PPT模板库管理", "/admin/templates"],
+      ["创作工作台", "/workbench"],
+      ["PPT--To--Slot", "/admin/ppt-to-slot"]
+    ] as const;
+
+    entries.forEach(([title, href]) => {
+      const link = screen.getByRole("link", { name: new RegExp(title) });
+
+      expect(link).toHaveAttribute("href", href);
+      expect(within(link).getByText(title)).toBeInTheDocument();
+      expect(within(link).getByText("进入")).toBeInTheDocument();
+    });
   });
 });

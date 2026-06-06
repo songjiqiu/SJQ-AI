@@ -16,6 +16,7 @@ storage/decks/*
 !storage/decks/.gitkeep
 storage/assets/*
 !storage/assets/.gitkeep
+storage/ocr/*
 
 .env
 .env.*

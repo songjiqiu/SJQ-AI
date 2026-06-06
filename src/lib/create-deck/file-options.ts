@@ -8,7 +8,15 @@ export const deckInputFileExtensions = [
   ".markdown",
   ".csv",
   ".json",
-  ".docx"
+  ".docx",
+  ".pptx",
+  ".xlsx",
+  ".pdf",
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".webp",
+  ".bmp"
 ] as const;
 
 export const deckInputFileAccept = [
@@ -17,7 +25,14 @@ export const deckInputFileAccept = [
   "text/markdown",
   "text/csv",
   "application/json",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/bmp"
 ].join(",");
 
 export type DeckInputFileExtension = (typeof deckInputFileExtensions)[number];

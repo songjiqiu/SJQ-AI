@@ -29,15 +29,16 @@
       "narrativeRole": "argument",
       "contentLayers": {
         "primary": [
-          "描述智能处理流程"
+          0,
+          1
         ],
         "supporting": [
-          "右侧承载算法节点意象",
-          "强调自动化收益"
+          2,
+          4,
+          5
         ],
         "supplementary": [
-          "适用场景：AI 培训",
-          "青绿琥珀科技风，使用节点、光标和数据面板表达智能感。"
+          3
         ]
       },
       "slideTransition": {
@@ -77,7 +78,57 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "AI 流程插画右",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "AI 流程插画右",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "描述智能处理流程",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "描述智能处理流程",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "右侧承载算法节点意象",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "右侧承载算法节点意象",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "强调自动化收益",
+          "priority": 4,
+          "sourceIds": [],
+          "text": "强调自动化收益",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "左文右图 / AI 科技感",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "左文右图 / AI 科技感",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "用右侧透明插画表达 AI 流程与能力闭环。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "用右侧透明插画表达 AI 流程与能力闭环。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "描述智能处理流程",

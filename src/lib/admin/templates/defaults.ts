@@ -236,14 +236,18 @@ export function buildDefaultTemplateSlide(
     title: definition.title,
     subtitle: definition.designPlan,
     bodyPoints: definition.body,
+    contentBlocks: buildTemplateContentBlocks(definition),
     speakerGoal: "帮助管理员快速搭建可复用的 PPT 页面模板。",
     visualIntent: definition.visualIntent,
     coreStatement: definition.body[0] ?? definition.title,
     narrativeRole: "setup",
     contentLayers: {
-      primary: [definition.body[0] ?? definition.title],
-      supporting: definition.body.slice(1),
-      supplementary: [definition.designPlan]
+      primary: [0, 1],
+      supporting: buildTemplateContentBlocks(definition)
+        .map((_, index) => index)
+        .filter((index) => index >= 2)
+        .slice(0, 6),
+      supplementary: []
     },
     slideTransition: {
       fromPrevious: "作为模板示例页，先展示版式核心能力。",
@@ -376,6 +380,30 @@ export function buildDefaultTemplateSlide(
       }
     })
   };
+}
+
+function buildTemplateContentBlocks(
+  definition: TemplateDefinition
+): SlideCompositionPlan["content"]["contentBlocks"] {
+  const blocks: SlideCompositionPlan["content"]["contentBlocks"] = [
+    {
+      blockType: "title",
+      priority: 1,
+      text: definition.title
+    },
+    {
+      blockType: "conclusion",
+      priority: 1,
+      text: definition.body[0] ?? definition.title
+    },
+    ...definition.body.map((point, index) => ({
+      blockType: "body" as const,
+      priority: Math.min(5, index + 2),
+      text: point
+    }))
+  ];
+
+  return blocks.slice(0, 12);
 }
 
 function templatePageRole(

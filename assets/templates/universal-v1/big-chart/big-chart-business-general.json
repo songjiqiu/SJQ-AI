@@ -28,15 +28,15 @@
       "narrativeRole": "argument",
       "contentLayers": {
         "primary": [
-          "顶部保留一句结论"
+          0,
+          1
         ],
         "supporting": [
-          "下方图表承载主要证据"
+          2,
+          3,
+          4
         ],
-        "supplementary": [
-          "适用场景：经营分析",
-          "浅底蓝绿商务风，强调清晰、稳定和可复用。"
-        ]
+        "supplementary": []
       },
       "slideTransition": {
         "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
@@ -74,7 +74,49 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "单图表结论页",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "单图表结论页",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "顶部保留一句结论",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "顶部保留一句结论",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "下方图表承载主要证据",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "下方图表承载主要证据",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "大图表 / 中国商务通用",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "大图表 / 中国商务通用",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "让趋势或对比图成为页面主体，标题只保留判断。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "让趋势或对比图成为页面主体，标题只保留判断。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "顶部保留一句结论",

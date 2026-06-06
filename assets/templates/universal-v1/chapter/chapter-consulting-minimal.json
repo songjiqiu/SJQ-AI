@@ -28,15 +28,15 @@
       "narrativeRole": "setup",
       "contentLayers": {
         "primary": [
-          "提出本章关键问题"
+          0,
+          1
         ],
         "supporting": [
-          "用留白建立阅读停顿"
+          2,
+          3,
+          4
         ],
-        "supplementary": [
-          "适用场景：咨询报告",
-          "白底黑灰咨询风，强调结论先行、强栅格和克制高亮。"
-        ]
+        "supplementary": []
       },
       "slideTransition": {
         "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
@@ -74,7 +74,49 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "大留白分割章",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "大留白分割章",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "提出本章关键问题",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "提出本章关键问题",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "用留白建立阅读停顿",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "用留白建立阅读停顿",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "章节页 / 极简咨询风",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "章节页 / 极简咨询风",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "用克制留白和细线分割建立咨询报告的章节节奏。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "用克制留白和细线分割建立咨询报告的章节节奏。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "提出本章关键问题",

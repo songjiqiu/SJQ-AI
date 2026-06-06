@@ -26,6 +26,10 @@ import {
   PptTemplateNotFoundError,
   PptTemplatePackageImportError
 } from "@/lib/admin/templates/service";
+import {
+  PptSlotTemplateNotFoundError,
+  PptToSlotValidationError
+} from "@/lib/admin/ppt-to-slot/service";
 import { isMissingPrismaStorageError } from "@/lib/db/prisma-errors";
 
 export function apiError(code: string, status: number, details?: unknown) {
@@ -166,6 +170,10 @@ export function handleApiError(error: unknown) {
     return apiError("NOT_FOUND", 404);
   }
 
+  if (error instanceof PptSlotTemplateNotFoundError) {
+    return apiError("NOT_FOUND", 404);
+  }
+
   if (error instanceof TemplateElementAssetNotFoundError) {
     return apiError("NOT_FOUND", 404);
   }
@@ -180,6 +188,10 @@ export function handleApiError(error: unknown) {
     return apiError("VALIDATION_FAILED", 400, {
       message: error.message
     });
+  }
+
+  if (error instanceof PptToSlotValidationError) {
+    return apiError("VALIDATION_FAILED", 400, error.details);
   }
 
   if (error instanceof ActiveGenerationExistsError) {

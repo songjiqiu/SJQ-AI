@@ -28,15 +28,15 @@
       "narrativeRole": "argument",
       "contentLayers": {
         "primary": [
-          "让场景图承载情绪"
+          0,
+          1
         ],
         "supporting": [
-          "前景文字保持高对比"
+          2,
+          3,
+          4
         ],
-        "supplementary": [
-          "适用场景：品牌方案",
-          "浅底蓝绿商务风，强调清晰、稳定和可复用。"
-        ]
+        "supplementary": []
       },
       "slideTransition": {
         "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
@@ -74,7 +74,49 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "半遮罩场景页",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "半遮罩场景页",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "让场景图承载情绪",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "让场景图承载情绪",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "前景文字保持高对比",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "前景文字保持高对比",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "大图背景 / 中国商务通用",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "大图背景 / 中国商务通用",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "用全幅背景和半透明遮罩呈现稳重场景页。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "用全幅背景和半透明遮罩呈现稳重场景页。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "让场景图承载情绪",

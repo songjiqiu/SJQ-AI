@@ -11,7 +11,8 @@ const allowedDevOrigins = (
 
 const nextConfig: NextConfig = {
   allowedDevOrigins,
-  poweredByHeader: false
+  poweredByHeader: false,
+  serverExternalPackages: ["@napi-rs/canvas"]
 };
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");

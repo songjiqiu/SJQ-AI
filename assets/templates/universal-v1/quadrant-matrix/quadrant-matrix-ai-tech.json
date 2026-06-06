@@ -30,16 +30,17 @@
       "narrativeRole": "argument",
       "contentLayers": {
         "primary": [
-          "高智能 / 高价值"
+          0,
+          1
         ],
         "supporting": [
-          "高智能 / 低价值",
-          "低智能 / 高价值",
-          "低智能 / 低价值"
+          2,
+          5,
+          6
         ],
         "supplementary": [
-          "适用场景：AI 机会图",
-          "青绿琥珀科技风，使用节点、光标和数据面板表达智能感。"
+          3,
+          4
         ]
       },
       "slideTransition": {
@@ -79,7 +80,65 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "能力/价值象限",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "能力/价值象限",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "高智能 / 高价值",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "高智能 / 高价值",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "高智能 / 低价值",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "高智能 / 低价值",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "低智能 / 高价值",
+          "priority": 4,
+          "sourceIds": [],
+          "text": "低智能 / 高价值",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "低智能 / 低价值",
+          "priority": 5,
+          "sourceIds": [],
+          "text": "低智能 / 低价值",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "四象限/矩阵 / AI 科技感",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "四象限/矩阵 / AI 科技感",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "用智能化程度和业务价值识别高潜机会区。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "用智能化程度和业务价值识别高潜机会区。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "高智能 / 高价值",

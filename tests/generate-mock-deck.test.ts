@@ -49,7 +49,13 @@ const copy: MockDeckCopy = {
     "star-map": "星图",
     matrix: "矩阵",
     "deep-space": "深空",
-    "morning-mist": "晨雾"
+    "morning-mist": "晨雾",
+    "moon-white": "月白",
+    "bamboo-green": "竹青",
+    "dai-blue": "黛蓝",
+    rouge: "胭脂",
+    "gilded-gold": "鎏金",
+    "ink-black": "玄墨"
   }
 };
 
@@ -57,7 +63,7 @@ const form: CreateDeckForm = {
   idea: "新能源融资路演",
   audience: "投资人",
   goal: "获得合作意向",
-  pageCount: 4,
+  pageCount: 6,
   deckType: "fundraising-pitch",
   palette: "star-map"
 };
@@ -70,16 +76,18 @@ describe("generateMockDeckDraft", () => {
     expect(draft).toEqual(secondDraft);
     expect(draft.mode).toBe("mock");
     expect(draft.title).toBe("新能源融资路演｜融资路演");
-    expect(draft.slides).toHaveLength(4);
+    expect(draft.slides).toHaveLength(6);
     expect(draft.slides.map((slide) => slide.id)).toEqual([
       "slide-1",
       "slide-2",
       "slide-3",
-      "slide-4"
+      "slide-4",
+      "slide-5",
+      "slide-6"
     ]);
-    expect(draft.slides[3]).toMatchObject({
-      index: 4,
-      title: "行动 4",
+    expect(draft.slides[5]).toMatchObject({
+      index: 6,
+      title: "行动 6",
       body: "获得合作意向"
     });
   });

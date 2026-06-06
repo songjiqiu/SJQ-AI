@@ -1,17 +1,19 @@
 import { z } from "zod";
 
+import { deckPageCountMax, deckPageCountMin } from "@/lib/deck-input/schema";
+
 import { deckTypeIds, paletteIds } from "./options";
 
 export const createDeckHiddenDefaultsByLocale = {
   "zh-CN": {
     audience: "通用受众",
     goal: "清晰传达核心内容",
-    pageCount: 6
+    pageCount: deckPageCountMin
   },
   "en-US": {
     audience: "general audience",
     goal: "communicate the core message clearly",
-    pageCount: 6
+    pageCount: deckPageCountMin
   }
 } as const;
 
@@ -43,8 +45,8 @@ export const createDeckFormSchema = z.object({
   pageCount: z.coerce
     .number()
     .int("pageCount.integer")
-    .min(3)
-    .max(18)
+    .min(deckPageCountMin)
+    .max(deckPageCountMax)
     .optional(),
   deckType: z.enum(deckTypeIds).default("business-report"),
   palette: z.enum(paletteIds)

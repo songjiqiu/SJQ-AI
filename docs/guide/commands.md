@@ -48,7 +48,9 @@ pnpm db:seed:template-assets
 
 数据库连接由 `DATABASE_URL` 提供，例如 `mysql://root:root@localhost:3306/ai-ppt?allowPublicKeyRetrieval=true`。Prisma 7 的连接串在 `prisma.config.ts` 中读取，运行迁移前需要确保 MySQL 服务可用且数据库已创建。
 
-`pnpm db:seed:template-assets -- --dry-run` 只校验 `assets/template-assets/universal-v1/` 下的通用语义资产包，不写入数据库。`pnpm db:seed:template-assets` 会把“通用语义资产包 v1”写入 `TemplateElementAsset` 表：脚本会先检查 `COMMON/common` 下是否存在同名但不属于本包的资产，有冲突时中止；无冲突时只删除同一 `setName=通用语义资产包 v1` 的旧资产，再创建 792 条通用语义资产。
+新增或调整数据库表、字段、枚举时，应同步维护 `prisma/schema.prisma` 中的中文文档注释，并通过手写 MySQL 迁移为真实表和列补充 `COMMENT`。Prisma 关系虚拟字段只需要 schema 文档注释，不生成数据库列注释。
+
+`pnpm db:seed:template-assets -- --dry-run` 只校验 `assets/template-assets/common-fallback-v1/` 下的小型通用兜底资产包，不写入数据库。`pnpm db:seed:template-assets` 会把“通用语义兜底资产 v1”写入 `TemplateAsset` 公共主表和六类详情表：脚本只删除同一 `setName=通用语义兜底资产 v1` 的旧兜底资产，再创建 18 条基础资产。旧 792 条通用语义资产包已清空，不再作为种子来源。
 
 本地 MySQL 8 使用默认 `caching_sha2_password` 且未启用 TLS 时，需要保留 `allowPublicKeyRetrieval=true`。缺少该参数时，MariaDB 驱动无法在认证阶段获取 RSA 公钥，Prisma 页面请求可能被包装成 `DriverAdapterError: pool timeout`。
 

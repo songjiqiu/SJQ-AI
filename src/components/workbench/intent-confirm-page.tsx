@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ClipboardCheck, FileText, Layers3 } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, Layers3 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import type {
   DeckIntentAnalysisResult,
   DeckStructureOutline
 } from "@/lib/ai-deck/schema";
+import { deckPageCountMax, deckPageCountMin } from "@/lib/deck-input/schema";
 
 import {
   intentAnalysisStorageKey,
@@ -18,6 +19,11 @@ import {
   outlinePayloadStorageKey
 } from "./creation-workbench";
 import { Field, WorkbenchStepNav } from "./workbench-shared";
+import {
+  buildConfirmedOutlinePayload,
+  isConfirmedOutlinePayloadValid,
+  syncStructureSlideCount
+} from "./outline-intent-payload";
 
 export function IntentConfirmPage() {
   const t = useTranslations("workbench");
@@ -82,46 +88,35 @@ export function IntentConfirmPage() {
       : null;
 
     if (
-      trimmedAudience.length < 2 ||
-      trimmedGoal.length < 2 ||
-      trimmedCoreMessage.length < 2 ||
-      pageCount < 3 ||
-      pageCount > 18 ||
-      !normalizedStructure ||
-      normalizedStructure.deckTitle.trim().length < 2 ||
-      normalizedStructure.deckSummary.trim().length < 8 ||
-      normalizedStructure.slides.length !== pageCount ||
-      normalizedStructure.slides.some(
-        (slide) =>
-          slide.title.trim().length < 2 ||
-          slide.purpose.trim().length < 6 ||
-          slide.keyMessage.trim().length < 4 ||
-          slide.visualDirection.trim().length < 6
-      )
+      !isConfirmedOutlinePayloadValid({
+        audience: trimmedAudience,
+        goal: trimmedGoal,
+        coreMessage: trimmedCoreMessage,
+        pageCount,
+        structureOutline: normalizedStructure
+      })
     ) {
+      toast.error(t("toast.intentInvalid"));
+      return;
+    }
+
+    if (!normalizedStructure) {
       toast.error(t("toast.intentInvalid"));
       return;
     }
 
     window.sessionStorage.setItem(
       outlinePayloadStorageKey,
-      JSON.stringify({
-        ...analysis.input,
-        pageCount,
-        confirmedPlan: {
-          input: {
-            ...analysis.input,
-            pageCount
-          },
-          fileSummaries: analysis.fileSummaries,
-          deckType: analysis.deckType,
+      JSON.stringify(
+        buildConfirmedOutlinePayload({
+          analysis,
           audience: trimmedAudience,
           goal: trimmedGoal,
           coreMessage: trimmedCoreMessage,
-          recommendedPageCount: pageCount,
+          pageCount,
           structureOutline: normalizedStructure
-        }
-      })
+        })
+      )
     );
     window.sessionStorage.removeItem(intentAnalysisStorageKey);
     window.sessionStorage.removeItem(intentPayloadStorageKey);
@@ -168,10 +163,14 @@ export function IntentConfirmPage() {
           </span>
         </section>
 
-        <section className="grid gap-4 rounded-lg border border-border bg-surface p-4 shadow-sm md:p-5">
+        <section className="grid gap-4 rounded-lg border border-border bg-surface p-4 shadow-sm md:grid-cols-2 md:p-5">
           <ReadonlyMeta
             label={t("fields.deckType.label")}
             value={optionT(`deckTypes.${analysis.deckType}`)}
+          />
+          <ReadonlyMeta
+            label={t("intent.fields.narrativeStyle")}
+            value={formatEnumValue(analysis.lightweightOutline.narrativeStyle)}
           />
         </section>
 
@@ -185,40 +184,12 @@ export function IntentConfirmPage() {
         </section>
 
         <section className="grid gap-4 rounded-lg border border-border bg-surface p-4 shadow-sm md:p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <FileText className="size-4 text-accent" aria-hidden="true" />
-            {t("intent.analysisTitle")}
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label={t("intent.fields.audience")}>
-              <input
-                className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
-                onChange={(event) => setAudience(event.target.value)}
-                value={audience}
-              />
-            </Field>
-            <Field label={t("intent.fields.goal")}>
-              <input
-                className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
-                onChange={(event) => setGoal(event.target.value)}
-                value={goal}
-              />
-            </Field>
-          </div>
-          <Field label={t("intent.fields.coreMessage")}>
-            <textarea
-              aria-label={t("intent.fields.coreMessage")}
-              className="min-h-28 w-full resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm leading-6 text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
-              onChange={(event) => setCoreMessage(event.target.value)}
-              value={coreMessage}
-            />
-          </Field>
           <Field label={t("intent.fields.recommendedPageCount")}>
             <input
               aria-label={t("intent.fields.recommendedPageCount")}
               className="h-11 w-40 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
-              max={18}
-              min={3}
+              max={deckPageCountMax}
+              min={deckPageCountMin}
               onChange={(event) =>
                 updatePageCount(Number(event.target.value))
               }
@@ -232,6 +203,41 @@ export function IntentConfirmPage() {
           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <Layers3 className="size-4 text-accent" aria-hidden="true" />
             {t("intent.structureTitle")}
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <ReadonlyMeta
+              label={t("intent.fields.globalTheme")}
+              value={analysis.lightweightOutline.globalTheme.theme}
+            />
+            <ReadonlyMeta
+              label={t("intent.fields.globalObjective")}
+              value={analysis.lightweightOutline.globalTheme.objective}
+            />
+          </div>
+          <div className="grid gap-2">
+            <div className="text-xs font-medium text-muted">
+              {t("intent.chaptersTitle")}
+            </div>
+            <div className="grid gap-2 md:grid-cols-2">
+              {analysis.lightweightOutline.chapters.map((chapter) => (
+                <div
+                  className="rounded-lg border border-border bg-background p-3 text-sm"
+                  key={chapter.chapterId}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-medium text-foreground">
+                      {chapter.title}
+                    </span>
+                    <span className="text-xs text-muted">
+                      {chapter.pageRange.start}-{chapter.pageRange.end}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs leading-5 text-muted">
+                    {chapter.purpose}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             <Field label={t("outline.fields.deckTitle")}>
@@ -260,9 +266,26 @@ export function IntentConfirmPage() {
                 key={slide.slideId}
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="rounded-md bg-accent-soft px-2 py-1 text-xs font-medium text-accent-strong">
-                    {t("preview.slideLabel", { index: slide.index })}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-md bg-accent-soft px-2 py-1 text-xs font-medium text-accent-strong">
+                      {t("preview.slideLabel", { index: slide.index })}
+                    </span>
+                    <span className="rounded-md border border-border px-2 py-1 text-xs text-muted">
+                      {analysis.lightweightOutline.pages[index]?.pageType ??
+                        slide.pageType ??
+                        "content"}
+                    </span>
+                    <span className="rounded-md border border-border px-2 py-1 text-xs text-muted">
+                      {analysis.lightweightOutline.pages[index]?.layoutType ??
+                        slide.layoutType ??
+                        "title-body-points"}
+                    </span>
+                    <span className="rounded-md border border-border px-2 py-1 text-xs text-muted">
+                      {analysis.lightweightOutline.pages[index]?.narrativeRole ??
+                        slide.narrativeRole ??
+                        "argument"}
+                    </span>
+                  </div>
                   <span className="text-xs text-muted">{slide.slideId}</span>
                 </div>
                 <Field label={t("intent.fields.structureTitle")}>
@@ -276,7 +299,7 @@ export function IntentConfirmPage() {
                     value={slide.title}
                   />
                 </Field>
-                <div className="grid gap-3 md:grid-cols-3">
+                <div className="grid gap-3 md:grid-cols-2">
                   <Field label={t("intent.fields.purpose")}>
                     <textarea
                       className="min-h-24 w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-sm leading-6 text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
@@ -299,18 +322,15 @@ export function IntentConfirmPage() {
                       value={slide.keyMessage}
                     />
                   </Field>
-                  <Field label={t("intent.fields.visualDirection")}>
-                    <textarea
-                      className="min-h-24 w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-sm leading-6 text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
-                      onChange={(event) =>
-                        updateStructureSlide(index, {
-                          visualDirection: event.target.value
-                        })
-                      }
-                      value={slide.visualDirection}
-                    />
-                  </Field>
                 </div>
+                <ReadonlyMeta
+                  label={t("intent.fields.sourceIds")}
+                  value={
+                    (analysis.lightweightOutline.pages[index]?.sourceIds ??
+                      slide.sourceIds ??
+                      []).join(", ") || t("intent.noSources")
+                  }
+                />
               </article>
             ))}
           </div>
@@ -364,7 +384,11 @@ export function IntentConfirmPage() {
 
     setRecommendedPageCount(nextPageCount);
 
-    if (Number.isFinite(nextPageCount) && nextPageCount >= 3 && nextPageCount <= 18) {
+    if (
+      Number.isFinite(nextPageCount) &&
+      nextPageCount >= deckPageCountMin &&
+      nextPageCount <= deckPageCountMax
+    ) {
       setStructureOutline((current) =>
         current ? syncStructureSlideCount(current, nextPageCount) : current
       );
@@ -424,32 +448,9 @@ function summarizeSourceIdea(idea: string) {
     : normalized;
 }
 
-function syncStructureSlideCount(
-  outline: DeckStructureOutline,
-  pageCount: number
-): DeckStructureOutline {
-  const safeCount = Math.min(18, Math.max(3, pageCount));
-  const slides = outline.slides.slice(0, safeCount);
-
-  while (slides.length < safeCount) {
-    const index = slides.length + 1;
-
-    slides.push({
-      slideId: `slide-${index}`,
-      index,
-      title: `第 ${index} 页`,
-      purpose: `说明第 ${index} 页与整体表达目标的关系。`,
-      keyMessage: "补充本页核心信息。",
-      visualDirection: "使用清晰主视觉配合文字信息。"
-    });
-  }
-
-  return {
-    ...outline,
-    slides: slides.map((slide, index) => ({
-      ...slide,
-      index: index + 1,
-      slideId: slide.slideId || `slide-${index + 1}`
-    }))
-  };
+function formatEnumValue(value: string) {
+  return value
+    .split("-")
+    .map((item) => item.charAt(0).toUpperCase() + item.slice(1))
+    .join(" ");
 }

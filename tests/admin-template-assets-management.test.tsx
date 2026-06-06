@@ -57,6 +57,14 @@ const baseAsset: TemplateElementAssetDto = {
   colorTags: ["blue"],
   createdAt: "2026-06-02T00:00:00.000Z",
   description: "适合流程节点和观点表达",
+  detail: {
+    cornerRadius: 12,
+    fillMode: "none",
+    iconName: "idea",
+    iconStyle: "line",
+    strokeColor: "#2563eb",
+    strokeWidth: 2
+  },
   id: "asset-1",
   isEnabled: true,
   kind: TemplateElementAssetKind.ICON,
@@ -458,7 +466,7 @@ describe("AdminTemplateElementAssetsManagement", () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
-        "/api/admin/template-assets",
+        "/api/admin/template-lines",
         expect.objectContaining({
           method: "POST"
         })
@@ -468,6 +476,12 @@ describe("AdminTemplateElementAssetsManagement", () => {
     const firstCall = fetchMock.mock.calls[0];
     const body = JSON.parse(String(firstCall?.[1]?.body));
     expect(body.kind).toBe("LINE");
+    expect(body.detail).toEqual(
+      expect.objectContaining({
+        strokeColor: "#2563eb",
+        strokeWidth: 2
+      })
+    );
     expect(body.name).toBe("圆角箭头连接线");
     expect(body.primaryCategory).toBe("basic-line");
     expect(body.secondaryCategory).toBe("straight-line");
@@ -1408,7 +1422,7 @@ describe("AdminTemplateElementAssetsManagement", () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
-        "/api/admin/template-assets/asset-1",
+        "/api/admin/template-icons/asset-1",
         expect.objectContaining({
           method: "PATCH"
         })
@@ -1420,7 +1434,7 @@ describe("AdminTemplateElementAssetsManagement", () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
-        "/api/admin/template-assets/asset-1",
+        "/api/admin/template-icons/asset-1",
         expect.objectContaining({
           body: expect.stringContaining('"isEnabled":false'),
           method: "PATCH"

@@ -25,8 +25,11 @@ import {
   createPptTemplate,
   deletePptTemplate,
   listPptTemplates,
+  selectPptTemplateForSlide,
   updatePptTemplate
 } from "@/lib/admin/templates/service";
+import { buildMockAnalyzedDeck } from "@/lib/ai-deck/fallback";
+import type { AnalyzeDeckRequest } from "@/lib/ai-deck/schema";
 
 function makeTemplate(overrides: Record<string, unknown> = {}) {
   const now = new Date("2026-06-01T00:00:00.000Z");
@@ -177,6 +180,96 @@ describe("admin PPT template service", () => {
       name: "封面模板",
       tags: ["封面"]
     });
+  });
+
+  it("loads incompatible legacy slide JSON from the category default", async () => {
+    db.prisma.pptTemplate.findMany.mockResolvedValue([
+      makeTemplate({
+        slide: {
+          content: {
+            contentLayers: {
+              primary: "旧版主内容"
+            }
+          },
+          slideId: "legacy-template"
+        }
+      })
+    ]);
+
+    const templates = await listPptTemplates();
+
+    expect(templates[0]?.slide.slideId).toBe("template-cover-title");
+    expect(templates[0]?.slide.designPlan.layoutTemplate).toBe("cover-title");
+    expect(templates[0]?.compatibilityWarning).toContain(
+      "incompatible with the current schema"
+    );
+  });
+
+  it("selects an enabled template by layout candidate, style, and sort order", async () => {
+    const input: AnalyzeDeckRequest = {
+      audience: "管理层",
+      coreMessage: "用数据说明增长机会。",
+      deckType: "business-report",
+      goal: "说明季度经营判断",
+      locale: "zh-CN",
+      pageCount: 6,
+      palette: "star-map",
+      sourceText: "季度经营分析包含增长机会、关键指标和行动建议。"
+    };
+    const mock = buildMockAnalyzedDeck(input);
+    const semanticPlan = {
+      slideId: mock.slides[0].slideId,
+      index: mock.slides[0].index,
+      content: mock.slides[0].content,
+      pageIntent: mock.slides[0].pageIntent,
+      contentHierarchy: mock.slides[0].contentHierarchy,
+      layoutSelection: mock.slides[0].layoutSelection,
+      constraints: mock.slides[0].constraints,
+      expressionIntent: mock.slides[0].expressionIntent,
+      designPlan: mock.slides[0].designPlan,
+      layoutDiagnostics: mock.slides[0].layoutDiagnostics,
+      semanticElements: mock.slides[0].semanticElements
+    };
+
+    db.prisma.pptTemplate.findMany.mockResolvedValue([
+      makeTemplate({
+        id: "ai-template",
+        name: "AI 科技封面",
+        sortOrder: 1,
+        tags: ["AI 科技感"],
+        slide: buildDefaultTemplateSlide("cover-title")
+      }),
+      makeTemplate({
+        id: "business-template",
+        name: "中国商务封面",
+        sortOrder: 9,
+        tags: ["中国商务通用"],
+        slide: buildDefaultTemplateSlide("cover-title")
+      }),
+      makeTemplate({
+        category: "title-body-points",
+        id: "body-template",
+        name: "中国商务正文",
+        sortOrder: 0,
+        tags: ["中国商务通用"],
+        slide: buildDefaultTemplateSlide("title-body-points")
+      })
+    ]);
+
+    const selected = await selectPptTemplateForSlide({
+      input,
+      semanticPlan,
+      unifiedVisualSpec: mock.unifiedVisualSpec
+    });
+
+    expect(selected?.id).toBe("business-template");
+    expect(db.prisma.pptTemplate.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          isEnabled: true
+        }
+      })
+    );
   });
 
   it("updates enabled status and sort order", async () => {

@@ -124,6 +124,9 @@ export function AdminTemplatesManagement({
       ].some((value) => value.toLowerCase().includes(keyword));
     });
   }, [query, selectedCategory, templates]);
+  const hasCompatibilityWarnings = templates.some(
+    (template) => template.compatibilityWarning
+  );
 
   const refreshTemplates = useCallback(async () => {
     setIsLoading(true);
@@ -495,6 +498,12 @@ export function AdminTemplatesManagement({
         </aside>
 
         <section aria-label={t("listAria")} className="min-w-0">
+          {hasCompatibilityWarnings ? (
+            <p className="mb-4 rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-sm leading-6 text-foreground">
+              {t("compatibilityWarning")}
+            </p>
+          ) : null}
+
           <div className="mb-4 grid gap-3 rounded-lg border border-border bg-surface p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
             <label className="relative block min-w-0">
               <Search
@@ -569,6 +578,11 @@ export function AdminTemplatesManagement({
                       {template.description ? (
                         <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">
                           {template.description}
+                        </p>
+                      ) : null}
+                      {template.compatibilityWarning ? (
+                        <p className="mt-2 rounded-md bg-warning/10 px-2 py-1.5 text-xs leading-5 text-warning">
+                          {t("compatibilityCardWarning")}
                         </p>
                       ) : null}
                       <div className="mt-3 flex flex-wrap gap-1.5">

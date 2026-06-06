@@ -28,15 +28,15 @@
       "narrativeRole": "argument",
       "contentLayers": {
         "primary": [
-          "白底全宽图表"
+          0,
+          1
         ],
         "supporting": [
-          "网格线极轻并保留脚注"
+          2,
+          3,
+          4
         ],
-        "supplementary": [
-          "适用场景：趋势研究",
-          "白底黑灰咨询风，强调结论先行、强栅格和克制高亮。"
-        ]
+        "supplementary": []
       },
       "slideTransition": {
         "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
@@ -74,7 +74,49 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "全宽趋势图",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "全宽趋势图",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "白底全宽图表",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "白底全宽图表",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "网格线极轻并保留脚注",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "网格线极轻并保留脚注",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "大图表 / 极简咨询风",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "大图表 / 极简咨询风",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "用极简趋势图呈现报告结论和数据证据。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "用极简趋势图呈现报告结论和数据证据。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "白底全宽图表",

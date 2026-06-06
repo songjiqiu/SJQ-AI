@@ -27,7 +27,7 @@ describe("POST /api/decks/analyze", () => {
             "这是一段用于测试接口的长文本，包含市场机会、产品优势、合作路径和执行计划。",
           audience: "投资人",
           goal: "获得试点合作意向",
-          pageCount: 3,
+          pageCount: 6,
           deckType: "business-report",
           palette: "star-map",
           locale: "zh-CN"
@@ -39,7 +39,7 @@ describe("POST /api/decks/analyze", () => {
     expect(response.status).toBe(200);
     expect(payload.mode).toBe("mock");
     expect(payload.unifiedVisualSpec).toBeDefined();
-    expect(payload.slides).toHaveLength(3);
+    expect(payload.slides).toHaveLength(6);
 
     vi.unstubAllEnvs();
   });

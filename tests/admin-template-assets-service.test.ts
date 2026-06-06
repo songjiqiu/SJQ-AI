@@ -7,17 +7,50 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ZodError } from "zod";
 
-const db = vi.hoisted(() => ({
-  prisma: {
-    templateElementAsset: {
+const db = vi.hoisted(() => {
+  const prisma = {
+    $transaction: vi.fn(),
+    templateAsset: {
       create: vi.fn(),
       deleteMany: vi.fn(),
+      findFirst: vi.fn(),
       findMany: vi.fn(),
       findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
       update: vi.fn()
+    },
+    templateContainerAsset: {
+      create: vi.fn(),
+      upsert: vi.fn()
+    },
+    templateIconAsset: {
+      create: vi.fn(),
+      upsert: vi.fn()
+    },
+    templateLineAsset: {
+      create: vi.fn(),
+      upsert: vi.fn()
+    },
+    templateNavigationAsset: {
+      create: vi.fn(),
+      upsert: vi.fn()
+    },
+    templateShapeAsset: {
+      create: vi.fn(),
+      upsert: vi.fn()
+    },
+    templateTextStyleAsset: {
+      create: vi.fn(),
+      upsert: vi.fn()
     }
-  }
-}));
+  };
+
+  prisma.$transaction.mockImplementation((callback) => callback(prisma));
+
+  return {
+    prisma
+  };
+});
 
 vi.mock("@/lib/db/prisma", () => ({
   prisma: db.prisma
@@ -25,15 +58,18 @@ vi.mock("@/lib/db/prisma", () => ({
 
 import {
   TemplateElementAssetNotFoundError,
-  createTemplateElementAsset,
-  deleteTemplateElementAsset,
-  listTemplateElementAssets,
-  searchTemplateElementAssetsForAi,
-  updateTemplateElementAsset
+  createTemplateAssetByKind,
+  deleteTemplateAssetByKind,
+  listTemplateAssetsByKind,
+  searchTemplateIconAssetsForAi,
+  updateTemplateAssetByKind
 } from "@/lib/admin/template-assets/service";
 
 function makeAsset(overrides: Record<string, unknown> = {}) {
   const now = new Date("2026-06-02T00:00:00.000Z");
+  const kind =
+    (overrides.kind as TemplateElementAssetKind | undefined) ??
+    TemplateElementAssetKind.ICON;
 
   return {
     aiModifyPermissions: {
@@ -46,34 +82,74 @@ function makeAsset(overrides: Record<string, unknown> = {}) {
     },
     backgroundModes: ["light", "dark"],
     colorTags: ["blue"],
+    container: null,
     createdAt: now,
-    description: "线性图标",
+    description: "测试资产",
+    icon:
+      kind === TemplateElementAssetKind.ICON
+        ? {
+            assetId: "asset-1",
+            cornerRadius: 12,
+            fillMode: "none",
+            iconName: "idea",
+            iconStyle: "line",
+            id: "icon-detail-1",
+            strokeColor: "#2563eb",
+            strokeWidth: 2
+          }
+        : null,
     id: "asset-1",
     isEnabled: true,
-    kind: TemplateElementAssetKind.ICON,
-    keywords: ["idea"],
+    keywords: ["idea", "growth"],
+    kind,
+    line:
+      kind === TemplateElementAssetKind.LINE
+        ? {
+            assetId: "asset-1",
+            cap: "round",
+            connectorType: "straight",
+            dash: "solid",
+            direction: "horizontal",
+            endArrowType: "triangle",
+            id: "line-detail-1",
+            startArrowType: "none",
+            strokeColor: "#2563eb",
+            strokeWidth: 2
+          }
+        : null,
     name: "概念图标",
+    navigation: null,
     pageTypes: ["title-body-points"],
     preview: {
       iconName: "idea"
     },
     primaryCategory: "status-feedback",
-    resource: {},
     reviewStatus: TemplateAssetReviewStatus.APPROVED,
-    semanticTags: ["idea", "concept"],
     secondaryCategory: "result-status",
+    semanticTags: ["idea", "growth"],
     setKey: "common",
     setKind: TemplateAssetSetKind.COMMON,
     setName: "通用套装",
+    shape:
+      kind === TemplateElementAssetKind.SHAPE
+        ? {
+            assetId: "asset-1",
+            cornerRadius: 8,
+            fillColor: "#dbeafe",
+            id: "shape-detail-1",
+            opacity: 1,
+            shadow: false,
+            shapeType: "roundedRect",
+            strokeColor: "#2563eb",
+            strokeWidth: 1
+          }
+        : null,
     sortOrder: 1,
     source: TemplateAssetSource.MANUAL,
-    style: {
-      strokeColor: "#2563eb",
-      strokeWidth: 2
-    },
     styleTags: ["minimal"],
     synonyms: ["concept"],
     tags: ["图标"],
+    textStyle: null,
     updatedAt: now,
     usageScenarios: ["feature"],
     variantKey: "warning",
@@ -81,37 +157,48 @@ function makeAsset(overrides: Record<string, unknown> = {}) {
   };
 }
 
-describe("admin template element asset service", () => {
+describe("admin template asset service", () => {
   afterEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+    db.prisma.$transaction.mockImplementation((callback) => callback(db.prisma));
   });
 
-  it("creates semantic assets with JSON fields", async () => {
-    db.prisma.templateElementAsset.create.mockImplementation(async ({ data }) =>
+  it("creates assets in the public table and typed detail table", async () => {
+    db.prisma.templateAsset.create.mockResolvedValue(
       makeAsset({
-        ...data,
-        id: "asset-created"
+        id: "shape-created",
+        kind: TemplateElementAssetKind.SHAPE
+      })
+    );
+    db.prisma.templateAsset.findUniqueOrThrow.mockResolvedValue(
+      makeAsset({
+        id: "shape-created",
+        kind: TemplateElementAssetKind.SHAPE,
+        name: "圆角图形"
       })
     );
 
-    const asset = await createTemplateElementAsset({
-      kind: TemplateElementAssetKind.SHAPE,
-      name: "圆角容器",
-      preview: {
-        shape: "roundedRect"
-      },
-      primaryCategory: "content-container",
-      semanticTags: ["container"],
-      secondaryCategory: "text-container",
-      style: {
-        fillColor: "#dbeafe"
-      },
-      tags: ["图形"],
-      usageScenarios: ["card"],
-      variantKey: "body-container"
-    });
+    const asset = await createTemplateAssetByKind(
+      TemplateElementAssetKind.SHAPE,
+      {
+        detail: {
+          cornerRadius: 8,
+          fillColor: "#dbeafe",
+          shapeType: "roundedRect",
+          strokeColor: "#2563eb",
+          strokeWidth: 1
+        },
+        name: "圆角图形",
+        primaryCategory: "basic-geometry",
+        semanticTags: ["container"],
+        secondaryCategory: "rect-geometry",
+        tags: ["图形"],
+        usageScenarios: ["card"],
+        variantKey: "rounded-rect"
+      }
+    );
 
-    expect(db.prisma.templateElementAsset.create).toHaveBeenCalledWith(
+    expect(db.prisma.templateAsset.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           aiModifyPermissions: expect.objectContaining({
@@ -119,54 +206,67 @@ describe("admin template element asset service", () => {
             allowStretch: true
           }),
           kind: TemplateElementAssetKind.SHAPE,
-          name: "圆角容器",
-          primaryCategory: "content-container",
-          preview: {
-            shape: "roundedRect"
-          },
-          secondaryCategory: "text-container",
+          name: "圆角图形",
+          primaryCategory: "basic-geometry",
+          secondaryCategory: "rect-geometry",
           setKey: "common",
           setKind: TemplateAssetSetKind.COMMON,
-          variantKey: "body-container"
+          variantKey: "rounded-rect"
         })
       })
     );
+    expect(db.prisma.templateShapeAsset.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        assetId: "shape-created",
+        fillColor: "#dbeafe",
+        shapeType: "roundedRect"
+      })
+    });
     expect(asset.kind).toBe(TemplateElementAssetKind.SHAPE);
-    expect(asset.semanticTags).toEqual(["container"]);
+    expect(asset.style).toEqual(
+      expect.objectContaining({
+        fillColor: "#dbeafe",
+        shapeType: "roundedRect"
+      })
+    );
   });
 
-  it("lists assets by kind and filters keyword across serialized arrays", async () => {
-    db.prisma.templateElementAsset.findMany.mockResolvedValue([
+  it("lists assets from the public table and filters serialized metadata", async () => {
+    db.prisma.templateAsset.findMany.mockResolvedValue([
       makeAsset({
+        kind: TemplateElementAssetKind.LINE,
         name: "流程箭头",
         semanticTags: ["connector"],
         usageScenarios: ["process"]
       }),
       makeAsset({
-        id: "asset-2",
-        name: "章节徽标",
-        semanticTags: ["badge"],
+        id: "line-2",
+        kind: TemplateElementAssetKind.LINE,
+        name: "章节分割线",
+        semanticTags: ["divider"],
         usageScenarios: ["chapter"]
       })
     ]);
 
-    const assets = await listTemplateElementAssets({
+    const assets = await listTemplateAssetsByKind(TemplateElementAssetKind.LINE, {
       includeDisabled: false,
-      kind: TemplateElementAssetKind.LINE,
-      primaryCategory: "process-line",
+      primaryCategory: "basic-line",
       query: "process",
-      secondaryCategory: "business-process",
-      variantKey: "step-flow-line"
+      secondaryCategory: "straight-line",
+      variantKey: "straight-line"
     });
 
-    expect(db.prisma.templateElementAsset.findMany).toHaveBeenCalledWith(
+    expect(db.prisma.templateAsset.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
+        include: expect.objectContaining({
+          line: true
+        }),
         where: expect.objectContaining({
           isEnabled: true,
           kind: TemplateElementAssetKind.LINE,
-          primaryCategory: "process-line",
-          secondaryCategory: "business-process",
-          variantKey: "step-flow-line"
+          primaryCategory: "basic-line",
+          secondaryCategory: "straight-line",
+          variantKey: "straight-line"
         })
       })
     );
@@ -174,75 +274,93 @@ describe("admin template element asset service", () => {
     expect(assets[0]?.name).toBe("流程箭头");
   });
 
-  it("updates enabled status, sort order, and JSON config", async () => {
-    db.prisma.templateElementAsset.findUnique.mockResolvedValue(makeAsset());
-    db.prisma.templateElementAsset.update.mockResolvedValue(
+  it("updates public fields and upserts the typed detail", async () => {
+    db.prisma.templateAsset.findFirst.mockResolvedValue(makeAsset());
+    db.prisma.templateAsset.update.mockResolvedValue(makeAsset());
+    db.prisma.templateAsset.findUniqueOrThrow.mockResolvedValue(
       makeAsset({
-        isEnabled: false,
-        sortOrder: 8,
-        style: {
+        icon: {
+          assetId: "asset-1",
+          cornerRadius: 4,
+          fillMode: "none",
+          iconName: "idea",
+          iconStyle: "line",
+          id: "icon-detail-1",
           strokeColor: "#111827",
           strokeWidth: 3
-        }
+        },
+        isEnabled: false,
+        sortOrder: 8
       })
     );
 
-    const asset = await updateTemplateElementAsset("asset-1", {
-      isEnabled: false,
-      primaryCategory: null,
-      secondaryCategory: null,
-      sortOrder: 8,
-      style: {
-        strokeColor: "#111827",
-        strokeWidth: 3
-      },
-      variantKey: null
-    });
+    const asset = await updateTemplateAssetByKind(
+      TemplateElementAssetKind.ICON,
+      "asset-1",
+      {
+        detail: {
+          cornerRadius: 4,
+          iconName: "idea",
+          iconStyle: "line",
+          strokeColor: "#111827",
+          strokeWidth: 3
+        },
+        isEnabled: false,
+        sortOrder: 8
+      }
+    );
 
-    expect(db.prisma.templateElementAsset.update).toHaveBeenCalledWith(
+    expect(db.prisma.templateAsset.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           isEnabled: false,
-          primaryCategory: null,
-          secondaryCategory: null,
-          sortOrder: 8,
-          style: {
-            strokeColor: "#111827",
-            strokeWidth: 3
-          },
-          variantKey: null
+          sortOrder: 8
         }),
         where: {
           id: "asset-1"
         }
       })
     );
+    expect(db.prisma.templateIconAsset.upsert).toHaveBeenCalledWith({
+      create: expect.objectContaining({
+        assetId: "asset-1",
+        strokeColor: "#111827",
+        strokeWidth: 3
+      }),
+      update: expect.objectContaining({
+        strokeColor: "#111827",
+        strokeWidth: 3
+      }),
+      where: {
+        assetId: "asset-1"
+      }
+    });
     expect(asset.isEnabled).toBe(false);
     expect(asset.style.strokeWidth).toBe(3);
   });
 
-  it("defaults AI-generated assets to pending review", async () => {
-    db.prisma.templateElementAsset.create.mockImplementation(async ({ data }) =>
+  it("defaults AI-generated candidate assets to pending review", async () => {
+    db.prisma.templateAsset.create.mockResolvedValue(makeAsset({ id: "asset-ai" }));
+    db.prisma.templateAsset.findUniqueOrThrow.mockResolvedValue(
       makeAsset({
-        ...data,
-        id: "asset-ai"
+        id: "asset-ai",
+        reviewStatus: TemplateAssetReviewStatus.PENDING_REVIEW,
+        source: TemplateAssetSource.AI_GENERATED
       })
     );
 
-    const asset = await createTemplateElementAsset({
-      kind: TemplateElementAssetKind.ICON,
-      name: "AI 生成图标",
-      preview: {
-        iconName: "ai"
-      },
-      semanticTags: ["ai", "生成"],
-      source: TemplateAssetSource.AI_GENERATED,
-      style: {
+    const asset = await createTemplateAssetByKind(TemplateElementAssetKind.ICON, {
+      detail: {
+        iconName: "ai",
+        iconStyle: "line",
         strokeColor: "#2563eb"
-      }
+      },
+      name: "AI 生成图标",
+      semanticTags: ["ai", "生成"],
+      source: TemplateAssetSource.AI_GENERATED
     });
 
-    expect(db.prisma.templateElementAsset.create).toHaveBeenCalledWith(
+    expect(db.prisma.templateAsset.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           reviewStatus: TemplateAssetReviewStatus.PENDING_REVIEW,
@@ -253,66 +371,87 @@ describe("admin template element asset service", () => {
     expect(asset.reviewStatus).toBe(TemplateAssetReviewStatus.PENDING_REVIEW);
   });
 
-  it("requires semantic tags when creating assets", async () => {
+  it("requires semantic tags before persisting", async () => {
     await expect(
-      createTemplateElementAsset({
-        kind: TemplateElementAssetKind.ICON,
-        name: "无语义图标",
-        preview: {
+      createTemplateAssetByKind(TemplateElementAssetKind.ICON, {
+        detail: {
           iconName: "empty"
         },
-        semanticTags: [],
-        style: {
-          strokeColor: "#2563eb"
-        }
+        name: "无语义图标",
+        semanticTags: []
       })
     ).rejects.toBeInstanceOf(ZodError);
-    expect(db.prisma.templateElementAsset.create).not.toHaveBeenCalled();
+    expect(db.prisma.templateAsset.create).not.toHaveBeenCalled();
   });
 
-  it("searches approved enabled AI assets with template-set fallback to common set", async () => {
-    db.prisma.templateElementAsset.findMany
-      .mockResolvedValueOnce([])
+  it("searches approved enabled template assets before common fallback", async () => {
+    db.prisma.templateAsset.findMany
+      .mockResolvedValueOnce([
+        makeAsset({
+          id: "template-asset",
+          name: "模板增长图标",
+          setKey: "business-general",
+          setKind: TemplateAssetSetKind.TEMPLATE,
+          sortOrder: 5
+        })
+      ])
       .mockResolvedValueOnce([
         makeAsset({
           id: "common-asset",
           name: "通用增长图标",
-          semanticTags: ["growth", "metric"],
-          sortOrder: 5
-        }),
-        makeAsset({
-          id: "disabled-asset",
-          isEnabled: false,
-          name: "停用图标",
-          semanticTags: ["growth"]
+          sortOrder: 1
         })
       ]);
 
-    const results = await searchTemplateElementAssetsForAi({
+    const results = await searchTemplateIconAssetsForAi({
       backgroundMode: "light",
-      kind: TemplateElementAssetKind.ICON,
       pageType: "title-body-points",
       semanticTags: ["growth"],
       setKey: "business-general",
       styleTags: ["minimal"]
     });
 
-    expect(db.prisma.templateElementAsset.findMany).toHaveBeenNthCalledWith(
+    expect(db.prisma.templateAsset.findMany).toHaveBeenCalledTimes(1);
+    expect(db.prisma.templateAsset.findMany).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
         where: expect.objectContaining({
           isEnabled: true,
+          kind: TemplateElementAssetKind.ICON,
           reviewStatus: TemplateAssetReviewStatus.APPROVED,
           setKey: "business-general",
           setKind: TemplateAssetSetKind.TEMPLATE
         })
       })
     );
-    expect(db.prisma.templateElementAsset.findMany).toHaveBeenNthCalledWith(
+    expect(results[0]?.id).toBe("template-asset");
+    expect(results[0]?.matchScore).toBeGreaterThan(0);
+  });
+
+  it("falls back to common approved enabled assets when template set has no match", async () => {
+    db.prisma.templateAsset.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        makeAsset({
+          id: "common-asset",
+          name: "通用增长图标",
+          sortOrder: 5
+        })
+      ]);
+
+    const results = await searchTemplateIconAssetsForAi({
+      backgroundMode: "light",
+      pageType: "title-body-points",
+      semanticTags: ["growth"],
+      setKey: "business-general"
+    });
+
+    expect(db.prisma.templateAsset.findMany).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
         where: expect.objectContaining({
           isEnabled: true,
+          kind: TemplateElementAssetKind.ICON,
           reviewStatus: TemplateAssetReviewStatus.APPROVED,
           setKey: "common",
           setKind: TemplateAssetSetKind.COMMON
@@ -320,47 +459,31 @@ describe("admin template element asset service", () => {
       })
     );
     expect(results[0]?.id).toBe("common-asset");
-    expect(results[0]?.matchScore).toBeGreaterThan(0);
   });
 
-  it("serializes legacy assets without category fields as uncategorized", async () => {
-    db.prisma.templateElementAsset.findMany.mockResolvedValue([
-      makeAsset({
-        primaryCategory: null,
-        secondaryCategory: null,
-        variantKey: null
-      })
-    ]);
-
-    const assets = await listTemplateElementAssets({
-      kind: TemplateElementAssetKind.ICON
+  it("deletes from the public table and relies on detail cascade", async () => {
+    db.prisma.templateAsset.deleteMany.mockResolvedValue({
+      count: 1
     });
 
-    expect(assets[0]?.primaryCategory).toBeNull();
-    expect(assets[0]?.secondaryCategory).toBeNull();
-    expect(assets[0]?.variantKey).toBeNull();
+    await deleteTemplateAssetByKind(TemplateElementAssetKind.ICON, "asset-1");
+
+    expect(db.prisma.templateAsset.deleteMany).toHaveBeenCalledWith({
+      where: {
+        id: "asset-1",
+        kind: TemplateElementAssetKind.ICON
+      }
+    });
+    expect(db.prisma.templateIconAsset.upsert).not.toHaveBeenCalled();
   });
 
-  it("rejects invalid kind and empty JSON objects before persisting", async () => {
-    await expect(
-      createTemplateElementAsset({
-        kind: "BAD" as never,
-        name: "坏资产",
-        preview: {},
-        style: {},
-        tags: []
-      } as never)
-    ).rejects.toBeInstanceOf(ZodError);
-    expect(db.prisma.templateElementAsset.create).not.toHaveBeenCalled();
-  });
-
-  it("throws not found when deleting a missing asset", async () => {
-    db.prisma.templateElementAsset.deleteMany.mockResolvedValue({
+  it("throws not found when deleting a missing typed asset", async () => {
+    db.prisma.templateAsset.deleteMany.mockResolvedValue({
       count: 0
     });
 
-    await expect(deleteTemplateElementAsset("missing")).rejects.toBeInstanceOf(
-      TemplateElementAssetNotFoundError
-    );
+    await expect(
+      deleteTemplateAssetByKind(TemplateElementAssetKind.ICON, "missing")
+    ).rejects.toBeInstanceOf(TemplateElementAssetNotFoundError);
   });
 });

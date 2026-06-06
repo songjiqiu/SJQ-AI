@@ -1,61 +1,28 @@
 import { NextResponse } from "next/server";
 
-import { templateElementAssetUpdateSchema } from "@/lib/admin/template-assets/schemas";
-import {
-  deleteTemplateElementAsset,
-  getTemplateElementAsset,
-  updateTemplateElementAsset
-} from "@/lib/admin/template-assets/service";
-import { handleApiError } from "@/lib/api/responses";
-import { requireAdminUser } from "@/lib/auth/session";
-
-export async function GET(
-  _request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    await requireAdminUser();
-    const { id } = await context.params;
-
-    return NextResponse.json({
-      asset: await getTemplateElementAsset(id)
-    });
-  } catch (error) {
-    return handleApiError(error);
-  }
+export function DELETE() {
+  return deprecatedTemplateAssetsResponse();
 }
 
-export async function PATCH(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    await requireAdminUser();
-    const { id } = await context.params;
-    const input = templateElementAssetUpdateSchema.parse(await request.json());
-
-    return NextResponse.json({
-      asset: await updateTemplateElementAsset(id, input)
-    });
-  } catch (error) {
-    return handleApiError(error);
-  }
+export function GET() {
+  return deprecatedTemplateAssetsResponse();
 }
 
-export async function DELETE(
-  _request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    await requireAdminUser();
-    const { id } = await context.params;
+export function PATCH() {
+  return deprecatedTemplateAssetsResponse();
+}
 
-    await deleteTemplateElementAsset(id);
-
-    return new NextResponse(null, {
-      status: 204
-    });
-  } catch (error) {
-    return handleApiError(error);
-  }
+function deprecatedTemplateAssetsResponse() {
+  return NextResponse.json(
+    {
+      error: "TEMPLATE_ASSETS_API_DEPRECATED",
+      details: {
+        message:
+          "Template asset APIs were split into dedicated icon, shape, line, text-style, container, and navigation endpoints."
+      }
+    },
+    {
+      status: 410
+    }
+  );
 }

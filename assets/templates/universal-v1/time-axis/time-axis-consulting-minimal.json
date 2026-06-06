@@ -29,15 +29,16 @@
       "narrativeRole": "argument",
       "contentLayers": {
         "primary": [
-          "阶段一：诊断"
+          0,
+          1
         ],
         "supporting": [
-          "阶段二：设计",
-          "阶段三：落地"
+          2,
+          4,
+          5
         ],
         "supplementary": [
-          "适用场景：咨询项目",
-          "白底黑灰咨询风，强调结论先行、强栅格和克制高亮。"
+          3
         ]
       },
       "slideTransition": {
@@ -77,7 +78,57 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "咨询路线图",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "咨询路线图",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "阶段一：诊断",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "阶段一：诊断",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "阶段二：设计",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "阶段二：设计",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "阶段三：落地",
+          "priority": 4,
+          "sourceIds": [],
+          "text": "阶段三：落地",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "时间轴 / 极简咨询风",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "时间轴 / 极简咨询风",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "用细线横轴和编号卡片呈现咨询路线图。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "用细线横轴和编号卡片呈现咨询路线图。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "阶段一：诊断",

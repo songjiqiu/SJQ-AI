@@ -16,6 +16,7 @@ import {
   type SlidePageIntent,
   type UnifiedVisualSpec
 } from "./schema";
+import type { PptTemplateDto } from "@/lib/admin/templates/types";
 
 type SlideLayoutKind =
   | "cover"
@@ -51,6 +52,21 @@ const textFallbacks = {
     title: "Title"
   }
 };
+
+function slideContentBlockText(block: SlideContent["contentBlocks"][number]) {
+  return block.content ?? block.text;
+}
+
+function contentLayerTexts(
+  slide: SlideContent,
+  group: keyof SlideContent["contentLayers"]
+) {
+  return slide.contentLayers?.[group].flatMap((index) => {
+    const block = slide.contentBlocks[index];
+
+    return block ? [slideContentBlockText(block)] : [];
+  }) ?? [];
+}
 
 export function buildFallbackPageIntent({
   input,
@@ -92,9 +108,12 @@ export function buildFallbackContentHierarchy({
 }): SlideCompositionPlan["contentHierarchy"] {
   const titleLabel = textFallbacks[input.locale].title;
   const keyMessageLabel = textFallbacks[input.locale].keyMessage;
+  const supportingLayerItems = contentLayerTexts(slide, "supporting");
+  const primaryLayerItems = contentLayerTexts(slide, "primary");
+  const supplementaryLayerItems = contentLayerTexts(slide, "supplementary");
   const supportingItems =
-    slide.contentLayers?.supporting.length > 0
-      ? slide.contentLayers.supporting
+    supportingLayerItems.length > 0
+      ? supportingLayerItems
       : slide.bodyPoints;
   const tierTwoItems = supportingItems.slice(0, 5).map((point, index) => ({
     content: point,
@@ -107,7 +126,7 @@ export function buildFallbackContentHierarchy({
           role: input.locale === "zh-CN" ? "副标题" : "Subtitle"
         }
       : null,
-    ...(slide.contentLayers?.supplementary ?? []).slice(0, 2).map((item, index) => ({
+    ...supplementaryLayerItems.slice(0, 2).map((item, index) => ({
       content: item,
       role: input.locale === "zh-CN" ? `补充信息 ${index + 1}` : `Supplement ${index + 1}`
     })),
@@ -144,7 +163,7 @@ export function buildFallbackContentHierarchy({
             role: titleLabel
           },
           {
-            content: slide.contentLayers?.primary[0] ?? pageIntent.coreMessage,
+            content: primaryLayerItems[0] ?? pageIntent.coreMessage,
             role: keyMessageLabel
           }
         ]
@@ -186,8 +205,31 @@ export function buildFallbackSemanticElements({
   slide: SlideContent;
 }): SemanticSlideElement[] {
   const copy = textFallbacks[input.locale];
-  const base: SemanticSlideElement[] = [
-    {
+  const base: SemanticSlideElement[] = slide.contentBlocks.map((block, index) => ({
+    category: semanticElementCategoryForContentBlock(contentBlockSemanticType(block)),
+    constraints:
+      contentBlockSemanticType(block) === "heading"
+        ? ["必须位于安全边距内", "作为页面最高层级信息"]
+        : ["必须完整落版为可见元素", "内容文本必须与可展示内容块一致"],
+    content: contentBlockText(block),
+    contentBlockIndex: index,
+    elementType: semanticElementTypeForContentBlock(contentBlockSemanticType(block)),
+    hierarchyLevel: block.priority <= 1 ? 1 : block.priority <= 3 ? 2 : 3,
+    id:
+      contentBlockSemanticType(block) === "heading"
+        ? `${slide.slideId}-semantic-title`
+        : `${slide.slideId}-semantic-content-block-${index + 1}`,
+    priority: block.priority,
+    role:
+      contentBlockSemanticType(block) === "heading"
+        ? copy.title
+        : contentBlockSemanticRole(contentBlockSemanticType(block), input.locale, index),
+    semanticType: semanticTypeForContentBlock(contentBlockSemanticType(block)),
+    styleRole: styleRoleForContentBlock(contentBlockSemanticType(block))
+  }));
+
+  if (!base.some((element) => element.semanticType === "title")) {
+    base.unshift({
       category: "text",
       constraints: ["必须位于安全边距内", "作为页面最高层级信息"],
       content: slide.title,
@@ -196,9 +238,16 @@ export function buildFallbackSemanticElements({
       id: `${slide.slideId}-semantic-title`,
       priority: 1,
       role: copy.title,
-      semanticType: "title"
-    },
-    {
+      semanticType: "title",
+      styleRole: "page-title"
+    });
+  }
+
+  if (
+    !base.some((element) => element.semanticType === "subtitle") &&
+    (slide.coreStatement || pageIntent.coreMessage)
+  ) {
+    base.push({
       category: "text",
       constraints: ["强化页面核心结论"],
       content: slide.coreStatement || pageIntent.coreMessage,
@@ -207,45 +256,49 @@ export function buildFallbackSemanticElements({
       id: `${slide.slideId}-semantic-key-message`,
       priority: 2,
       role: copy.keyMessage,
-      semanticType: "subtitle"
-    }
-  ];
+      semanticType: "subtitle",
+      styleRole: "key-message"
+    });
+  }
 
   if (pageIntent.pageRole === "data") {
     base.push({
       category: "infographic",
       constraints: ["突出指标、维度、趋势或对比关系", "避免密集小字"],
-      content: (slide.contentLayers?.supporting ?? slide.bodyPoints).join("\n"),
+      content: contentLayerTexts(slide, "supporting").join("\n") || slide.bodyPoints.join("\n"),
       elementType: "chartPlaceholder",
       hierarchyLevel: 2,
       id: `${slide.slideId}-semantic-chart`,
       priority: 3,
       role: input.locale === "zh-CN" ? "数据图表" : "Data chart",
-      semanticType: "chart"
+      semanticType: "chart",
+      styleRole: "chart"
     });
   } else if (pageIntent.pageRole === "comparison") {
     base.push({
       category: "infographic",
       constraints: ["识别比较对象、比较维度和差异结论", "左右结构必须对称"],
-      content: (slide.contentLayers?.supporting ?? slide.bodyPoints).join("\n"),
+      content: contentLayerTexts(slide, "supporting").join("\n") || slide.bodyPoints.join("\n"),
       elementType: "shape",
       hierarchyLevel: 2,
       id: `${slide.slideId}-semantic-comparison`,
       priority: 3,
       role: input.locale === "zh-CN" ? "对比容器" : "Comparison container",
-      semanticType: "card"
+      semanticType: "card",
+      styleRole: "comparison"
     });
   } else if (pageIntent.pageRole === "process") {
     base.push({
       category: "infographic",
       constraints: ["识别步骤、顺序、输入输出和依赖关系", "保持阅读顺序清晰"],
-      content: (slide.contentLayers?.supporting ?? slide.bodyPoints).join("\n"),
+      content: contentLayerTexts(slide, "supporting").join("\n") || slide.bodyPoints.join("\n"),
       elementType: "shape",
       hierarchyLevel: 2,
       id: `${slide.slideId}-semantic-process`,
       priority: 3,
       role: input.locale === "zh-CN" ? "流程图" : "Process flow",
-      semanticType: "card"
+      semanticType: "card",
+      styleRole: "steps"
     });
   } else {
     base.push({
@@ -262,26 +315,11 @@ export function buildFallbackSemanticElements({
           ? copy.supportingVisual
           : copy.mainVisual,
       semanticType:
-        pageIntent.contentDensity === "high" ? "accentShape" : "heroVisual"
+        pageIntent.contentDensity === "high" ? "accentShape" : "heroVisual",
+      styleRole:
+        pageIntent.contentDensity === "high" ? "supporting-visual" : "hero-visual"
     });
   }
-
-  base.push(
-    ...(slide.contentLayers?.supporting ?? slide.bodyPoints).slice(0, 5).map((point, index) => ({
-      category: "text" as const,
-      constraints: ["作为二级信息，不抢主视觉中心"],
-      content: point,
-      elementType: "text" as const,
-      hierarchyLevel: 2 as const,
-      id: `${slide.slideId}-semantic-point-${index + 1}`,
-      priority: Math.min(5, 3 + index),
-      role:
-        input.locale === "zh-CN"
-          ? `正文要点 ${index + 1}`
-          : `Body point ${index + 1}`,
-      semanticType: "body" as const
-    }))
-  );
 
   base.push({
     category: "navigation",
@@ -292,7 +330,8 @@ export function buildFallbackSemanticElements({
     id: `${slide.slideId}-semantic-page-number`,
     priority: 5,
     role: input.locale === "zh-CN" ? "页码" : "Page number",
-    semanticType: "footer"
+    semanticType: "footer",
+    styleRole: "source-note"
   });
 
   return dedupeSemanticElements(base).slice(0, 14);
@@ -458,6 +497,143 @@ export function composeSlideFromSemanticPlan({
           }
         : element
     ),
+    imageLayerRequests
+  };
+}
+
+export function composeSlideFromTemplate({
+  input,
+  semanticPlan,
+  template,
+  unifiedVisualSpec
+}: {
+  input: AnalyzeDeckRequest;
+  semanticPlan: SemanticSlidePlan;
+  template: PptTemplateDto;
+  unifiedVisualSpec: UnifiedVisualSpec;
+}): SlideCompositionPlan {
+  const contentMap = buildTemplateContentMap({ input, semanticPlan });
+  const elementIdMap = new Map(
+    template.slide.elements.map((element) => [
+      element.id,
+      `${semanticPlan.slideId}-${element.id}`
+    ])
+  );
+  const requestIdMap = new Map(
+    template.slide.imageLayerRequests.map((request) => [
+      request.id,
+      `${semanticPlan.slideId}-${request.id}`
+    ])
+  );
+  const imageLayerRequests = template.slide.imageLayerRequests.map((request) => ({
+    ...request,
+    elementId: elementIdMap.get(request.elementId) ?? `${semanticPlan.slideId}-${request.elementId}`,
+    id: requestIdMap.get(request.id) ?? `${semanticPlan.slideId}-${request.id}`,
+    keywords: [
+      semanticPlan.content.title,
+      semanticPlan.pageIntent.pageRole,
+      input.deckType,
+      ...semanticPlan.content.bodyPoints
+    ].slice(0, 8),
+    prompt: buildTemplateImagePrompt({
+      input,
+      semanticPlan,
+      template,
+      unifiedVisualSpec
+    }),
+    purpose: normalizeImagePurpose(
+      request.purpose,
+      input.locale === "zh-CN"
+        ? "生成本页模板主视觉"
+        : "Generate this slide's template visual"
+    ),
+    visualNotes: unifiedVisualSpec.imageStyle
+  }));
+  const imageRequestIds = new Set(imageLayerRequests.map((request) => request.id));
+  const bodyTextElements = getTemplateBodyTextElements(template.slide.elements);
+  const elements = template.slide.elements.map((element, index) => {
+    const id = elementIdMap.get(element.id) ?? `${semanticPlan.slideId}-${element.id}`;
+    const imageRequestId = element.imageRequestId
+      ? requestIdMap.get(element.imageRequestId) ?? `${semanticPlan.slideId}-${element.imageRequestId}`
+      : undefined;
+    const content =
+      element.type === "text"
+        ? getTemplateTextContent({
+            bodyTextElements,
+            contentMap,
+            element,
+            index,
+            input,
+            semanticPlan
+          })
+        : element.content;
+    const nextElement: SlideElement = {
+      ...element,
+      content,
+      id,
+      imageRequestId,
+      requiresImageGeneration:
+        element.type === "generatedImage" && imageRequestId
+          ? true
+          : element.requiresImageGeneration,
+      role: getTemplateElementRole({
+        content,
+        contentMap,
+        element,
+        input
+      }),
+      styleNotes: `${element.styleNotes} 使用模板：${template.name}。`
+    };
+
+    if (
+      nextElement.type === "generatedImage" &&
+      nextElement.imageRequestId &&
+      !imageRequestIds.has(nextElement.imageRequestId)
+    ) {
+      return {
+        ...nextElement,
+        imageRequestId: undefined,
+        requiresImageGeneration: false,
+        semanticType: "accentShape" as const,
+        type: "shape" as const
+      };
+    }
+
+    return nextElement;
+  });
+
+  return {
+    slideId: semanticPlan.slideId,
+    index: semanticPlan.index,
+    content: semanticPlan.content,
+    contentHierarchy: semanticPlan.contentHierarchy,
+    layoutSelection: semanticPlan.layoutSelection,
+    constraints: semanticPlan.constraints,
+    designQualityScore: emptyDesignQualityScore(input.locale),
+    designPlan: {
+      ...semanticPlan.designPlan,
+      layoutTemplate: template.category,
+      readingOrder:
+        semanticPlan.designPlan.readingOrder.length > 0
+          ? semanticPlan.designPlan.readingOrder
+          : elements.map((element) => element.id).slice(0, 24),
+      visualStrategy: `${semanticPlan.designPlan.visualStrategy} 已套用模板“${template.name}”（${template.id}）。`
+    },
+    expressionIntent: semanticPlan.expressionIntent,
+    layoutDiagnostics: mergeSemanticDiagnostics(
+      {
+        ...semanticPlan.layoutDiagnostics,
+        warnings: [
+          ...semanticPlan.layoutDiagnostics.warnings,
+          `已套用模板：${template.name}（${template.id}）。`
+        ]
+      },
+      semanticPlan.pageIntent
+    ),
+    pageIntent: semanticPlan.pageIntent,
+    semanticElements: semanticPlan.semanticElements,
+    canvas: template.slide.canvas,
+    elements,
     imageLayerRequests
   };
 }
@@ -1144,6 +1320,219 @@ function buildImageLayerRequests({
   return requests;
 }
 
+function buildTemplateContentMap({
+  input,
+  semanticPlan
+}: {
+  input: AnalyzeDeckRequest;
+  semanticPlan: SemanticSlidePlan;
+}) {
+  const sourceNote = semanticPlan.content.sourceRequirement.note;
+  const bodyPoints = displayableTemplateBodyItems(semanticPlan);
+
+  return {
+    badge:
+      input.locale === "zh-CN"
+        ? templateBadgeForPageRole(semanticPlan.pageIntent.pageRole)
+        : semanticPlan.pageIntent.pageRole.toUpperCase(),
+    body: bodyPoints,
+    footer:
+      semanticPlan.content.sourceRequirement.required
+        ? sourceNote
+        : String(semanticPlan.index).padStart(2, "0"),
+    subtitle:
+      semanticPlan.content.subtitle ||
+      semanticPlan.content.coreStatement ||
+      semanticPlan.pageIntent.coreMessage ||
+      bodyPoints[0] ||
+      semanticPlan.content.title,
+    title: semanticPlan.content.title
+  };
+}
+
+function getTemplateTextContent({
+  bodyTextElements,
+  contentMap,
+  element,
+  index,
+  input,
+  semanticPlan
+}: {
+  bodyTextElements: SlideElement[];
+  contentMap: ReturnType<typeof buildTemplateContentMap>;
+  element: SlideElement;
+  index: number;
+  input: AnalyzeDeckRequest;
+  semanticPlan: SemanticSlidePlan;
+}) {
+  if (element.semanticType === "title") {
+    return contentMap.title;
+  }
+
+  if (element.semanticType === "subtitle") {
+    return contentMap.subtitle;
+  }
+
+  if (element.semanticType === "footer") {
+    return contentMap.footer;
+  }
+
+  if (element.semanticType === "badge") {
+    const existing = element.content?.trim();
+
+    return existing && existing.length <= 32 ? existing : contentMap.badge;
+  }
+
+  if (element.semanticType === "body" || element.semanticType === "card") {
+    if (bodyTextElements.length === 1) {
+      return contentMap.body[0] ?? contentMap.subtitle;
+    }
+
+    const pointIndex = inferBodyTextPointIndex({
+      bodyTextElements,
+      element,
+      fallbackIndex: index
+    });
+    const point = contentMap.body[pointIndex];
+
+    return point ?? contentMap.body[0] ?? contentMap.subtitle;
+  }
+
+  if (element.role.includes("来源") || /source|caption|脚注/i.test(element.role)) {
+    return contentMap.footer;
+  }
+
+  if (/页码|page/i.test(element.role)) {
+    return String(semanticPlan.index).padStart(2, "0");
+  }
+
+  return (
+    element.content ??
+    (input.locale === "zh-CN" ? "模板文本" : "Template text")
+  );
+}
+
+function displayableTemplateBodyItems(semanticPlan: SemanticSlidePlan) {
+  const nonTitleBlocks = semanticPlan.content.contentBlocks
+    .filter((block) => contentBlockSemanticType(block) !== "heading")
+    .sort((first, second) => first.priority - second.priority)
+    .map((block) => contentBlockText(block));
+
+  return nonTitleBlocks.length > 0 ? nonTitleBlocks : semanticPlan.content.bodyPoints;
+}
+
+function getTemplateBodyTextElements(elements: SlideElement[]) {
+  return elements.filter(
+    (element) =>
+      element.type === "text" &&
+      (element.semanticType === "body" || element.semanticType === "card")
+  );
+}
+
+function inferBodyTextPointIndex({
+  bodyTextElements,
+  element,
+  fallbackIndex
+}: {
+  bodyTextElements: SlideElement[];
+  element: SlideElement;
+  fallbackIndex: number;
+}) {
+  const textIndex = bodyTextElements.findIndex((item) => item.id === element.id);
+
+  if (textIndex >= 0) {
+    return textIndex;
+  }
+
+  return inferPointIndex(element, fallbackIndex);
+}
+
+function getTemplateElementRole({
+  content,
+  contentMap,
+  element,
+  input
+}: {
+  content?: string;
+  contentMap: ReturnType<typeof buildTemplateContentMap>;
+  element: SlideElement;
+  input: AnalyzeDeckRequest;
+}) {
+  if (element.type !== "text") {
+    return element.role;
+  }
+
+  if (element.semanticType === "title") {
+    return input.locale === "zh-CN" ? "标题" : "Title";
+  }
+
+  if (element.semanticType === "subtitle") {
+    return input.locale === "zh-CN" ? "副标题" : "Subtitle";
+  }
+
+  if (element.semanticType === "body" || element.semanticType === "card") {
+    return compactText(
+      content ?? contentMap.body.join(" "),
+      input.locale === "zh-CN" ? 28 : 36
+    );
+  }
+
+  return element.role;
+}
+
+function buildTemplateImagePrompt({
+  input,
+  semanticPlan,
+  template,
+  unifiedVisualSpec
+}: {
+  input: AnalyzeDeckRequest;
+  semanticPlan: SemanticSlidePlan;
+  template: PptTemplateDto;
+  unifiedVisualSpec: UnifiedVisualSpec;
+}) {
+  return input.locale === "zh-CN"
+    ? `为 PPT 第 ${semanticPlan.index} 页生成适配模板“${template.name}”的视觉图层。页面标题：${semanticPlan.content.title}。核心信息：${semanticPlan.pageIntent.coreMessage}。视觉意图：${semanticPlan.content.visualIntent}。统一风格：${unifiedVisualSpec.visualStyle}。不要文字、不要水印，主体避开标题区。`
+    : `Generate a visual layer for slide ${semanticPlan.index} using template "${template.name}". Title: ${semanticPlan.content.title}. Core message: ${semanticPlan.pageIntent.coreMessage}. Visual intent: ${semanticPlan.content.visualIntent}. Unified style: ${unifiedVisualSpec.visualStyle}. No text or watermark; keep the subject away from the title area.`;
+}
+
+function templateBadgeForPageRole(pageRole: SlidePageIntent["pageRole"]) {
+  const badges: Record<SlidePageIntent["pageRole"], string> = {
+    agenda: "目录",
+    comparison: "对比",
+    content: "要点",
+    cover: "封面",
+    data: "数据",
+    process: "流程",
+    section: "章节",
+    summary: "总结"
+  };
+
+  return badges[pageRole];
+}
+
+function inferPointIndex(element: SlideElement, fallbackIndex: number) {
+  const corpus = `${element.id} ${element.role}`;
+  const matched =
+    corpus.match(/(?:p|point|要点|卡片|步骤|step|card)[^\d一二三四五六七八九]*(\d+)/i)?.[1] ??
+    corpus.match(/([一二三四五六七八九])/u)?.[1];
+
+  if (!matched) {
+    return Math.max(0, fallbackIndex - 2);
+  }
+
+  const numeric = Number(matched);
+
+  if (Number.isFinite(numeric) && numeric > 0) {
+    return numeric - 1;
+  }
+
+  return Math.max(
+    0,
+    "一二三四五六七八九".indexOf(matched)
+  );
+}
+
 function normalizeImagePurpose(value: string | undefined, fallback: string) {
   const trimmed = value?.trim();
 
@@ -1528,6 +1917,164 @@ function dedupeSemanticElements(elements: SemanticSlideElement[]) {
     seen.add(element.id);
     return true;
   });
+}
+
+function contentBlockText(block: SlideContent["contentBlocks"][number]) {
+  return block.content ?? block.text;
+}
+
+function contentBlockSemanticType(
+  block: SlideContent["contentBlocks"][number]
+): NonNullable<SlideContent["contentBlocks"][number]["type"]> {
+  return block.type ?? semanticContentBlockTypeForLegacy(block.blockType);
+}
+
+function semanticContentBlockTypeForLegacy(
+  blockType: SlideContent["contentBlocks"][number]["blockType"]
+): NonNullable<SlideContent["contentBlocks"][number]["type"]> {
+  const map: Record<
+    SlideContent["contentBlocks"][number]["blockType"],
+    NonNullable<SlideContent["contentBlocks"][number]["type"]>
+  > = {
+    body: "text",
+    chart: "chart",
+    comparison: "comparison",
+    conclusion: "conclusion",
+    metric: "metric",
+    note: "source",
+    quote: "quote",
+    step: "steps",
+    tag: "callout",
+    title: "heading"
+  };
+
+  return map[blockType];
+}
+
+function semanticTypeForContentBlock(
+  blockType: NonNullable<SlideContent["contentBlocks"][number]["type"]>
+): SemanticSlideElement["semanticType"] {
+  if (blockType === "heading") {
+    return "title";
+  }
+
+  if (blockType === "metric" || blockType === "callout") {
+    return "badge";
+  }
+
+  if (blockType === "chart" || blockType === "table") {
+    return "chart";
+  }
+
+  if (blockType === "quote" || blockType === "summary" || blockType === "conclusion") {
+    return "subtitle";
+  }
+
+  if (blockType === "steps" || blockType === "timeline" || blockType === "comparison") {
+    return "card";
+  }
+
+  return "body";
+}
+
+function semanticElementCategoryForContentBlock(
+  blockType: NonNullable<SlideContent["contentBlocks"][number]["type"]>
+): SemanticSlideElement["category"] {
+  if (blockType === "chart" || blockType === "metric" || blockType === "table") {
+    return "infographic";
+  }
+
+  if (blockType === "comparison" || blockType === "steps" || blockType === "timeline") {
+    return "container";
+  }
+
+  return "text";
+}
+
+function semanticElementTypeForContentBlock(
+  blockType: NonNullable<SlideContent["contentBlocks"][number]["type"]>
+): SemanticSlideElement["elementType"] {
+  if (blockType === "chart" || blockType === "table") {
+    return "chartPlaceholder";
+  }
+
+  if (blockType === "comparison" || blockType === "steps" || blockType === "timeline") {
+    return "shape";
+  }
+
+  return "text";
+}
+
+function styleRoleForContentBlock(
+  blockType: NonNullable<SlideContent["contentBlocks"][number]["type"]>
+) {
+  const map: Record<
+    NonNullable<SlideContent["contentBlocks"][number]["type"]>,
+    string
+  > = {
+    callout: "callout",
+    chart: "chart",
+    comparison: "comparison",
+    conclusion: "conclusion",
+    heading: "page-title",
+    image: "supporting-visual",
+    list: "body-list",
+    metric: "metric",
+    quote: "quote",
+    source: "source-note",
+    steps: "steps",
+    summary: "summary",
+    table: "table",
+    text: "body",
+    timeline: "timeline"
+  };
+
+  return map[blockType];
+}
+
+function contentBlockSemanticRole(
+  blockType: NonNullable<SlideContent["contentBlocks"][number]["type"]>,
+  locale: AnalyzeDeckRequest["locale"],
+  index: number
+) {
+  const zhRoles: Record<NonNullable<SlideContent["contentBlocks"][number]["type"]>, string> = {
+    callout: "强调内容",
+    chart: "图表说明",
+    comparison: "对比内容",
+    conclusion: "核心结论",
+    heading: "主标题",
+    image: "图片内容",
+    list: "列表内容",
+    metric: "关键指标",
+    quote: "引用内容",
+    source: "来源说明",
+    steps: "步骤内容",
+    summary: "摘要内容",
+    table: "表格内容",
+    text: "正文内容",
+    timeline: "时间线内容"
+  };
+  const enRoles: Record<NonNullable<SlideContent["contentBlocks"][number]["type"]>, string> = {
+    callout: "Callout",
+    chart: "Chart note",
+    comparison: "Comparison item",
+    conclusion: "Conclusion",
+    heading: "Title",
+    image: "Image",
+    list: "List",
+    metric: "Key metric",
+    quote: "Quote",
+    source: "Source",
+    steps: "Steps",
+    summary: "Summary",
+    table: "Table",
+    text: "Body content",
+    timeline: "Timeline"
+  };
+
+  return locale === "zh-CN"
+    ? `${zhRoles[blockType]} ${index + 1}`
+    : `${enRoles[blockType]} ${index + 1}`;
 }
 
 function textElement({

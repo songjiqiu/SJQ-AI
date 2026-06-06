@@ -28,11 +28,29 @@ describe("createDeckFormSchema", () => {
     expect(parsed.deckType).toBe("fundraising-pitch");
   });
 
+  it("accepts expanded palette presets", () => {
+    const parsed = createDeckFormSchema.parse({
+      ...validForm,
+      palette: "bamboo-green"
+    });
+
+    expect(parsed.palette).toBe("bamboo-green");
+  });
+
   it("rejects unknown deck types", () => {
     expect(
       createDeckFormSchema.safeParse({
         ...validForm,
         deckType: "unknown-type"
+      }).success
+    ).toBe(false);
+  });
+
+  it("rejects unknown palette presets", () => {
+    expect(
+      createDeckFormSchema.safeParse({
+        ...validForm,
+        palette: "unknown-palette"
       }).success
     ).toBe(false);
   });
@@ -52,18 +70,18 @@ describe("createDeckFormSchema", () => {
     ).toBe(false);
   });
 
-  it("limits page count to 3 through 18", () => {
+  it("limits page count to 6 through 40", () => {
     expect(
-      createDeckFormSchema.safeParse({ ...validForm, pageCount: 2 }).success
+      createDeckFormSchema.safeParse({ ...validForm, pageCount: 5 }).success
     ).toBe(false);
     expect(
-      createDeckFormSchema.safeParse({ ...validForm, pageCount: 3 }).success
+      createDeckFormSchema.safeParse({ ...validForm, pageCount: 6 }).success
     ).toBe(true);
     expect(
-      createDeckFormSchema.safeParse({ ...validForm, pageCount: 18 }).success
+      createDeckFormSchema.safeParse({ ...validForm, pageCount: 40 }).success
     ).toBe(true);
     expect(
-      createDeckFormSchema.safeParse({ ...validForm, pageCount: 19 }).success
+      createDeckFormSchema.safeParse({ ...validForm, pageCount: 41 }).success
     ).toBe(false);
   });
 });

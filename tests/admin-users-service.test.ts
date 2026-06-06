@@ -37,7 +37,7 @@ import {
 function makeUser(overrides: Record<string, unknown> = {}) {
   return {
     _count: {
-      models: 3,
+      aiModels: 3,
       providers: 2,
       sessions: 1
     },
@@ -78,6 +78,19 @@ describe("admin user service", () => {
       }
     ]);
     expect(users[0]).not.toHaveProperty("passwordHash");
+    expect(db.prisma.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: {
+          _count: {
+            select: {
+              aiModels: true,
+              providers: true,
+              sessions: true
+            }
+          }
+        }
+      })
+    );
   });
 
   it("disables a user and immediately clears their sessions", async () => {
@@ -85,7 +98,7 @@ describe("admin user service", () => {
     db.tx.user.update.mockResolvedValue(
       makeUser({
         _count: {
-          models: 3,
+          aiModels: 3,
           providers: 2,
           sessions: 1
         },

@@ -30,16 +30,18 @@
       "narrativeRole": "argument",
       "contentLayers": {
         "primary": [
-          "智能生成流水线：输入"
+          0,
+          1
         ],
         "supporting": [
-          "分析",
-          "生成",
-          "导出"
+          2,
+          3,
+          6,
+          7
         ],
         "supplementary": [
-          "适用场景：产品流程",
-          "青绿琥珀科技风，使用节点、光标和数据面板表达智能感。"
+          4,
+          5
         ]
       },
       "slideTransition": {
@@ -79,7 +81,73 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "智能生成流水线",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "智能生成流水线",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "智能生成流水线：输入",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "智能生成流水线：输入",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "输入",
+          "priority": 2,
+          "sourceIds": [],
+          "text": "输入",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "分析",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "分析",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "生成",
+          "priority": 4,
+          "sourceIds": [],
+          "text": "生成",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "导出",
+          "priority": 5,
+          "sourceIds": [],
+          "text": "导出",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "流程/步骤 / AI 科技感",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "流程/步骤 / AI 科技感",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "用节点和流向线呈现 AI 生成流程。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "用节点和流向线呈现 AI 生成流程。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "智能生成流水线：输入",

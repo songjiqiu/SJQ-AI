@@ -107,6 +107,7 @@ export function TemplateCanvas({
             width: `${toCanvasPercent(element.bounds.width, "x")}%`,
             height: `${toCanvasPercent(element.bounds.height, "y")}%`,
             zIndex: element.zIndex,
+            ...elementAssetBoxStyle(element),
             ...elementTextStyle(element),
             ...motionStyle
           } satisfies CSSProperties;
@@ -224,7 +225,66 @@ function renderElementContent(
     return isThumbnail ? <Shapes className="size-5" aria-hidden="true" /> : element.role;
   }
 
+  if (element.type === "icon") {
+    return (
+      <span
+        aria-hidden="true"
+        className="grid size-full place-items-center"
+        data-asset-icon={element.assetStyle?.iconName ?? "semantic-icon"}
+      >
+        <Shapes className="size-4/5" />
+      </span>
+    );
+  }
+
   return element.role;
+}
+
+function elementAssetBoxStyle(element: SlideElement): CSSProperties {
+  const assetStyle = element.assetStyle;
+
+  if (!assetStyle) {
+    return {};
+  }
+
+  const borderColor = assetStyle.strokeColor;
+  const borderWidth = assetStyle.strokeWidth;
+  const isLine =
+    element.assetBinding?.kind === "LINE" ||
+    Boolean(assetStyle.lineType) ||
+    element.bounds.height <= 0.18 ||
+    element.bounds.width <= 0.18;
+
+  if (isLine) {
+    return {
+      backgroundColor: assetStyle.strokeColor,
+      borderColor: assetStyle.strokeColor,
+      borderRadius: assetStyle.cornerRadius,
+      borderStyle: assetStyle.dash === "dotted" ? "dotted" : assetStyle.dash === "dashed" ? "dashed" : "solid",
+      borderWidth,
+      color: assetStyle.strokeColor,
+      opacity: assetStyle.opacity
+    };
+  }
+
+  if (element.type === "text") {
+    return {
+      borderColor,
+      borderRadius: assetStyle.cornerRadius,
+      color: assetStyle.strokeColor
+    };
+  }
+
+  return {
+    backgroundColor:
+      element.type === "icon" ? "transparent" : assetStyle.fillColor,
+    borderColor,
+    borderRadius: assetStyle.cornerRadius,
+    borderStyle: assetStyle.dash === "dotted" ? "dotted" : assetStyle.dash === "dashed" ? "dashed" : "solid",
+    borderWidth,
+    color: assetStyle.strokeColor ?? assetStyle.activeColor,
+    opacity: assetStyle.opacity
+  };
 }
 
 function elementTextStyle(element: SlideElement): CSSProperties {

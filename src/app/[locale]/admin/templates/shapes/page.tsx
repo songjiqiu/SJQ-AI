@@ -5,7 +5,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { AdminTemplateElementAssetsManagement } from "@/components/admin/admin-template-element-assets-management";
 import { routing } from "@/i18n/routing";
-import { listTemplateElementAssets } from "@/lib/admin/template-assets/service";
+import { listTemplateShapeAssets } from "@/lib/admin/template-assets/service";
 import { AccountDisabledError, ForbiddenError } from "@/lib/auth/access";
 import { requireAdminUser, UnauthorizedError } from "@/lib/auth/session";
 
@@ -41,9 +41,7 @@ export default async function AdminTemplateShapesPage({
 
   return (
     <AdminTemplateElementAssetsManagement
-      initialAssets={await listTemplateElementAssets({
-        kind: TemplateElementAssetKind.SHAPE
-      })}
+      initialAssets={await listTemplateShapeAssets()}
       kind={TemplateElementAssetKind.SHAPE}
     />
   );

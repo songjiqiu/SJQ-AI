@@ -29,15 +29,16 @@
       "narrativeRole": "argument",
       "contentLayers": {
         "primary": [
-          "左侧呈现场景案例"
+          0,
+          1
         ],
         "supporting": [
-          "右侧说明核心结论",
-          "补充三条业务启示"
+          2,
+          4,
+          5
         ],
         "supplementary": [
-          "适用场景：客户案例",
-          "浅底蓝绿商务风，强调清晰、稳定和可复用。"
+          3
         ]
       },
       "slideTransition": {
@@ -77,7 +78,57 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "案例图左文右",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "案例图左文右",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "左侧呈现场景案例",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "左侧呈现场景案例",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "右侧说明核心结论",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "右侧说明核心结论",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "补充三条业务启示",
+          "priority": 4,
+          "sourceIds": [],
+          "text": "补充三条业务启示",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "左图右文 / 中国商务通用",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "左图右文 / 中国商务通用",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "先用案例图吸引注意，再用右侧文字解释价值。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "先用案例图吸引注意，再用右侧文字解释价值。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "左侧呈现场景案例",

@@ -28,15 +28,15 @@
       "narrativeRole": "argument",
       "contentLayers": {
         "primary": [
-          "超大字重承载引用"
+          0,
+          1
         ],
         "supporting": [
-          "来源信息极小并保留留白"
+          2,
+          3,
+          4
         ],
-        "supplementary": [
-          "适用场景：观点强调",
-          "白底黑灰咨询风，强调结论先行、强栅格和克制高亮。"
-        ]
+        "supplementary": []
       },
       "slideTransition": {
         "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
@@ -74,7 +74,49 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "黑白大字引用",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "黑白大字引用",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "超大字重承载引用",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "超大字重承载引用",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "来源信息极小并保留留白",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "来源信息极小并保留留白",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "引用/金句页 / 极简咨询风",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "引用/金句页 / 极简咨询风",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "用黑白大字和充足留白呈现高质感引用页。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "用黑白大字和充足留白呈现高质感引用页。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "超大字重承载引用",

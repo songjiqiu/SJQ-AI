@@ -27,6 +27,7 @@ import {
   buildDefaultDesignConstraints,
   buildDefaultLayoutSelection
 } from "@/lib/ai-deck/semantic-layout";
+import { bindSlideElementColorsToVisualSpec } from "@/lib/ai-deck/visual-element-colors";
 import {
   createImageQualityReviewer,
   materializeImageLayer,
@@ -34,6 +35,7 @@ import {
 } from "@/lib/ai-deck/image-assets";
 import {
   analyzeDeckRequestSchema,
+  deckPageCountMin,
   slideDesignConstraintsSchema,
   slideDesignQualityScoreSchema,
   slideLayoutSelectionSchema,
@@ -43,6 +45,7 @@ import {
   slidePageDesignSchema,
   generatedImageLayerSchema,
   generatedDeckResultSchema,
+  slideMotionPlanSchema,
   type AnalyzeDeckRequest,
   type AnalyzedDeckResult,
   type GeneratedDeckResult,
@@ -54,6 +57,7 @@ import {
   type SlideDesignConstraints,
   type SlideDesignQualityScore,
   type SlideLayoutSelection,
+  type SlideMotionPlan,
   type UnifiedVisualSpec
 } from "@/lib/ai-deck/schema";
 import { prisma } from "@/lib/db/prisma";
@@ -396,7 +400,12 @@ async function generatePreviewDeckFromOutlineDraftForUser({
       outlineSlides,
       unifiedVisualSpec,
       options.analyzerOptions
-    )).map((slide) => normalizeSlideCompositionPlan(slide))
+    )).map((slide) =>
+      normalizeSlideCompositionPlan(slide, {
+        completeContentBlocks: true,
+        unifiedVisualSpec
+      })
+    )
   );
   const previewSlideCount = getPreviewReadySlideCount(outlineSlides.length);
   const reportPreviewProgress = createGenerationProgressReporter({
@@ -614,7 +623,12 @@ async function persistGeneratedDeckForUser({
   try {
     const normalizedDeck = {
       ...analyzedDeck,
-      slides: analyzedDeck.slides.map((slide) => normalizeSlideCompositionPlan(slide))
+      slides: analyzedDeck.slides.map((slide) =>
+        normalizeSlideCompositionPlan(slide, {
+          completeContentBlocks: true,
+          unifiedVisualSpec: analyzedDeck.unifiedVisualSpec
+        })
+      )
     } satisfies AnalyzedDeckResult;
     const contentReview = buildContentReview(input, normalizedDeck);
     const consistencyReport = buildConsistencyReport(input, normalizedDeck);
@@ -933,11 +947,24 @@ async function readGeneratedSlidesForPptx(
     return fallbackSlides;
   }
 
+  const project = await prisma.deckProject.findFirst({
+    where: {
+      id: projectId
+    },
+    select: {
+      unifiedVisualSpec: true
+    }
+  });
+  const unifiedVisualSpec = normalizeUnifiedVisualSpec(
+    project?.unifiedVisualSpec,
+    input
+  );
+
   return storedSlides.map((slide) => ({
     ...slideFromStored({
       ...slide,
       projectInput: input
-    }),
+    }, unifiedVisualSpec),
     generatedImageLayers: slide.generatedImageLayers as GeneratedImageLayer[],
     motionPlan: slide.motionPlan as GeneratedSlideResult["motionPlan"]
   }));
@@ -976,9 +1003,10 @@ async function finalizeGeneratedDeckProject({
   }
 
   const imageAssets: PptxImageAsset[] = [];
+  const projectAssets = Array.isArray(project.assets) ? project.assets : [];
 
   for (const layer of slides.flatMap((slide) => slide.generatedImageLayers)) {
-    const asset = project.assets.find((item) => item.id === layer.assetId);
+    const asset = projectAssets.find((item) => item.id === layer.assetId);
 
     if (!asset) {
       continue;
@@ -1405,10 +1433,14 @@ export async function updateDeckSlideForUser({
   }
 
   const projectInput = analyzeDeckRequestSchema.parse(project.input);
+  const unifiedVisualSpec = normalizeUnifiedVisualSpec(
+    project.unifiedVisualSpec,
+    projectInput
+  );
   const currentPlan = slideFromStored({
     ...target,
     projectInput
-  });
+  }, unifiedVisualSpec);
   const nextPlan = normalizeSlideCompositionPlan({
     ...currentPlan,
     content: input.content
@@ -1420,6 +1452,9 @@ export async function updateDeckSlideForUser({
     imageLayerRequests: input.imageLayerRequests
       ? (input.imageLayerRequests as SlideCompositionPlan["imageLayerRequests"])
       : currentPlan.imageLayerRequests
+  }, {
+    completeContentBlocks: true,
+    unifiedVisualSpec
   });
   const generatedImageLayers = input.generatedImageLayers
     ? (input.generatedImageLayers as GeneratedImageLayer[])
@@ -1471,10 +1506,15 @@ export async function uploadDeckSlideElementFileForUser({
     throw new DeckProjectNotFoundError();
   }
 
+  const uploadInput = analyzeDeckRequestSchema.parse(project.input);
+  const uploadVisualSpec = normalizeUnifiedVisualSpec(
+    project.unifiedVisualSpec,
+    uploadInput
+  );
   const currentPlan = slideFromStored({
     ...target,
-    projectInput: analyzeDeckRequestSchema.parse(project.input)
-  });
+    projectInput: uploadInput
+  }, uploadVisualSpec);
   const element = currentPlan.elements.find((item) => item.id === elementId);
 
   if (!element || !isFileElementType(element.type)) {
@@ -1566,6 +1606,9 @@ export async function regenerateDeckSlideForUser({
     ...nextPlan,
     index: target.index,
     slideId: target.slideId
+  }, {
+    completeContentBlocks: true,
+    unifiedVisualSpec
   });
   const generator = imageGenerator ?? createImageLayerGenerator();
   const generatedImageLayers: GeneratedImageLayer[] = [];
@@ -1676,6 +1719,14 @@ export async function getDeckPptxAssetForUser({
 function serializeDeckProject(project: DeckProjectWithSlides): GeneratedDeckResult {
   const pptxAsset = project.assets.find((asset) => asset.kind === "PPTX");
   const input = analyzeDeckRequestSchema.parse(project.input);
+  const titleByIndex = new Map(
+    project.slides.flatMap((slide) => {
+      const content = isRecord(slide.content) ? slide.content : null;
+      const title = content?.title;
+
+      return typeof title === "string" ? [[slide.index, title] as const] : [];
+    })
+  );
 
   return generatedDeckResultSchema.parse({
     id: project.id,
@@ -1690,35 +1741,66 @@ function serializeDeckProject(project: DeckProjectWithSlides): GeneratedDeckResu
     slides: project.slides.map((slide) => {
       const content = normalizeSlideContent(slide.content, input, {
         slideCount: project.slides.length || input.pageCount,
-        nextTitle: project.slides.find((item) => item.index === slide.index + 1)
-          ?.content && isRecord(project.slides.find((item) => item.index === slide.index + 1)?.content)
-          ? String((project.slides.find((item) => item.index === slide.index + 1)?.content as Record<string, unknown>).title ?? "")
-          : undefined,
-        previousTitle: project.slides.find((item) => item.index === slide.index - 1)
-          ?.content && isRecord(project.slides.find((item) => item.index === slide.index - 1)?.content)
-          ? String((project.slides.find((item) => item.index === slide.index - 1)?.content as Record<string, unknown>).title ?? "")
-          : undefined
+        nextTitle: titleByIndex.get(slide.index + 1),
+        previousTitle: titleByIndex.get(slide.index - 1)
       });
+      const unifiedVisualSpec = normalizeUnifiedVisualSpec(project.unifiedVisualSpec, input);
+      const normalizedSlide = slideFromStored({
+        ...slide,
+        content,
+        projectInput: input
+      }, unifiedVisualSpec);
 
       return {
-      slideId: slide.slideId,
-      index: slide.index,
-      content,
-      ...pageDesignFromStored({
-        ...slide,
-        content
-      }),
-      elements: slide.elements,
-      imageLayerRequests: slide.imageLayerRequests,
-      generatedImageLayers: slide.generatedImageLayers,
-      motionPlan: slide.motionPlan,
-      canvas: slide.canvas
+        ...normalizedSlide,
+        generatedImageLayers: normalizeStoredGeneratedImageLayers(
+          slide.generatedImageLayers
+        ),
+        motionPlan: normalizeStoredMotionPlan(slide.motionPlan, normalizedSlide)
       };
     }),
     pptxUrl: pptxAsset?.publicUrl,
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString()
   });
+}
+
+function normalizeStoredGeneratedImageLayers(value: unknown): GeneratedImageLayer[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((layer) => {
+    const parsed = generatedImageLayerSchema.safeParse(layer);
+
+    return parsed.success ? [parsed.data] : [];
+  });
+}
+
+function normalizeStoredMotionPlan(
+  value: unknown,
+  slide: SlideCompositionPlan
+): SlideMotionPlan {
+  const parsed = slideMotionPlanSchema.safeParse(value);
+
+  if (!parsed.success) {
+    return buildSlideMotionPlan(slide);
+  }
+
+  const elementIds = new Set(slide.elements.map((element) => element.id));
+  const motionElementIds = new Set(
+    parsed.data.elements.map((element) => element.elementId)
+  );
+  const hasInvalidElementReference = parsed.data.elements.some(
+    (element) => !elementIds.has(element.elementId)
+  );
+  const coversCurrentElements = slide.elements.every((element) =>
+    motionElementIds.has(element.id)
+  );
+
+  return hasInvalidElementReference || !coversCurrentElements
+    ? buildSlideMotionPlan(slide)
+    : parsed.data;
 }
 
 function parseMode(mode: string): "ai-json" | "mock" {
@@ -2112,17 +2194,26 @@ async function getRawDeckProjectForUser(userId: string, projectId: string) {
 }
 
 function slideFromStored(
-  slide: DeckSlideWithProjectInput
+  slide: DeckSlideWithProjectInput,
+  unifiedVisualSpec?: Pick<UnifiedVisualSpec, "colorPalette" | "colorRoles">
 ): SlideCompositionPlan {
-  return normalizeSlideCompositionPlan({
+  const content = normalizeStoredSlideContent(slide);
+  const normalized = normalizeSlideCompositionPlan({
     slideId: slide.slideId,
     index: slide.index,
-    content: normalizeStoredSlideContent(slide),
-    ...pageDesignFromStored(slide),
+    content,
+    ...pageDesignFromStored({
+      ...slide,
+      content
+    }),
     elements: slide.elements as SlideCompositionPlan["elements"],
     imageLayerRequests: slide.imageLayerRequests as SlideCompositionPlan["imageLayerRequests"],
     canvas: slide.canvas as SlideCompositionPlan["canvas"]
   });
+
+  return unifiedVisualSpec
+    ? bindSlideElementColorsToVisualSpec(normalized, unifiedVisualSpec)
+    : normalized;
 }
 
 function normalizeStoredSlideContent(
@@ -2297,7 +2388,13 @@ function buildStoredFallbackPageIntent(
 function buildStoredFallbackContentHierarchy(
   content: SlideContent
 ): SlideCompositionPlan["contentHierarchy"] {
-  const supporting = content.contentLayers?.supporting ?? content.bodyPoints;
+  const layerSupporting =
+    content.contentLayers?.supporting.flatMap((index) => {
+      const block = content.contentBlocks[index];
+
+      return block ? [block.content ?? block.text] : [];
+    }) ?? [];
+  const supporting = layerSupporting.length > 0 ? layerSupporting : content.bodyPoints;
 
   return {
     primaryMessage: content.coreStatement || content.bodyPoints[0] || content.title,
@@ -2412,7 +2509,7 @@ function buildStoredFallbackInput(
     deckType: "business-report",
     goal: content.speakerGoal,
     locale: "zh-CN",
-    pageCount: Math.max(3, slide.index),
+    pageCount: Math.max(deckPageCountMin, slide.index),
     palette: "star-map",
     sourceText: content.bodyPoints.join("\n")
   };
@@ -2501,7 +2598,7 @@ async function rebuildDeckPptxForProject(userId: string, projectId: string) {
     ...slideFromStored({
       ...slide,
       projectInput: input
-    }),
+    }, unifiedVisualSpec),
     generatedImageLayers: slide.generatedImageLayers as GeneratedImageLayer[],
     motionPlan: slide.motionPlan as GeneratedSlideResult["motionPlan"]
   }));

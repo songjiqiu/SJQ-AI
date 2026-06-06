@@ -5,6 +5,7 @@ import {
   LayoutTemplate,
   Presentation,
   ShieldCheck,
+  UploadCloud,
   Users
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -31,6 +32,12 @@ export function AdminHome() {
       href: "/workbench",
       icon: Presentation,
       title: t("entries.workbench.title")
+    },
+    {
+      body: t("entries.pptToSlot.body"),
+      href: "/admin/ppt-to-slot",
+      icon: UploadCloud,
+      title: t("entries.pptToSlot.title")
     }
   ];
 
@@ -52,27 +59,29 @@ export function AdminHome() {
 
       <section
         aria-label={t("entryAria")}
-        className="grid gap-4 md:grid-cols-2"
+        className="mx-auto grid w-full max-w-[calc((100%-1rem)*2/3+1rem)] gap-4 md:grid-cols-2"
       >
         {entries.map((entry) => {
           const Icon = entry.icon;
 
           return (
             <Link
-              className="group grid min-h-44 gap-4 rounded-lg border border-border bg-surface p-5 text-foreground outline-none transition hover:border-accent hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-accent"
+              className="group relative flex min-h-44 flex-col gap-4 rounded-lg border border-border bg-surface p-5 text-foreground outline-none transition hover:border-accent hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-accent"
               href={entry.href}
               key={entry.href}
             >
-              <span className="flex size-11 items-center justify-center rounded-lg bg-accent-soft text-accent-strong">
-                <Icon className="size-5" aria-hidden="true" />
-              </span>
-              <span className="grid gap-2">
-                <span className="text-lg font-semibold">{entry.title}</span>
-                <span className="text-sm leading-6 text-muted">
-                  {entry.body}
+              <span className="flex min-w-0 items-center gap-3 pr-24">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-strong">
+                  <Icon className="size-5" aria-hidden="true" />
+                </span>
+                <span className="min-w-0 text-lg font-semibold leading-7">
+                  {entry.title}
                 </span>
               </span>
-              <span className="mt-auto inline-flex items-center gap-2 text-sm font-medium text-accent-strong">
+              <span className="text-sm leading-6 text-muted">
+                {entry.body}
+              </span>
+              <span className="absolute right-5 top-5 inline-flex items-center gap-2 text-sm font-medium text-accent-strong">
                 {t("open")}
                 <ArrowRight
                   className="size-4 transition group-hover:translate-x-0.5"

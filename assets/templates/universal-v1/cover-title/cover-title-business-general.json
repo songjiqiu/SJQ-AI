@@ -28,15 +28,15 @@
       "narrativeRole": "setup",
       "contentLayers": {
         "primary": [
-          "一句话定义汇报主题"
+          0,
+          1
         ],
         "supporting": [
-          "补充日期、组织和场景"
+          2,
+          3,
+          4
         ],
-        "supplementary": [
-          "适用场景：年度汇报",
-          "浅底蓝绿商务风，强调清晰、稳定和可复用。"
-        ]
+        "supplementary": []
       },
       "slideTransition": {
         "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
@@ -74,7 +74,49 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "年度汇报封面",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "年度汇报封面",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "一句话定义汇报主题",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "一句话定义汇报主题",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "补充日期、组织和场景",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "补充日期、组织和场景",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "封面大标题 / 中国商务通用",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "封面大标题 / 中国商务通用",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "用强标题和抽象业务主视觉建立专业第一印象。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "用强标题和抽象业务主视觉建立专业第一印象。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "一句话定义汇报主题",

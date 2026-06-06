@@ -28,15 +28,15 @@
       "narrativeRole": "setup",
       "contentLayers": {
         "primary": [
-          "章节核心问题"
+          0,
+          1
         ],
         "supporting": [
-          "承接上一部分并提示下一部分"
+          2,
+          3,
+          4
         ],
-        "supplementary": [
-          "适用场景：商务汇报",
-          "浅底蓝绿商务风，强调清晰、稳定和可复用。"
-        ]
+        "supplementary": []
       },
       "slideTransition": {
         "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
@@ -74,7 +74,49 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "章节编号分栏",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "章节编号分栏",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "章节核心问题",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "章节核心问题",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "承接上一部分并提示下一部分",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "承接上一部分并提示下一部分",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "章节页 / 中国商务通用",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "章节页 / 中国商务通用",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "用左侧章节编号和右侧标题完成演示节奏切换。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "用左侧章节编号和右侧标题完成演示节奏切换。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "章节核心问题",

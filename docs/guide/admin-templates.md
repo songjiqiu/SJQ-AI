@@ -1,6 +1,6 @@
 # 管理端 PPT 模板库
 
-管理端提供“模板工作区”，模板管理路径为 `/{locale}/admin/templates`。该页面只允许管理员访问，普通用户访问管理端路由会回到创作工作台。
+管理端首页提供“PPT模板库管理”入口，模板管理路径为 `/{locale}/admin/templates`。该页面只允许管理员访问，普通用户访问管理端路由会回到创作工作台。
 
 模板工作区顶部提供七个入口：模板管理、图标管理、图形管理、线条管理、文本样式管理、容器组件管理和导航组件管理。`/{locale}/admin/templates` 继续保留原 PPT 模板管理能力，不迁移旧路由；语义元素资源分别位于 `/{locale}/admin/templates/icons`、`/{locale}/admin/templates/shapes`、`/{locale}/admin/templates/lines`、`/{locale}/admin/templates/text-styles`、`/{locale}/admin/templates/containers` 和 `/{locale}/admin/templates/navigation`。
 
@@ -18,7 +18,11 @@
 
 保存模板会使用现有 `slideCompositionPlanSchema` 校验。页面坐标继续使用 inch，画布固定为 `13.333 x 7.5` 的 16:9；图片元素必须通过 `imageRequestId` 关联 `imageLayerRequests`。
 
-语义元素资产保存在 Prisma `TemplateElementAsset` 表中，`kind` 使用 `ICON`、`SHAPE`、`LINE`、`TEXT_STYLE`、`CONTAINER`、`NAVIGATION` 六种固定类型。每条资产归属于通用套装或模板套装，核心字段包括名称、说明、三级分类、关键词、同义词、普通标签、语义标签、适用页面类型、使用场景、风格标签、颜色标签、背景适配、样式 JSON、资源文件/参数 JSON、预览 JSON、AI 修改权限、排序、启用状态、来源和审核状态。资产是平台级管理员配置，不按普通用户隔离；正式 AI 检索只读取 `isEnabled=true` 且 `reviewStatus=APPROVED` 的资产。
+读取模板库时会兼容历史旧数据：如果数据库中已有模板的 `slide` JSON 与当前 `SlideCompositionPlan` schema 不兼容，列表页不会崩溃，而是临时使用所属分类的默认样板加载，并在模板库顶部和对应模板卡片显示兼容提示。管理员应重新保存该模板，或通过“导入通用模板”重置固定分类模板，避免旧 JSON 长期留存。
+
+PPT--To--Slot 使用独立的 `PptSlotTemplate` 表保存 Slot 模板草稿和审核结果。该表保存的是上传 PPTX 提取出的 `template.json` 结构，包括 canvas、safeArea、alignmentLines、slots、styleTokens、rules、usage、来源文件和来源页码；它不保存 `SlideCompositionPlan`，也不会在审核通过时自动写入 `PptTemplate`。两套模板库边界独立：`PptTemplate` 继续服务当前 PPT 生成主链路，`PptSlotTemplate` 用于沉淀可被后续 Slot 生成项目消费的版式抽象。
+
+语义元素资产采用“公共主表 + 六类详情表”保存。Prisma `TemplateAsset` 是公共主表，保存 `kind`、套装、名称、说明、三级分类、标签、语义标签、关键词、同义词、适用页面类型、使用场景、风格标签、颜色标签、背景适配、预览、AI 修改权限、排序、启用状态、来源和审核状态。`TemplateIconAsset`、`TemplateShapeAsset`、`TemplateLineAsset`、`TemplateTextStyleAsset`、`TemplateContainerAsset`、`TemplateNavigationAsset` 分别保存图标、图形、线条、文本样式、容器组件和导航组件的强类型详情字段。资产是平台级管理员配置，不按普通用户隔离；正式 AI 检索只读取 `isEnabled=true` 且 `reviewStatus=APPROVED` 的资产。
 
 三级分类字段为 `primaryCategory`、`secondaryCategory` 和 `variantKey`。旧数据可以为空，后台会显示为“未分类”。六类资产后台均提供主类目、二级语义和资源变体筛选：
 
@@ -31,18 +35,26 @@
 
 后台表单选择三级分类后，会自动补齐资产名称建议、说明、语义标签、使用场景和默认 `style` / `preview` JSON。语义资产列表顶部采用极简筛选栏：搜索、资产统计、清空筛选和新增资产位于同一操作行，常显筛选只保留主类目、二级语义、资源变体、套装类型和审核状态；页面类型、风格标签和背景适配不再作为独立常显条件，可直接通过搜索框输入页面类型 key、本地化页面类型名称、风格标签、`light` / `dark` / `transparent` 或对应背景文案检索。列表卡片采用精简扫读模式，只显示预览、名称、分类路径、启用状态、审核状态、短说明、少量去重后的语义标签和操作入口；套装、页面类型、背景适配、资源包版本等低频信息不在列表重复展示，可在编辑弹窗中查看和维护。语义资产新增和编辑弹窗采用分组编辑：基础信息与检索标签默认展开，`style` / `resource` / `preview` JSON 配置和 AI 修改权限默认收起；桌面端右侧固定显示预览、分类路径、套装、审核状态和来源摘要，滚动编辑表单时仍可对照当前预览。管理员仍可手动编辑套装、审核状态、关键词、同义词、页面类型、风格标签、颜色标签、背景适配、资源参数和 AI 修改权限。顶部“批量导入”支持选择 JSON 文件，文件内容可以是资产数组，也可以是包含 `assets` 数组的对象；前端会逐条调用创建接口并沿用服务端校验。AI 生成资源应保存为 `source=AI_GENERATED` 且默认 `reviewStatus=PENDING_REVIEW`，审核通过后再进入正式检索。
 
-通用语义资产包 v1 位于 `assets/template-assets/universal-v1/`，包含 `manifest.json` 和 `assets.json`。该包按当前六类资产分类树做到“一资源变体一资产”，共 792 条：图标 360 条、图形 216 条、线条 168 条、容器 18 条、文本样式 15 条、导航 15 条。资产统一写入 `COMMON/common` 通用套装，`setName` 固定为“通用语义资产包 v1”，默认 `source=MANUAL`、`reviewStatus=APPROVED`、`isEnabled=true`，供 AI 检索兜底使用。运行 `pnpm db:seed:template-assets -- --dry-run` 只校验资产包；运行 `pnpm db:seed:template-assets` 会先检查同名冲突，再删除同一 `setName` 的旧包资产并重新创建 792 条，不会清空管理员手工维护的其他通用资产。
+语义资产库按空库从零重建，不迁移旧通用包数据，也不恢复旧 792 条通用语义资产包。当前只保留小型 `COMMON/common` 兜底包 `assets/template-assets/common-fallback-v1/`，包含图标、图形、线条、文本样式、容器和导航各 3 条基础资产，`setName` 固定为“通用语义兜底资产 v1”，默认 `source=MANUAL`、`reviewStatus=APPROVED`、`isEnabled=true`。运行 `pnpm db:seed:template-assets -- --dry-run` 只校验兜底包；运行 `pnpm db:seed:template-assets` 会删除同一 `setName` 的旧兜底资产，再写入 18 条基础资产。
 
 管理接口如下：
 
-- `GET /api/admin/template-assets?kind=ICON|SHAPE|LINE|TEXT_STYLE|CONTAINER|NAVIGATION`：按类型读取资产，可通过 `query` 搜索名称、说明、套装、标签、语义标签、关键词、同义词、页面类型、使用场景、风格、颜色和背景适配，也可通过 `primaryCategory`、`secondaryCategory`、`variantKey`、`setKind`、`setKey`、`pageType`、`styleTag`、`backgroundMode`、`reviewStatus` 过滤。
-- `POST /api/admin/template-assets`：创建资产。
-- `GET /api/admin/template-assets/{id}`：读取单条资产。
-- `PATCH /api/admin/template-assets/{id}`：更新资产或启停状态。
-- `DELETE /api/admin/template-assets/{id}`：删除资产。
-- `POST /api/admin/template-assets/ai-search`：按套装、页面类型、页面语义、资源类型、语义标签、风格标签和背景适配检索 AI 可用资源。检索时优先当前模板套装；若模板套装没有命中，则回退 `COMMON/common` 通用套装，并返回匹配分和使用建议。
+- 图标：`/api/admin/template-icons`
+- 图形：`/api/admin/template-shapes`
+- 线条：`/api/admin/template-lines`
+- 文本样式：`/api/admin/template-text-styles`
+- 容器组件：`/api/admin/template-containers`
+- 导航组件：`/api/admin/template-navigation`
 
-六类资产的 `style`、`resource` 与 `preview` 均要求为 JSON 对象。图标推荐保存 SVG 或图标参数；图形推荐保存 PPT 原生 Shape 参数或 SVG；线条推荐保存 PPT 原生 Line / Connector 参数；文本样式保存字体、字号、字重、颜色、行高、最大行数和推荐字数范围；容器保存支持内容类型、推荐宽高、内边距和承载量；导航保存固定位置、显示规则、封面/封底显示规则和当前状态样式。编辑弹窗中的 JSON 配置区会同时校验这三项，任一项不是对象都会阻止保存；列表与编辑弹窗预览会优先读取 `preview`，并兜底读取 `resource`、`style` 和 `variantKey`：图标按语义 key 映射图形；图形按 `shapeType` 显示矩形、圆角矩形、正方形、平行四边形、圆形、椭圆、扇形、弧形、三角形、菱形、梯形、六边形等形态，旧基础几何资产即使 `preview/resource/style` 仍保存为泛化的 `roundedRect`，后台也会优先根据 `variantKey` 推断真实预览形态；容器按 `containerRole` 区分正文区、引用框、结论框、图片区、图表区、占位符、图文卡片、指标卡片、分栏、列表、强调框、警示框和洞察框，旧资产即使只保存 `shape: "container"` 也会按 `variantKey` 推断；导航按 `navigationRole` 与 `displayMode` 区分目录列表、目录网格、侧边目录、章节标识、页码、线性进度、圆点进度和步骤状态，旧资产缺少 `displayMode` 时会按变体和分类推断；文本样式按 `textRole` 区分封面主标题、副标题、章节标题、页标题、小标题、正文、要点、注释、引用、标签、页眉、页脚、来源说明和数字强调，旧资产缺少 `textRole` 时会按 `variantKey` 推断；线条按 `lineType`、`direction`、`connectorType`、`dash`、`startArrowType` 和 `endArrowType` 显示直线、竖线、折线、曲线、波浪线、虚线、点线、双线、单向箭头和双向箭头。通用语义资产包 v1 的资产已按这些约定生成结构化 `style`、`resource` 和 `preview`，可通过后台继续人工微调。当前版本已提供后台管理、预览和 AI 资源检索接口，但生成流程尚未自动把六类资源接入单页编排。
+每组接口都支持 `GET` 列表、`POST` 新建、`GET /{id}` 详情、`PATCH /{id}` 更新、`DELETE /{id}` 删除和 `POST /ai-search` 检索。列表可通过 `query` 搜索名称、说明、套装、标签、语义标签、关键词、同义词、页面类型、使用场景、风格、颜色和背景适配，也可通过 `primaryCategory`、`secondaryCategory`、`variantKey`、`setKind`、`setKey`、`pageType`、`styleTag`、`backgroundMode`、`reviewStatus` 过滤。旧 `/api/admin/template-assets`、`/api/admin/template-assets/{id}` 和 `/api/admin/template-assets/ai-search` 已废弃，返回 `410`。
+
+六类资产的详情字段已经拆入专用详情表。后台仍兼容显示 `style`、`resource` 与 `preview` JSON：`style` 和 `resource` 由详情字段序列化生成，`preview` 继续留在公共主表用于管理端预览。图标保存图标名、线性/填充风格、描边色和圆角；图形保存 shape 类型、填充、描边、圆角、透明度和阴影；线条保存连接类型、方向、虚线、起止箭头、线宽和端点；文本样式保存字体、字号、字重、颜色、行高、最大行数和文本角色；容器保存支持内容类型、推荐宽高、内边距、间距和边框；导航保存导航角色、展示模式、固定位置、当前/未激活颜色和封面/封底显示规则。当前版本已把六类资源接入生成主链路：模板或内置排版产出页面 JSON 后，服务端会分别检索六类启用且审核通过的资产，并把命中资源写入元素的 `assetBinding` 与 `assetStyle`。画布预览和 PPTX 导出只消费已写入页面 JSON 的 `assetStyle`，避免历史 PPT 受资产库后续修改影响。
+
+语义资产增长策略分三层：
+
+- 第一来源：从已审核模板 JSON 和 PPT--To--Slot 结果提取真实元素，写入模板专属资产。
+- 第二来源：维护小型 `COMMON/common` 兜底资产库，覆盖生成必需的基础资产。
+- 第三来源：AI 生成时发现缺口，只创建 `PENDING_REVIEW` 候选资产，管理员审核通过后才参与正式检索。
 
 ## JSON 导入与格式下载
 
@@ -87,4 +99,4 @@
 
 ## 当前边界
 
-模板库和语义元素资源库当前完成后台管理、资源预览和 AI 检索接口，尚未接入创作生成流程和预览页“换模板”功能。后续接入时可按分类读取已启用模板，并通过 `POST /api/admin/template-assets/ai-search` 或服务层检索函数按 `kind`、套装、页面类型、语义标签、风格标签和背景适配读取已启用且已入库资源，把模板 JSON 和资源 JSON 作为单页编排参考或替换目标。
+模板库已自动接入创作生成流程：单页 LLM 仍只输出无坐标的语义计划和 `layoutSelection` 候选，服务端会按候选分类读取已启用模板，结合模板标签、PPT 类型视觉基调、页面角色、内容密度和 `sortOrder` 选择具体模板，并把当前页标题、核心表达、正文要点、来源/页码和图片提示词写入模板坐标。模板库未导入、分类没有启用模板或模板套用后未通过 `SlideCompositionPlan` schema 校验时，会回退内置排版并在页面诊断中记录原因。模板或内置排版完成后，语义元素资产增强层会按 `kind`、页面类型、页面语义、语义标签、风格标签和背景适配检索已启用且已入库资源，把图标、图形、线条、文本样式、容器和导航结果写入元素的 `assetBinding` 与 `assetStyle`；检索失败、缺表、无命中或资源不适配时保留原页面并记录诊断，不阻断生成。预览页“换模板”功能仍是独立编辑入口，后续可复用同一套模板选择与套用逻辑。

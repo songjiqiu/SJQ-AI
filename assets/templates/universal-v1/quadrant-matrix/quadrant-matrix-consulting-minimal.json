@@ -30,16 +30,17 @@
       "narrativeRole": "argument",
       "contentLayers": {
         "primary": [
-          "重点象限"
+          0,
+          1
         ],
         "supporting": [
-          "机会象限",
-          "观察象限",
-          "搁置象限"
+          2,
+          5,
+          6
         ],
         "supplementary": [
-          "适用场景：战略分析",
-          "白底黑灰咨询风，强调结论先行、强栅格和克制高亮。"
+          3,
+          4
         ]
       },
       "slideTransition": {
@@ -79,7 +80,65 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "咨询 2x2",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "咨询 2x2",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "重点象限",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "重点象限",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "机会象限",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "机会象限",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "观察象限",
+          "priority": 4,
+          "sourceIds": [],
+          "text": "观察象限",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "搁置象限",
+          "priority": 5,
+          "sourceIds": [],
+          "text": "搁置象限",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "四象限/矩阵 / 极简咨询风",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "四象限/矩阵 / 极简咨询风",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "用标准 2x2 矩阵支撑咨询式判断。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "用标准 2x2 矩阵支撑咨询式判断。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "重点象限",

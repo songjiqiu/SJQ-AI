@@ -1,6 +1,6 @@
 # 通用 PPT 模板设计规范
 
-本文档定义“PPT创造大师”通用模板库 v1 的设计方案、静态 JSON 包和管理端批量导入方式。当前模板包可写入现有 `PptTemplate` 模板库，但不新增数据库表，也不接入 PPT 生成链路。
+本文档定义“PPT创造大师”通用模板库 v1 的设计方案、静态 JSON 包和管理端批量导入方式。当前模板包可写入现有 `PptTemplate` 模板库，不新增数据库表；导入并启用后，可被创作生成流程的服务端模板选择链路读取和套用。
 
 ## 设计目标
 
@@ -16,7 +16,7 @@
 
 通用模板 JSON 包位于 `assets/templates/universal-v1/`，包含 45 个模板文件和 `manifest.json`：
 
-- 每个模板文件使用现有 `ppt-template-import-v1` 格式，可通过管理端模板工作区的“新建模板 > 导入 JSON”单文件导入。
+- 每个模板文件使用现有 `ppt-template-import-v1` 格式，可通过管理端“PPT模板库管理”的“新建模板 > 导入 JSON”单文件导入。
 - `manifest.json` 使用 `ppt-template-manifest-v1`，记录模板分类、风格、中文名称、文件路径和排序，供人工检查或后续批量导入能力复用。
 - 文件名使用 ASCII，例如 `assets/templates/universal-v1/chapter/chapter-business-general.json`。
 - 管理端模板库顶部提供“导入通用模板”按钮，可一键导入该包。导入前会删除 15 个固定分类下的全部旧模板，再创建 45 个通用模板记录。

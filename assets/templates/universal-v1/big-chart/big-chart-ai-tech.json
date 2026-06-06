@@ -28,15 +28,15 @@
       "narrativeRole": "argument",
       "contentLayers": {
         "primary": [
-          "大图表承载核心指标"
+          0,
+          1
         ],
         "supporting": [
-          "辅助指标弱化处理"
+          2,
+          3,
+          4
         ],
-        "supplementary": [
-          "适用场景：数据看板",
-          "青绿琥珀科技风，使用节点、光标和数据面板表达智能感。"
-        ]
+        "supplementary": []
       },
       "slideTransition": {
         "fromPrevious": "作为通用模板页，可承接上一页信息并切换表达节奏。",
@@ -74,7 +74,49 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "数据驾驶舱",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "数据驾驶舱",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "大图表承载核心指标",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "大图表承载核心指标",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "辅助指标弱化处理",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "辅助指标弱化处理",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "大图表 / AI 科技感",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "大图表 / AI 科技感",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "用驾驶舱结构呈现 AI 或业务数据的关键状态。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "用驾驶舱结构呈现 AI 或业务数据的关键状态。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "大图表承载核心指标",

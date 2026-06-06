@@ -9,7 +9,7 @@ type UserWithCounts = Prisma.UserGetPayload<{
   include: {
     _count: {
       select: {
-        models: true;
+        aiModels: true;
         providers: true;
         sessions: true;
       };
@@ -34,7 +34,7 @@ export class SelfAdminChangeBlockedError extends Error {
 function serializeAdminUser(user: UserWithCounts): AdminUserDto {
   return {
     counts: {
-      models: user._count.models,
+      models: user._count.aiModels,
       providers: user._count.providers,
       sessions: user._count.sessions
     },
@@ -52,7 +52,7 @@ export async function listAdminUsers() {
     include: {
       _count: {
         select: {
-          models: true,
+          aiModels: true,
           providers: true,
           sessions: true
         }
@@ -129,7 +129,7 @@ export async function updateAdminUser(
       include: {
         _count: {
           select: {
-            models: true,
+            aiModels: true,
             providers: true,
             sessions: true
           }

@@ -75,5 +75,11 @@ export const paletteSwatches: Record<PaletteId, string> = {
   "star-map": "bg-[#246bfe]",
   matrix: "bg-[#13966a]",
   "deep-space": "bg-[#7c3aed]",
-  "morning-mist": "bg-[#c05621]"
+  "morning-mist": "bg-[#c05621]",
+  "moon-white": "bg-[#5b7c99]",
+  "bamboo-green": "bg-[#2f7d5b]",
+  "dai-blue": "bg-[#284b7a]",
+  rouge: "bg-[#b73756]",
+  "gilded-gold": "bg-[#a56a15]",
+  "ink-black": "bg-[#384252]"
 };

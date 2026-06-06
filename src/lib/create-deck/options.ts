@@ -64,7 +64,13 @@ export const paletteIds = [
   "star-map",
   "matrix",
   "deep-space",
-  "morning-mist"
+  "morning-mist",
+  "moon-white",
+  "bamboo-green",
+  "dai-blue",
+  "rouge",
+  "gilded-gold",
+  "ink-black"
 ] as const;
 
 export type DeckTypeId = (typeof deckTypeIds)[number];

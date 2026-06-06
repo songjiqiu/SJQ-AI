@@ -29,15 +29,16 @@
       "narrativeRole": "argument",
       "contentLayers": {
         "primary": [
-          "节点一：输入理解"
+          0,
+          1
         ],
         "supporting": [
-          "节点二：结构生成",
-          "节点三：视觉编排"
+          2,
+          4,
+          5
         ],
         "supplementary": [
-          "适用场景：AI 介绍",
-          "青绿琥珀科技风，使用节点、光标和数据面板表达智能感。"
+          3
         ]
       },
       "slideTransition": {
@@ -77,7 +78,57 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "发光节点要点",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "发光节点要点",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "节点一：输入理解",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "节点一：输入理解",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "节点二：结构生成",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "节点二：结构生成",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "节点三：视觉编排",
+          "priority": 4,
+          "sourceIds": [],
+          "text": "节点三：视觉编排",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "标题 + 正文/要点 / AI 科技感",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "标题 + 正文/要点 / AI 科技感",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "用串联节点表达 AI 工作流中的三段关键能力。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "用串联节点表达 AI 工作流中的三段关键能力。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "节点一：输入理解",

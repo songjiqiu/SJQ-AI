@@ -494,16 +494,22 @@ describe("ExperienceSettingsDialog", () => {
     expect(
       screen.getByRole("group", { name: "配色预设" })
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "月白" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "竹青" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "黛蓝" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "胭脂" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "鎏金" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "玄墨" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "深色模式" }));
 
     expect(document.documentElement.classList.contains("dark")).toBe(true);
     expect(window.localStorage.getItem("theme")).toBe("dark");
 
-    fireEvent.click(screen.getByRole("button", { name: "矩阵" }));
+    fireEvent.click(screen.getByRole("button", { name: "竹青" }));
 
-    expect(document.documentElement.dataset.palette).toBe("matrix");
-    expect(window.localStorage.getItem("pptcm_palette")).toBe("matrix");
+    expect(document.documentElement.dataset.palette).toBe("bamboo-green");
+    expect(window.localStorage.getItem("pptcm_palette")).toBe("bamboo-green");
   });
 
   it("switches to model management and shows the default model", async () => {

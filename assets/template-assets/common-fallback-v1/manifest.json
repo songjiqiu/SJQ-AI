@@ -1,0 +1,15 @@
+{
+  "assetCount": 18,
+  "assetFile": "assets/template-assets/common-fallback-v1/assets.json",
+  "formatVersion": "template-assets-fallback-manifest-v1",
+  "kindCounts": {
+    "CONTAINER": 3,
+    "ICON": 3,
+    "LINE": 3,
+    "NAVIGATION": 3,
+    "SHAPE": 3,
+    "TEXT_STYLE": 3
+  },
+  "packageId": "common-template-assets-fallback-v1",
+  "packageName": "通用语义兜底资产 v1"
+}

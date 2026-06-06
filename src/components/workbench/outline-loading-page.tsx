@@ -2,7 +2,7 @@
 
 import { AlertCircle, ArrowLeft, WandSparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -20,6 +20,11 @@ import {
   WorkbenchApiError,
   createWorkbenchApiError
 } from "./api-errors";
+import {
+  buildConfirmedOutlinePayload,
+  isConfirmedOutlinePayloadValid,
+  syncStructureSlideCount
+} from "./outline-intent-payload";
 import { WorkbenchStepNav } from "./workbench-shared";
 
 type WorkbenchApiErrorPayload = {
@@ -27,12 +32,69 @@ type WorkbenchApiErrorPayload = {
   error?: string;
 };
 
+const intentAutoContinueSeconds = 8;
+
 export function IntentAnalysisLoadingPage() {
   const t = useTranslations("workbench");
   const router = useRouter();
   const startedRef = useRef(false);
+  const autoContinueStartedRef = useRef(false);
+  const [analysis, setAnalysis] = useState<DeckIntentAnalysisResult | null>(
+    null
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<unknown>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState(
+    intentAutoContinueSeconds
+  );
+
+  const continueWithAnalysis = useCallback(
+    (currentAnalysis: DeckIntentAnalysisResult) => {
+      if (autoContinueStartedRef.current) {
+        return;
+      }
+
+      const pageCount = Math.trunc(
+        Number(currentAnalysis.recommendedPageCount)
+      );
+      const structureOutline = syncStructureSlideCount(
+        currentAnalysis.structureOutline,
+        pageCount
+      );
+
+      if (
+        !isConfirmedOutlinePayloadValid({
+          audience: currentAnalysis.audience,
+          goal: currentAnalysis.goal,
+          coreMessage: currentAnalysis.coreMessage,
+          pageCount,
+          structureOutline
+        })
+      ) {
+        setErrorMessage(t("toast.intentInvalid"));
+        return;
+      }
+
+      autoContinueStartedRef.current = true;
+      window.sessionStorage.setItem(
+        outlinePayloadStorageKey,
+        JSON.stringify(
+          buildConfirmedOutlinePayload({
+            analysis: currentAnalysis,
+            audience: currentAnalysis.audience,
+            goal: currentAnalysis.goal,
+            coreMessage: currentAnalysis.coreMessage,
+            pageCount,
+            structureOutline
+          })
+        )
+      );
+      window.sessionStorage.removeItem(intentAnalysisStorageKey);
+      window.sessionStorage.removeItem(intentPayloadStorageKey);
+      router.replace("/workbench/outline/loading");
+    },
+    [router, t]
+  );
 
   useEffect(() => {
     if (startedRef.current) {
@@ -68,8 +130,9 @@ export function IntentAnalysisLoadingPage() {
           intentAnalysisStorageKey,
           JSON.stringify(payload)
         );
+        setAnalysis(payload);
+        setRemainingSeconds(intentAutoContinueSeconds);
         toast.success(t("toast.intentAnalyzed"));
-        router.replace("/workbench/outline/analyze/confirm");
       } catch (error) {
         const message =
           error instanceof Error ? error.message : t("toast.failed");
@@ -85,20 +148,73 @@ export function IntentAnalysisLoadingPage() {
     void analyzeIntent();
   }, [router, t]);
 
+  useEffect(() => {
+    if (!analysis || errorMessage) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      if (remainingSeconds <= 1) {
+        continueWithAnalysis(analysis);
+        return;
+      }
+
+      setRemainingSeconds((value) => value - 1);
+    }, 1000);
+
+    return () => window.clearTimeout(timer);
+  }, [analysis, continueWithAnalysis, errorMessage, remainingSeconds]);
+
+  const editStructure = () => {
+    router.replace("/workbench/outline/analyze/confirm");
+  };
+
   return (
     <>
       <WorkbenchStepNav current={1} />
       <LoadingShell
         actionLabel={t("loading.backToInput")}
-        description={t("loading.intentDescription")}
+        description={
+          analysis
+            ? t("loading.intentInterceptDescription", {
+                seconds: remainingSeconds
+              })
+            : t("loading.intentDescription")
+        }
         errorDetails={errorDetails}
         errorDetailsLabel={t("errors.failureDetails")}
         errorMessage={errorMessage}
         icon={errorMessage ? <AlertCircle /> : <WandSparkles />}
         onAction={() => router.replace("/workbench")}
-        progressLabel={t("loading.intentProgress")}
+        progressLabel={
+          analysis
+            ? t("loading.intentInterceptProgress", {
+                seconds: remainingSeconds
+              })
+            : t("loading.intentProgress")
+        }
+        secondaryAction={
+          analysis && !errorMessage
+            ? {
+                label: t("actions.editStructure"),
+                onAction: editStructure
+              }
+            : undefined
+        }
+        primaryAction={
+          analysis && !errorMessage
+            ? {
+                label: t("actions.generateNow"),
+                onAction: () => continueWithAnalysis(analysis)
+              }
+            : undefined
+        }
         title={
-          errorMessage ? t("loading.intentFailed") : t("loading.intentTitle")
+          errorMessage
+            ? t("loading.intentFailed")
+            : analysis
+              ? t("loading.intentInterceptTitle")
+              : t("loading.intentTitle")
         }
       />
     </>
@@ -188,7 +304,9 @@ export function LoadingShell({
   errorMessage,
   icon,
   onAction,
+  primaryAction,
   progressLabel,
+  secondaryAction,
   title
 }: {
   actionLabel: string;
@@ -198,7 +316,15 @@ export function LoadingShell({
   errorMessage: string | null;
   icon: ReactNode;
   onAction: () => void;
+  primaryAction?: {
+    label: string;
+    onAction: () => void;
+  };
   progressLabel?: string;
+  secondaryAction?: {
+    label: string;
+    onAction: () => void;
+  };
   title: string;
 }) {
   return (
@@ -227,6 +353,24 @@ export function LoadingShell({
               <div className="h-full w-2/3 animate-pulse rounded-full bg-accent" />
             </div>
             <p className="mt-3 text-xs text-muted">{progressLabel}</p>
+          </div>
+        ) : null}
+        {!errorMessage && (primaryAction || secondaryAction) ? (
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            {secondaryAction ? (
+              <Button
+                onClick={secondaryAction.onAction}
+                type="button"
+                variant="secondary"
+              >
+                {secondaryAction.label}
+              </Button>
+            ) : null}
+            {primaryAction ? (
+              <Button onClick={primaryAction.onAction} type="button">
+                {primaryAction.label}
+              </Button>
+            ) : null}
           </div>
         ) : null}
         {errorMessage ? (

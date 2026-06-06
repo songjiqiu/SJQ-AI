@@ -30,16 +30,17 @@
       "narrativeRole": "argument",
       "contentLayers": {
         "primary": [
-          "高价值 / 高紧急"
+          0,
+          1
         ],
         "supporting": [
-          "高价值 / 低紧急",
-          "低价值 / 高紧急",
-          "低价值 / 低紧急"
+          2,
+          5,
+          6
         ],
         "supplementary": [
-          "适用场景：优先级评估",
-          "浅底蓝绿商务风，强调清晰、稳定和可复用。"
+          3,
+          4
         ]
       },
       "slideTransition": {
@@ -79,7 +80,65 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "优先级矩阵",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "优先级矩阵",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "高价值 / 高紧急",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "高价值 / 高紧急",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "高价值 / 低紧急",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "高价值 / 低紧急",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "低价值 / 高紧急",
+          "priority": 4,
+          "sourceIds": [],
+          "text": "低价值 / 高紧急",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "低价值 / 低紧急",
+          "priority": 5,
+          "sourceIds": [],
+          "text": "低价值 / 低紧急",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "四象限/矩阵 / 中国商务通用",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "四象限/矩阵 / 中国商务通用",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "用价值和紧急度帮助比较和决策。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "用价值和紧急度帮助比较和决策。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "高价值 / 高紧急",

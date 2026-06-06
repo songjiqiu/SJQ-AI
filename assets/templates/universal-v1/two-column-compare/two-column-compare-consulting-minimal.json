@@ -29,15 +29,16 @@
       "narrativeRole": "argument",
       "contentLayers": {
         "primary": [
-          "两栏严格同构"
+          0,
+          1
         ],
         "supporting": [
-          "按维度列出优劣",
-          "给出适用条件"
+          2,
+          4,
+          5
         ],
         "supplementary": [
-          "适用场景：方案评估",
-          "白底黑灰咨询风，强调结论先行、强栅格和克制高亮。"
+          3
         ]
       },
       "slideTransition": {
@@ -77,7 +78,57 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "方案 A / B",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "方案 A / B",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "两栏严格同构",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "两栏严格同构",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "按维度列出优劣",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "按维度列出优劣",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "给出适用条件",
+          "priority": 4,
+          "sourceIds": [],
+          "text": "给出适用条件",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "双栏对比 / 极简咨询风",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "双栏对比 / 极简咨询风",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "用标准咨询对比页支撑方案选择。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "用标准咨询对比页支撑方案选择。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "两栏严格同构",

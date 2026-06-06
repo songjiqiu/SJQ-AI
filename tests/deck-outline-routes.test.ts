@@ -89,11 +89,11 @@ describe("deck outline routes", () => {
             audience: "投资人",
             goal: "获得试点合作意向",
             coreMessage: "用市场机会与试点成果证明合作价值。",
-            recommendedPageCount: 3,
+            recommendedPageCount: 6,
             structureOutline: {
               deckTitle: "新能源融资路演",
               deckSummary: "这是一份用于确认结构的大纲草稿。",
-              slides: [1, 2, 3].map((index) => ({
+              slides: Array.from({ length: 6 }, (_, index) => index + 1).map((index) => ({
                 slideId: `slide-${index}`,
                 index,
                 title: `第 ${index} 页`,
@@ -117,7 +117,7 @@ describe("deck outline routes", () => {
         deckType: "fundraising-pitch",
         confirmedPlan: expect.objectContaining({
           audience: "投资人",
-          recommendedPageCount: 3
+          recommendedPageCount: 6
         })
       }),
       expect.any(Object)
@@ -140,11 +140,11 @@ describe("deck outline routes", () => {
       audience: "投资人",
       goal: "获得试点合作意向",
       coreMessage: "用市场机会与试点成果证明合作价值。",
-      recommendedPageCount: 5,
+      recommendedPageCount: 6,
       structureOutline: {
         deckTitle: "新能源融资路演",
         deckSummary: "这是一份用于确认结构的大纲草稿。",
-        slides: [1, 2, 3, 4, 5].map((index) => ({
+        slides: Array.from({ length: 6 }, (_, index) => index + 1).map((index) => ({
           slideId: `slide-${index}`,
           index,
           title: `第 ${index} 页`,
@@ -169,8 +169,8 @@ describe("deck outline routes", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(payload.recommendedPageCount).toBe(5);
-    expect(payload.structureOutline.slides).toHaveLength(5);
+    expect(payload.recommendedPageCount).toBe(6);
+    expect(payload.structureOutline.slides).toHaveLength(6);
     expect(outlineService.analyzeDeckOutlineIntentForUser).toHaveBeenCalledWith(
       expect.objectContaining({
         deckType: "fundraising-pitch"

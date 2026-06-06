@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import JSZip from "jszip";
 import {
   BadgeDollarSign,
   BriefcaseBusiness,
@@ -23,6 +22,7 @@ import {
   Rocket,
   ScrollText,
   Send,
+  ShieldCheck,
   Sparkles,
   Store,
   Target,
@@ -41,11 +41,10 @@ import { toast } from "sonner";
 import { usePalettePreset } from "@/components/theme/palette-provider";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { deckTypeGroups, type DeckTypeId } from "@/lib/create-deck/options";
 import {
   deckInputFileAccept,
-  deckInputMaxFileCharacters,
   deckInputMaxFileCount,
   deckInputMaxFileSize
 } from "@/lib/create-deck/file-options";
@@ -55,6 +54,11 @@ import {
   type CreateDeckForm,
   type CreateDeckFormInput
 } from "@/lib/create-deck/schema";
+import { deckPageCountMax, deckPageCountMin } from "@/lib/deck-input/schema";
+import type {
+  DeckInputSource,
+  ParsedDeckInputFile
+} from "@/lib/deck-input/schema";
 import type { DeckOutlineDraftListItem } from "@/lib/deck-outline/schema";
 import { cn } from "@/lib/utils";
 
@@ -100,7 +104,13 @@ const deckTypeIcons: Record<DeckTypeId, LucideIcon> = {
   "training-course": GraduationCap
 };
 
-export function CreationWorkbench() {
+type CreationWorkbenchProps = {
+  showAdminBackLink?: boolean;
+};
+
+export function CreationWorkbench({
+  showAdminBackLink = false
+}: CreationWorkbenchProps = {}) {
   const t = useTranslations("workbench");
   const optionT = useTranslations("options");
   const locale = useLocale();
@@ -189,8 +199,8 @@ export function CreationWorkbench() {
     try {
       const payload = {
         idea: values.idea,
+        ...(await parseInputFiles(textFiles)),
         sourceText: "",
-        textFiles: await readTextFiles(textFiles),
         ...(values.pageCount ? { pageCount: values.pageCount } : {}),
         deckType: values.deckType,
         palette: selectedPalette,
@@ -304,7 +314,18 @@ export function CreationWorkbench() {
   return (
     <main className="min-h-[calc(100vh-4rem)]">
       <WorkbenchStepNav current={1} />
-      <div className="mx-auto grid max-w-6xl gap-5 px-4 py-6 lg:py-7">
+      <div className="mx-auto grid max-w-5xl gap-5 px-4 py-6 lg:py-7">
+        {showAdminBackLink ? (
+          <div className="flex justify-end">
+            <Link
+              className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-sm font-medium text-muted outline-none transition hover:bg-surface-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent"
+              href="/admin"
+            >
+              <ShieldCheck className="size-4" aria-hidden="true" />
+              {t("actions.backToAdmin")}
+            </Link>
+          </div>
+        ) : null}
         <section className="mx-auto w-full max-w-3xl text-center">
           <div className="mb-2 flex items-center justify-center gap-3 sm:mb-3">
             <WandSparkles
@@ -324,14 +345,14 @@ export function CreationWorkbench() {
             id={creationFormId}
             onSubmit={onSubmit}
           >
-            <div className="grid gap-5 p-5 sm:p-6">
+            <div className="grid gap-4 p-4 sm:p-5">
               <Field
                 error={errors.idea ? t("validation.idea") : undefined}
                 label={t("fields.idea.label")}
               >
                 <textarea
                   {...register("idea")}
-                  className="min-h-52 w-full resize-y border-0 bg-transparent px-0 py-0 text-xl leading-9 text-foreground outline-none placeholder:text-muted focus:ring-0"
+                  className="min-h-44 w-full resize-y border-0 bg-transparent px-0 py-0 text-lg leading-8 text-foreground outline-none placeholder:text-muted focus:ring-0"
                   placeholder={t("fields.idea.placeholder")}
                 />
               </Field>
@@ -340,7 +361,7 @@ export function CreationWorkbench() {
                 <div className="flex min-w-0 flex-wrap items-end gap-4">
                   <div className="grid gap-1.5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <label className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-accent/50 bg-background px-4 text-base font-medium text-accent-strong transition hover:border-accent">
+                      <label className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-accent/50 bg-background px-3 text-sm font-medium text-accent-strong transition hover:border-accent">
                         <UploadCloud className="size-4" aria-hidden="true" />
                         {t("fields.textFiles.action")}
                         <input
@@ -351,11 +372,11 @@ export function CreationWorkbench() {
                           type="file"
                         />
                       </label>
-                      <span className="text-sm leading-6 text-muted">
+                      <span className="text-xs leading-5 text-muted">
                         {t("fields.textFiles.limit")}
                       </span>
                     </div>
-                    <span className="text-sm leading-6 text-muted">
+                    <span className="text-xs leading-5 text-muted">
                       {t("fields.textFiles.formats")}
                     </span>
                   </div>
@@ -383,17 +404,17 @@ export function CreationWorkbench() {
                       setValueAs: (value) =>
                         value === "" ? undefined : Number(value)
                     })}
-                    className="h-12 w-full rounded-lg border border-border bg-surface px-4 text-base text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
-                    max={18}
-                    min={3}
+                    className="h-11 w-full rounded-lg border border-border bg-surface px-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
+                    max={deckPageCountMax}
+                    min={deckPageCountMin}
                     placeholder={t("fields.pageCount.placeholder")}
                     type="number"
                   />
-                  <span className="text-sm leading-6 text-muted">
+                  <span className="text-xs leading-5 text-muted">
                     {t("fields.pageCount.label")}
                   </span>
                   {errors.pageCount ? (
-                    <span className="text-sm text-warning">
+                    <span className="text-xs text-warning">
                       {t("validation.pageCount")}
                     </span>
                   ) : null}
@@ -401,28 +422,28 @@ export function CreationWorkbench() {
               </div>
             </div>
 
-            <div className="grid gap-5 border-t border-border bg-background/70 p-5">
-              <div className="grid gap-3">
-                <span className="text-base font-semibold text-foreground">
+            <div className="grid gap-4 border-t border-border bg-background/70 p-4">
+              <div className="grid gap-2">
+                <span className="text-sm font-semibold text-foreground">
                   {t("fields.deckType.label")}
                 </span>
-                <div className="grid gap-3">
+                <div className="grid gap-2">
                   {deckTypeGroups.map((group) => (
                     <fieldset
-                      className="grid gap-2 rounded-lg border border-border bg-surface px-3 pb-3 pt-2"
+                      className="grid gap-1.5 rounded-lg border border-border bg-surface px-2.5 pb-2.5 pt-1.5"
                       key={group.id}
                     >
-                      <legend className="px-1 text-sm font-medium text-muted">
+                      <legend className="px-1 text-xs font-medium text-muted">
                         {optionT(`typeGroups.${group.id}`)}
                       </legend>
-                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
                         {group.types.map((deckType) => {
                           const Icon = deckTypeIcons[deckType];
 
                           return (
                             <label
                               className={cn(
-                                "flex min-h-12 cursor-pointer items-center gap-2.5 rounded-md border border-border bg-background px-3 py-2.5 text-left text-base transition hover:border-accent",
+                                "flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-2.5 py-2 text-left text-sm transition hover:border-accent",
                                 selectedDeckType === deckType &&
                                   "border-accent bg-accent-soft text-accent-strong"
                               )}
@@ -434,8 +455,8 @@ export function CreationWorkbench() {
                                 type="radio"
                                 value={deckType}
                               />
-                              <Icon className="size-5 shrink-0" aria-hidden="true" />
-                              <span className="min-w-0 break-words font-medium leading-5">
+                              <Icon className="size-4 shrink-0" aria-hidden="true" />
+                              <span className="min-w-0 break-words font-medium leading-4">
                                 {optionT(`deckTypes.${deckType}`)}
                               </span>
                             </label>
@@ -453,14 +474,14 @@ export function CreationWorkbench() {
           <aside className="flex flex-col gap-4 lg:self-stretch">
             <section
               aria-label={t("drafts.aria")}
-              className="rounded-lg border border-border bg-surface p-5 shadow-sm"
+              className="rounded-lg border border-border bg-surface p-4 shadow-sm"
             >
               <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-base font-semibold text-foreground">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <ClipboardList className="size-4 text-accent" aria-hidden="true" />
                   {t("drafts.title")}
                 </div>
-                <span className="text-sm text-muted">
+                <span className="text-xs text-muted">
                   {isDraftsLoading ? t("drafts.loading") : outlineDrafts.length}
                 </span>
               </div>
@@ -501,7 +522,7 @@ export function CreationWorkbench() {
                     </div>
                   ))
                 ) : (
-                  <p className="rounded-lg border border-dashed border-border bg-background p-4 text-base leading-7 text-muted">
+                  <p className="rounded-lg border border-dashed border-border bg-background p-3 text-sm leading-6 text-muted">
                     {t("drafts.empty")}
                   </p>
                 )}
@@ -510,14 +531,14 @@ export function CreationWorkbench() {
 
             <section
               aria-label={t("history.aria")}
-              className="rounded-lg border border-border bg-surface p-5 shadow-sm"
+              className="rounded-lg border border-border bg-surface p-4 shadow-sm"
             >
               <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-base font-semibold text-foreground">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <History className="size-4 text-accent" aria-hidden="true" />
                   {t("history.title")}
                 </div>
-                <span className="text-sm text-muted">
+                <span className="text-xs text-muted">
                   {isHistoryLoading ? t("history.loading") : history.length}
                 </span>
               </div>
@@ -559,14 +580,14 @@ export function CreationWorkbench() {
                     </div>
                   ))
                 ) : (
-                  <p className="rounded-lg border border-dashed border-border bg-background p-4 text-base leading-7 text-muted">
+                  <p className="rounded-lg border border-dashed border-border bg-background p-3 text-sm leading-6 text-muted">
                     {t("history.empty")}
                   </p>
                 )}
               </div>
             </section>
 
-            <div className="rounded-lg border border-border bg-surface p-5 shadow-sm lg:mt-auto">
+            <div className="rounded-lg border border-border bg-surface p-4 shadow-sm lg:mt-auto">
               <div className="grid gap-3">
                 <Button onClick={resetForm} type="button" variant="secondary">
                   <RotateCcw className="size-4" aria-hidden="true" />
@@ -613,50 +634,43 @@ export function CreationWorkbench() {
   );
 }
 
-async function readTextFiles(files: File[]) {
-  const accepted = files.slice(0, deckInputMaxFileCount);
-
-  return Promise.all(
-    accepted.map(async (file) => ({
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      content: (await readDeckInputFile(file)).slice(0, deckInputMaxFileCharacters)
-    }))
-  );
-}
-
-async function readDeckInputFile(file: File) {
-  if (getFileExtension(file.name) === ".docx") {
-    return extractDocxText(await file.arrayBuffer());
+async function parseInputFiles(files: File[]) {
+  if (files.length === 0) {
+    return {
+      parsedFiles: [] as ParsedDeckInputFile[],
+      sources: [] as DeckInputSource[],
+      textFiles: []
+    };
   }
 
-  return file.text();
-}
+  const formData = new FormData();
 
-async function extractDocxText(buffer: ArrayBuffer) {
-  const zip = await JSZip.loadAsync(buffer);
-  const documentXml = await zip.file("word/document.xml")?.async("text");
-
-  if (!documentXml) {
-    return "";
+  for (const file of files.slice(0, deckInputMaxFileCount)) {
+    formData.append("files", file);
   }
 
-  return documentXml
-    .replace(/<w:tab\/>/g, "\t")
-    .replace(/<\/w:p>/g, "\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&amp;/g, "&")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
+  const response = await fetch("/api/decks/outline/files", {
+    method: "POST",
+    body: formData
+  });
 
-function getFileExtension(filename: string) {
-  const index = filename.lastIndexOf(".");
+  if (!response.ok) {
+    throw new Error("文件解析失败，请检查文件格式后重试。");
+  }
 
-  return index >= 0 ? filename.slice(index).toLowerCase() : "";
+  const payload = (await response.json()) as {
+    parsedFiles?: ParsedDeckInputFile[];
+    sources?: DeckInputSource[];
+    warnings?: string[];
+  };
+
+  if (payload.warnings?.length) {
+    toast.warning(payload.warnings.slice(0, 2).join("\n"));
+  }
+
+  return {
+    parsedFiles: payload.parsedFiles ?? [],
+    sources: payload.sources ?? [],
+    textFiles: []
+  };
 }

@@ -7,6 +7,10 @@ import type {
   SlideCompositionPlan,
   UnifiedVisualSpec
 } from "./schema";
+import {
+  extractPaletteHexColors,
+  formatColorPaletteForPrompt
+} from "./visual-colors";
 
 export type ImageLayerGenerationContext = {
   request: ImageLayerRequest;
@@ -71,7 +75,7 @@ export class MockImageLayerGenerator implements ImageLayerGenerator {
     unifiedVisualSpec
   }: ImageLayerGenerationContext): Promise<ImageLayerGeneration> {
     const { width, height } = getDimensions(request.aspectRatio);
-    const colors = unifiedVisualSpec.colorPalette;
+    const colors = extractPaletteHexColors(unifiedVisualSpec.colorPalette);
     const primary = normalizeColor(colors[0], "#246bfe");
     const secondary = normalizeColor(colors[1], "#0f4bc7");
     const soft = normalizeColor(colors[2], "#dbe8ff");
@@ -304,7 +308,8 @@ function buildImagePrompt({
     `- Style: ${unifiedVisualSpec.visualStyle}`,
     `- Image style: ${unifiedVisualSpec.imageStyle}`,
     `- Typography: ${unifiedVisualSpec.typography}`,
-    `- Palette: ${unifiedVisualSpec.colorPalette.join(", ")}`,
+    `- Palette:\n${formatColorPaletteForPrompt(unifiedVisualSpec.colorPalette)}`,
+    `- Image prompt style: ${unifiedVisualSpec.imageRules.imagePromptStyle}`,
     `- Image rules: ${unifiedVisualSpec.imageRules.usageNotes.join(" ")}`,
     "",
     "Constraints:",

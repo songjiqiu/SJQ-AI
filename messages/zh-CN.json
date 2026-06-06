@@ -79,13 +79,65 @@
         "body": "查看账号、角色、启用状态和账号隔离数据，并在需要时调整用户权限。"
       },
       "templates": {
-        "title": "模板工作区",
-        "body": "维护 PPT 模板库、页面分类和可复用页面 JSON，为后续生成流程准备版式资产。"
+        "title": "PPT模板库管理",
+        "body": "维护 PPT 模板库、页面分类和可复用页面 JSON，并进入设计器调整模板版式资产。"
       },
       "workbench": {
         "title": "创作工作台",
         "body": "进入面向普通创作流程的 PPT 拆页、视觉说明和页面元素编排界面。"
+      },
+      "pptToSlot": {
+        "title": "PPT--To--Slot",
+        "body": "上传 PPTX，提取页面坐标、区域和样式，生成可人工确认的 Slot 模板 JSON。"
       }
+    }
+  },
+  "adminPptToSlot": {
+    "title": "PPT--To--Slot",
+    "subtitle": "从上传的 PPTX 中提取真实坐标、层级、样式和区域结构，生成独立 Slot 模板草稿，人工确认后进入 Slot 模板库。",
+    "actions": {
+      "back": "返回管理端"
+    },
+    "upload": {
+      "label": "上传 PPTX 文件",
+      "help": "第一版支持 10MB 以内的 .pptx 文件；复杂动画、完整母版继承和无人审核入库暂不处理。",
+      "submit": "提取 Slot 模板"
+    },
+    "list": {
+      "aria": "PPT Slot 模板列表",
+      "empty": "还没有 Slot 模板。上传一个 .pptx 文件后，每页会生成一条待审核模板。",
+      "slide": "第 {index} 页"
+    },
+    "detail": {
+      "empty": "请选择一个模板查看 overlay 和 JSON。",
+      "overlayAlt": "PPT Slot overlay 预览"
+    },
+    "artifacts": {
+      "template": "template.json",
+      "rawLayers": "raw_layers.json",
+      "layoutCandidates": "layout_candidates.json",
+      "reviewReport": "review_report.md"
+    },
+    "review": {
+      "notes": "审核备注",
+      "approve": "确认入库",
+      "changesRequested": "要求修改",
+      "reject": "拒绝"
+    },
+    "statuses": {
+      "DRAFT": "草稿",
+      "PENDING_REVIEW": "待审核",
+      "APPROVED": "已通过",
+      "CHANGES_REQUESTED": "要求修改",
+      "REJECTED": "已拒绝"
+    },
+    "toast": {
+      "uploaded": "Slot 模板已生成",
+      "updated": "审核状态已更新"
+    },
+    "errors": {
+      "uploadFailed": "PPTX 提取失败，请检查文件后重试。",
+      "updateFailed": "审核状态更新失败，请稍后重试。"
     }
   },
   "adminTemplateWorkspace": {
@@ -412,6 +464,8 @@
   "adminTemplates": {
     "title": "PPT模板库管理",
     "subtitle": "按页面类型维护可复用 PPT 模板，模板保存完整页面 JSON，并支持在设计器中调整元素、图层和图片请求。",
+    "compatibilityWarning": "检测到部分旧模板 JSON 与当前结构不兼容，已临时使用所属分类默认样板加载。建议重新保存模板，或重新导入通用模板。",
+    "compatibilityCardWarning": "旧模板 JSON 已按默认样板兼容加载",
     "categoriesAria": "PPT模板分类",
     "listAria": "PPT模板列表",
     "searchPlaceholder": "搜索模板名称、说明或标签",
@@ -627,7 +681,13 @@
       "star-map": "星图",
       "matrix": "矩阵",
       "deep-space": "深空",
-      "morning-mist": "晨雾"
+      "morning-mist": "晨雾",
+      "moon-white": "月白",
+      "bamboo-green": "竹青",
+      "dai-blue": "黛蓝",
+      "rouge": "胭脂",
+      "gilded-gold": "鎏金",
+      "ink-black": "玄墨"
     }
   },
   "adminTemplateAssets": {
@@ -825,9 +885,9 @@
         "placeholder": "粘贴长文本，或输入一个完整创作想法。例如：为一家新能源初创公司准备融资路演，重点说明市场机会、产品优势和合作路径。"
       },
       "textFiles": {
-        "label": "文本类文件",
+        "label": "资料文件",
         "action": "添加文件",
-        "formats": "支持 txt / md / csv / json / docx 文件",
+        "formats": "支持 txt / md / csv / json / docx / pptx / xlsx / pdf / 图片",
         "limit": "单个文件最大 10MB",
         "tooLarge": "已忽略超过 10MB 的文件"
       },
@@ -844,7 +904,7 @@
     },
     "validation": {
       "idea": "请至少输入 10 个字的原始文本或创作想法。",
-      "pageCount": "页数需为 3 到 18 之间的整数。"
+      "pageCount": "页数需为 6 到 40 之间的整数。"
     },
     "actions": {
       "reset": "重置",
@@ -860,11 +920,22 @@
       "delete": "删除",
       "deleting": "删除中",
       "cancel": "取消",
+      "close": "关闭",
       "download": "下载PPTX",
+      "done": "完成",
+      "editBodyPoints": "编辑正文条目",
+      "editContent": "编辑内容",
       "playMotion": "播放动效",
       "pauseMotion": "暂停动效",
+      "regenerateCurrentSlide": "重新生成当前页",
       "backToInput": "返回输入页",
-      "uploadNewFile": "上传新文件"
+      "editStructure": "编辑结构",
+      "generateNow": "立即生成草稿",
+      "uploadNewFile": "上传新文件",
+      "addSlide": "新增一页",
+      "changeTemplate": "换模板",
+      "saveCurrentSlide": "保存当前页",
+      "backToAdmin": "返回管理端"
     },
     "confirm": {
       "deleteTitle": "确认删除"
@@ -886,7 +957,7 @@
       "loadFailed": "历史 PPT 读取失败，请稍后重试。"
     },
     "errors": {
-      "aiJsonGenerationFailed": "AI 返回内容暂未通过结构化校验，已自动尝试兼容修复但仍失败。请稍后重试，或在体验设置中检查当前 LLM 模型是否稳定支持 JSON 输出。",
+      "aiJsonGenerationFailed": "AI 返回内容暂未通过结构化校验或一致性校验。请稍后重试，或在体验设置中检查当前 LLM 模型是否稳定支持 JSON 输出。",
       "databaseMigrationRequired": "数据库迁移未完成，请先运行 pnpm db:migrate 后重试。",
       "debugDetails": "调试详情",
       "failureDetails": "失败详情",
@@ -908,6 +979,17 @@
       "downloadPending": "完成后下载",
       "progressAria": "PPT 生成进度",
       "progressCount": "{current}/{total} 页",
+      "displayContent": "本页内容",
+      "displayContentSeparator": "：",
+      "contentBlockItem": "内容块",
+      "layerItem": "图层",
+      "emptyLayerContent": "无内容",
+      "displayContentTypes": {
+        "title": "标题",
+        "subtitle": "副标题",
+        "body": "正文"
+      },
+      "notPlaced": "未落版",
       "statuses": {
         "GENERATING": "生成中",
         "READY": "已完成",
@@ -944,14 +1026,17 @@
       "title": "一致性"
     },
     "visualSpec": {
-      "title": "统一视觉说明"
+      "title": "统一视觉说明",
+      "open": "统一视觉说明"
     },
     "loading": {
       "intentTitle": "正在分析输入",
-      "intentDescription": "AI 正在判断受众、表达目标、核心信息，并推荐合适页数。",
+      "intentDescription": "AI 正在生成整体 PPT 结构、隐藏意图上下文，并推荐合适页数。",
+      "intentInterceptTitle": "结构大纲已生成",
+      "intentInterceptDescription": "将在 {seconds} 秒后自动继续生成统一视觉说明、每页详细大纲和可展示内容 JSON；需要调整时可先编辑结构。",
       "intentFailed": "输入分析失败",
       "outlineTitle": "正在生成大纲草稿",
-      "outlineDescription": "AI 正在基于已确认结构大纲生成每页详细文案 JSON 与统一全局视觉规范。",
+      "outlineDescription": "AI 正在分阶段生成统一视觉说明、每页详细大纲和可展示内容 JSON。",
       "outlineFailed": "大纲生成失败",
       "generateTitle": "正在生成预览 PPT",
       "generateDescription": "AI 正在基于已确认的大纲编排页面图层、生成图片请求、审核内容并合成 PPTX。",
@@ -961,53 +1046,72 @@
       "missingOutlinePayload": "没有找到已确认的大纲输入，请返回输入页重新提交。",
       "missingGeneratePayload": "没有找到待生成的草稿信息，请返回输入页重新选择大纲。",
       "backToInput": "返回输入页",
-      "intentProgress": "正在生成受众、目标、核心信息和推荐页数。",
-      "outlineProgress": "正在生成结构大纲、每页文案 JSON 和统一全局视觉规范。",
+      "intentProgress": "正在生成整体结构、隐藏意图上下文和推荐页数。",
+      "intentInterceptProgress": "{seconds} 秒后自动继续生成大纲草稿。",
+      "outlineProgress": "正在生成统一视觉说明、每页详细大纲和可展示内容 JSON。",
       "generateProgress": "正在编排图层、生成图片、审核内容并合成 PPTX。",
       "generateBackgroundProgress": "任务耗时较长，但没有失败。你可以留在本页等待自动进入预览，也可以返回输入页，完成后会出现在生成历史中。"
     },
     "intent": {
-      "title": "确认输入分析",
-      "subtitle": "请确认 AI 对受众、目标、核心信息和页数的判断。PPT 类型会作为场景结构参考进入后续生成。",
+      "title": "确认整体结构",
+      "subtitle": "请确认页数、PPT 类型和整体目录。受众、目标和核心信息会作为隐藏上下文进入后续生成。",
       "loading": "正在读取输入分析结果...",
-      "analysisTitle": "输入分析",
+      "analysisTitle": "隐藏输入分析",
       "structureTitle": "结构大纲",
       "sourceTitle": "原始输入摘要",
+      "chaptersTitle": "章节结构",
       "filesTitle": "已添加文件",
       "fileMeta": "{characters} 字符 · {size} B",
+      "noSources": "无引用来源",
       "pageCountBadge": "推荐 {count} 页",
-      "footerMeta": "确认后将基于这份结构大纲生成每页详细文案 JSON 与统一全局视觉规范。",
+      "footerMeta": "确认后将基于这份结构大纲分阶段生成统一视觉说明、每页详细大纲和可展示内容 JSON。",
       "fields": {
         "audience": "目标受众",
         "goal": "表达目标",
         "coreMessage": "核心信息",
+        "globalObjective": "整体目标",
+        "globalTheme": "全局主题",
+        "narrativeStyle": "叙事风格",
         "recommendedPageCount": "推荐页数",
+        "sourceIds": "引用来源",
         "structureTitle": "页面标题",
         "purpose": "页面目的",
-        "keyMessage": "核心观点",
-        "visualDirection": "视觉方向"
+        "keyMessage": "核心观点"
       }
     },
     "outline": {
       "title": "大纲草稿",
       "reviewTitle": "确认并修改大纲",
-      "reviewSubtitle": "先确认 AI 生成的大纲；需要调整时点击编辑，预览 PPT 将严格使用已保存的大纲生成。",
+      "reviewSubtitle": "先确认 AI 生成的目录、统一视觉说明、每页详细大纲和可展示内容 JSON；预览 PPT 将严格使用已保存内容生成。",
       "slideCount": "{count} 页",
       "slides": "页面大纲",
       "slideEditor": "页面文案编辑",
       "previewAria": "大纲只读预览",
       "previewMode": "预览模式",
       "editMode": "编辑模式",
-      "readonlyHint": "默认展示已保存大纲，不会直接修改内容；点击编辑后可调整标题、目录、页面文案和统一视觉说明。",
+      "readonlyHint": "默认展示已保存大纲，不会直接修改内容；点击编辑后可调整标题、目录、页面详细大纲、可展示内容 JSON 和统一视觉说明。",
+      "ruleTagEditor": {
+        "addPlaceholder": "输入一条规则后按回车添加"
+      },
+      "paletteGroups": {
+        "primary": "主色（1 个）",
+        "secondary": "辅助色（2-3 个）",
+        "chart": "图表色（4-8 个）",
+        "neutral": "中性色/表面色（2-4 个）",
+        "accent": "强调色/高亮色（1-2 个）",
+        "base": "基础色"
+      },
       "fields": {
         "deckTitle": "整套标题",
         "deckSummary": "整套摘要",
         "themeName": "主题名称",
         "visualStyle": "视觉风格",
-        "colorPalette": "色板（每行一个颜色）",
+        "designIntent": "设计意图",
+        "usageConvenience": "使用便捷",
+        "colorPalette": "分组色板（名称 | HEX | 用途）",
         "typography": "排版说明",
         "imageStyle": "图片风格",
-        "layoutRules": "布局规则（每行一条）",
+        "layoutRules": "布局规则",
         "consistencyRules": "一致性规则（每行一条）",
         "forbiddenRules": "禁用规则（每行一条）",
         "pageSpec": "页面基础规格",
@@ -1025,16 +1129,26 @@
         "lineHeight": "行高",
         "fontFallback": "字体 fallback（每行一个）",
         "colorRoles": "颜色角色",
+        "colorPaletteWithRoles": "分组色板与角色",
+        "relatedRoles": "关联角色",
+        "colorRoleTuning": "颜色角色微调",
         "background": "背景色角色",
         "bodyText": "正文色角色",
         "accent": "强调色角色",
         "decorative": "装饰色角色",
+        "borderDivider": "边框/分隔线色角色",
         "highlight": "高亮色角色",
         "chart": "图表色角色",
         "contrastRequirement": "对比度要求",
         "imageRules": "图片生成/使用规则",
+        "imageForbiddenItems": "禁用项",
+        "forbiddenRulePreview": "禁用规则",
+        "ruleNumber": "规则 {number}",
         "backgroundAvoidsHighContrastTextArea": "背景图避开高对比文字区域",
         "subjectAvoidsTitleArea": "主体避开标题区",
+        "imageType": "图片类型",
+        "imagePromptStyle": "图片 Prompt 风格",
+        "forbiddenItems": "图片禁止项（每行一条）",
         "usageNotes": "使用说明（每行一条）",
         "basicInfo": "基础信息",
         "colorSystem": "色彩系统",
@@ -1043,15 +1157,16 @@
         "slideTitle": "页面标题",
         "subtitle": "副标题",
         "bodyPoints": "正文要点（每行一条）",
+        "contentBlocks": "可展示内容 JSON（类型 | 优先级 | 内容）",
         "speakerGoal": "演讲目标",
         "visualIntent": "视觉意图",
         "advancedSlideInfo": "高级页面信息",
         "coreStatement": "本页核心表达句",
         "narrativeRole": "叙事作用",
         "explanationDepth": "讲解深度",
-        "contentLayersPrimary": "主信息（每行一条）",
-        "contentLayersSupporting": "支撑信息（每行一条）",
-        "contentLayersSupplementary": "补充信息（每行一条）",
+        "contentLayersPrimary": "主信息（引用可展示内容）",
+        "contentLayersSupporting": "支撑信息（引用可展示内容）",
+        "contentLayersSupplementary": "补充信息（引用可展示内容）",
         "transitionFromPrevious": "承接上一页",
         "transitionToNext": "引出下一页",
         "sourceRequirement": "信息来源要求",
@@ -1082,17 +1197,21 @@
         "surface": "卡片/表面色角色",
         "titleText": "标题色角色",
         "coverTitle": "封面标题",
+        "coverSubtitle": "封面副标题",
         "pageTitle": "页标题",
+        "sectionTitle": "小节标题",
         "body": "正文",
         "annotation": "注释",
         "chartLabel": "图表标签",
+        "iconLabel": "图标标签",
         "fontSize": "字号",
         "fontWeight": "字重",
         "usage": "用途",
         "advancedRules": "高级规则",
+        "advancedRulesSummary": "高级规则（{groups} 组 · {count} 条，默认折叠）",
+        "fullTypographyScale": "完整字号层级（{count} 项）",
         "informationDensityRules": "信息密度规则",
         "defaultLevel": "默认密度",
-        "spacingRules": "间距和留白规则",
         "pageMargin": "页面边距",
         "sectionGap": "区块间距",
         "elementGap": "元素间距",
@@ -1111,14 +1230,22 @@
         "iconStyle": "图标风格",
         "stroke": "线宽/笔触",
         "emphasisRules": "强调规则",
+        "componentRules": "组件与元素规范",
+        "transparencyRules": "透明度规则",
+        "card": "卡片",
+        "tag": "标签",
+        "metric": "指标",
+        "table": "表格",
+        "icon": "图标",
         "keyNumbers": "重点数字",
         "keywords": "关键词",
         "conclusion": "结论句",
-        "forbiddenVisualRules": "视觉禁用规则（每行一条）"
+        "forbiddenVisualRules": "禁用规则（每行一条）"
       },
       "values": {
         "yes": "是",
         "no": "否",
+        "baseColorUsage": "仅作为黑白基础色使用，用于需要纯黑或纯白的文字、背景或对比场景。",
         "required": "需注明",
         "notRequired": "不强制",
         "narrativeRole": {
@@ -1183,6 +1310,7 @@
     },
     "elements": {
       "title": "页面元素编排",
+      "summaryHint": "文本元素显示当前内容摘要，非文本元素显示角色名称。",
       "layer": "层级 {zIndex}",
       "bounds": "位置 x:{x}% y:{y}%，尺寸 {width}% × {height}%，层级 {zIndex}"
     },
@@ -1192,6 +1320,14 @@
     },
     "designQuality": {
       "title": "设计质量评分",
+      "open": "设计质量评分",
+      "pageTitle": "设计质量评分",
+      "backToPreview": "返回预览页",
+      "totalScore": "总分",
+      "issues": "问题",
+      "suggestions": "建议",
+      "noIssues": "暂无问题",
+      "noSuggestions": "暂无建议",
       "repairStatus": "自动修复",
       "layoutCandidates": "候选版式",
       "dimensions": {
@@ -1207,6 +1343,11 @@
         "failed": "修复失败，保留最佳版本",
         "still-low": "已修复但仍需复核"
       }
+    },
+    "selectedElement": {
+      "title": "选中元素",
+      "content": "内容",
+      "empty": "点击画布中的元素后可编辑内容与位置。"
     },
     "elementTypes": {
       "text": "文字",

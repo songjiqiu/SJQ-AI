@@ -9,7 +9,6 @@ import {
   Gauge,
   GripVertical,
   Image as ImageIcon,
-  LayoutTemplate,
   Pause,
   Play,
   Plus,
@@ -20,6 +19,7 @@ import {
   SlidersHorizontal,
   Trash2,
   Type,
+  X,
   Upload
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -27,6 +27,13 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
+import { resolveSlideContentBlockBindings } from "@/lib/ai-deck/content-block-bindings";
 import type {
   GeneratedDeckResult,
   GeneratedSlideResult,
@@ -34,6 +41,15 @@ import type {
   SlideElement,
   UnifiedVisualSpec
 } from "@/lib/ai-deck/schema";
+import {
+  extractPaletteRoleHexColors,
+  normalizeHexColor,
+  resolveSlideVisualColors,
+  sanitizeColorRoleText,
+  stripHexColorsFromText,
+  type SlideVisualColors
+} from "@/lib/ai-deck/visual-colors";
+import { deckPageCountMax } from "@/lib/deck-input/schema";
 import type { DeckOutlineDraft } from "@/lib/deck-outline/schema";
 import { cn } from "@/lib/utils";
 
@@ -55,6 +71,7 @@ type DeckPreviewScoreItem = {
   label: string;
   score: number;
   summary: string;
+  testId: string;
 };
 
 type DeckPreviewProgress = {
@@ -70,6 +87,242 @@ const boundsFieldLabels = {
   x: "X",
   y: "Y"
 } as const satisfies Record<keyof SlideElement["bounds"], string>;
+
+const imageIllustrationRuleFields = [
+  "style",
+  "composition",
+  "background",
+  "consistency"
+] as const satisfies ReadonlyArray<
+  keyof UnifiedVisualSpec["imageIllustrationRules"]
+>;
+
+const colorRolePreviewFields = [
+  "background",
+  "surface",
+  "titleText",
+  "bodyText",
+  "accent",
+  "highlight",
+  "chart",
+  "decorative",
+  "borderDivider"
+] as const satisfies ReadonlyArray<
+  Exclude<keyof UnifiedVisualSpec["colorRoles"], "contrastRequirement">
+>;
+
+const typographyScaleFields = [
+  "coverTitle",
+  "coverSubtitle",
+  "pageTitle",
+  "sectionTitle",
+  "body",
+  "annotation",
+  "chartLabel",
+  "iconLabel"
+] as const satisfies ReadonlyArray<
+  keyof UnifiedVisualSpec["typographyRules"]["scale"]
+>;
+
+const compactTypographyScaleFields = [
+  "coverTitle",
+  "pageTitle",
+  "body",
+  "chartLabel"
+] as const satisfies ReadonlyArray<
+  keyof UnifiedVisualSpec["typographyRules"]["scale"]
+>;
+
+const baseColorHexes = ["#000000", "#FFFFFF"] as const;
+
+type ColorSystemPreviewGroup = {
+  colors: Array<{
+    hex: string;
+    name: string;
+    roles: string[];
+    usage: string;
+  }>;
+  key: keyof UnifiedVisualSpec["colorPalette"] | "base";
+  label: string;
+};
+
+type ColorSystemPreviewColor = ColorSystemPreviewGroup["colors"][number];
+
+
+function normalizeVisualRuleText(value: string) {
+  return value.replace(/\s+/g, "").replace(/[。；;，,、/]+$/g, "").toLowerCase();
+}
+
+function dedupeVisualRuleTexts(values: string[]) {
+  const seen = new Set<string>();
+
+  return values.flatMap((value) => {
+    const trimmed = value.trim();
+    const key = normalizeVisualRuleText(trimmed);
+
+    if (!trimmed || seen.has(key)) {
+      return [];
+    }
+
+    seen.add(key);
+    return [trimmed];
+  });
+}
+
+function buildMergedForbiddenRules(
+  visualSpec: Pick<UnifiedVisualSpec, "forbiddenRules" | "forbiddenVisualRules">
+) {
+  return dedupeVisualRuleTexts([
+    ...visualSpec.forbiddenRules,
+    ...visualSpec.forbiddenVisualRules
+  ]);
+}
+
+function buildForbiddenRulePatch(value: string[]) {
+  const merged = dedupeVisualRuleTexts(value).slice(0, 10);
+
+  return {
+    forbiddenRules: merged.slice(0, 6),
+    forbiddenVisualRules: merged
+  };
+}
+
+type RuleTagItem = {
+  key: string;
+  text: string;
+};
+
+function createRuleTagItem(key: string, text: string): RuleTagItem {
+  return {
+    key,
+    text: text.trim()
+  };
+}
+
+type RulePreviewItem = {
+  label: string;
+  value: string;
+};
+
+function createRulePreviewItem(
+  label: string,
+  value: string
+): RulePreviewItem {
+  return {
+    label,
+    value: value.trim()
+  };
+}
+
+function RulePreviewCards({ items }: { items: RulePreviewItem[] }) {
+  return (
+    <div className="grid gap-2 md:grid-cols-2">
+      {items.map((item) => (
+        <OutlinePreviewColorText
+          compact
+          key={item.label}
+          label={item.label}
+          value={item.value}
+        />
+      ))}
+    </div>
+  );
+}
+
+function RuleTagGroupEditor({
+  addPlaceholder,
+  disabled = false,
+  items,
+  label,
+  onAdd,
+  onRemove
+}: {
+  addPlaceholder: string;
+  disabled?: boolean;
+  items: RuleTagItem[];
+  label: string;
+  onAdd: (value: string) => void;
+  onRemove: (key: string) => void;
+}) {
+  const [draftValue, setDraftValue] = useState("");
+
+  const commitDraft = () => {
+    const nextValue = draftValue.trim();
+
+    if (!nextValue) {
+      setDraftValue("");
+      return;
+    }
+
+    onAdd(nextValue);
+    setDraftValue("");
+  };
+
+  return (
+    <label className="grid gap-2">
+      <span className="text-xs font-medium text-muted">{label}</span>
+      <div className="grid gap-2 rounded-lg border border-border bg-background p-3">
+        <div className="flex flex-wrap gap-2">
+          {items.map((item) => (
+            <button
+              className={cn(
+                "inline-flex items-center gap-2 rounded-md border border-border bg-surface px-2 py-1 text-xs font-medium leading-5 text-foreground transition hover:border-accent focus-visible:ring-2 focus-visible:ring-accent-soft",
+                disabled && "cursor-not-allowed opacity-70"
+              )}
+              disabled={disabled}
+              key={item.key}
+              onClick={() => onRemove(item.key)}
+              type="button"
+            >
+              <span>{item.text}</span>
+              <X className="size-3.5" aria-hidden="true" />
+            </button>
+          ))}
+        </div>
+        <input
+          className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent-soft"
+          disabled={disabled}
+          onBlur={commitDraft}
+          onChange={(event) => setDraftValue(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter") {
+              return;
+            }
+
+            event.preventDefault();
+            commitDraft();
+          }}
+          placeholder={addPlaceholder}
+          value={draftValue}
+        />
+      </div>
+    </label>
+  );
+}
+
+function buildLabeledRuleTagItems<
+  T extends Record<string, string>,
+  K extends readonly (Extract<keyof T, string>)[]
+>(
+  fields: K,
+  labelForField: (field: K[number]) => string,
+  values: T
+) {
+  return fields.flatMap((field) => {
+    const value = values[field]?.trim();
+
+    if (!value) {
+      return [];
+    }
+
+    return [
+      createRuleTagItem(
+        String(field),
+        `${labelForField(field)}: ${value}`
+      )
+    ];
+  });
+}
 
 export function WorkbenchStepNav({ current }: { current: 1 | 2 | 3 }) {
   const t = useTranslations("workbench.steps");
@@ -146,7 +399,7 @@ export function OutlineDraftEditor({
   };
   const updateSlide = (
     field: keyof DeckOutlineDraft["slides"][number],
-    value: string | string[]
+    value: DeckOutlineDraft["slides"][number][keyof DeckOutlineDraft["slides"][number]]
   ) => {
     updateDraft({
       slides: draft.slides.map((slide, index) =>
@@ -278,6 +531,13 @@ export function OutlineDraftEditor({
                 }
                 value={slide.bodyPoints}
               />
+              <ContentBlocksEditor
+                label={t("outline.fields.contentBlocks")}
+                onChange={(value) =>
+                  updateSlideAt(index, { field: "contentBlocks", value })
+                }
+                value={slide.contentBlocks}
+              />
               <div className="grid gap-3 md:grid-cols-2">
                 <EditableField
                   label={t("outline.fields.speakerGoal")}
@@ -408,6 +668,11 @@ export function OutlineDraftEditor({
             label={t("outline.fields.bodyPoints")}
             onChange={(value) => updateSlide("bodyPoints", value)}
             value={selectedSlide.bodyPoints}
+          />
+          <ContentBlocksEditor
+            label={t("outline.fields.contentBlocks")}
+            onChange={(value) => updateSlide("contentBlocks", value)}
+            value={selectedSlide.contentBlocks}
           />
           <EditableField
             label={t("outline.fields.speakerGoal")}
@@ -544,6 +809,9 @@ export function OutlineDraftPreview({ draft }: { draft: DeckOutlineDraft }) {
               </li>
             ))}
           </ul>
+          <div className="mt-5">
+            <OutlinePreviewContentBlocks slide={slide} />
+          </div>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             <OutlinePreviewNote
               label={t("outline.fields.speakerGoal")}
@@ -578,20 +846,24 @@ export function DeckPreviewScoreStrip({
   const t = useTranslations("workbench");
 
   return (
-    <div className={cn("grid gap-2 sm:grid-cols-2", className)}>
-      <CompactScorePanel
-        icon={<ShieldCheck className="size-4" aria-hidden="true" />}
-        label={t("review.title")}
-        score={deck.contentReview.score}
-        summary={deck.contentReview.summary}
-      />
-      <CompactScorePanel
-        icon={<Gauge className="size-4" aria-hidden="true" />}
-        label={t("consistency.title")}
-        score={deck.consistencyReport.score}
-        summary={deck.consistencyReport.summary}
-      />
-    </div>
+    <TooltipProvider delayDuration={0}>
+      <div className={cn("grid gap-2 sm:grid-cols-2", className)}>
+        <CompactScorePanel
+          icon={<ShieldCheck className="size-4" aria-hidden="true" />}
+          label={t("review.title")}
+          score={deck.contentReview.score}
+          summary={deck.contentReview.summary}
+          testId="deck-preview-score-card-review"
+        />
+        <CompactScorePanel
+          icon={<Gauge className="size-4" aria-hidden="true" />}
+          label={t("consistency.title")}
+          score={deck.consistencyReport.score}
+          summary={deck.consistencyReport.summary}
+          testId="deck-preview-score-card-consistency"
+        />
+      </div>
+    </TooltipProvider>
   );
 }
 
@@ -743,7 +1015,7 @@ export function DeckPreview({
             variant="secondary"
           >
             <Plus className="size-4" aria-hidden="true" />
-            新增一页
+            {t("actions.addSlide")}
           </Button>
           <Button
             disabled={isGenerating}
@@ -752,7 +1024,7 @@ export function DeckPreview({
             variant="secondary"
           >
             <RefreshCw className="size-4" aria-hidden="true" />
-            换模板
+            {t("actions.changeTemplate")}
           </Button>
           <Button
             onClick={() => setIsMotionPlaying((value) => !value)}
@@ -772,7 +1044,7 @@ export function DeckPreview({
             type="button"
           >
             <Save className="size-4" aria-hidden="true" />
-            保存当前页
+            {t("actions.saveCurrentSlide")}
           </Button>
           {editableDeck.pptxUrl ? (
             <a
@@ -815,6 +1087,7 @@ export function DeckPreview({
                   compact
                   motionEnabled={false}
                   slide={slide}
+                  unifiedVisualSpec={editableDeck.unifiedVisualSpec}
                 />
                 <span className="text-center text-xs font-medium text-muted">
                   {t("preview.slideLabel", { index: slide.index })}
@@ -834,35 +1107,40 @@ export function DeckPreview({
                 onSelectElement={setSelectedElementId}
                 selectedElementId={selectedElementId}
                 slide={selectedSlide}
+                unifiedVisualSpec={editableDeck.unifiedVisualSpec}
               />
             ) : null}
           </div>
 
-          <div className="grid min-h-0 items-end">
+          <div className="grid min-h-0 overflow-hidden">
             {selectedSlide ? (
-              <SlideMetaPanel
-                selectedElementId={selectedElementId}
-                slide={selectedSlide}
-              />
+              <div className="grid min-h-0 content-start gap-3 overflow-y-auto pr-1">
+                <SlideSelectedElementEditor
+                  deck={editableDeck}
+                  disabled={isGenerating}
+                  onDeleteElement={deleteElement}
+                  onElementChange={updateElement}
+                  onSlideChange={(slide) => updateSlide(slide)}
+                  selectedElement={selectedElement}
+                  selectedSlide={selectedSlide}
+                />
+                <SlideMetaPanel
+                  selectedElementId={selectedElementId}
+                  slide={selectedSlide}
+                />
+              </div>
             ) : null}
           </div>
         </div>
 
-        <aside className="grid min-h-0 min-w-0 content-start gap-4 overflow-y-auto overflow-x-hidden border-t border-border bg-background p-4 xl:border-l xl:border-t-0">
+        <aside className="grid min-h-0 min-w-0 overflow-hidden border-t border-border bg-background p-4 xl:border-l xl:border-t-0">
           {selectedSlide ? (
             <SlideEditingPanel
-              deck={editableDeck}
-              onDeleteElement={deleteElement}
+              onSelectElement={setSelectedElementId}
               onRegenerate={() => void regenerateCurrentSlide()}
               onSlideChange={(slide) => updateSlide(slide)}
-              onVisualSpecChange={(visualSpec) =>
-                setEditableDeck((value) => ({
-                  ...value,
-                  unifiedVisualSpec: visualSpec
-                }))
-              }
-              selectedElement={selectedElement}
               disabled={isGenerating}
+              selectedElementId={selectedElementId}
               selectedSlide={selectedSlide}
             />
           ) : null}
@@ -906,6 +1184,27 @@ export function DeckPreview({
         : selectedSlide.imageLayerRequests
     });
     setSelectedElementId(null);
+  }
+
+  function updateElement(
+    elementId: string,
+    patch: Partial<SlideElement>
+  ) {
+    if (!selectedSlide) {
+      return;
+    }
+
+    updateSlide({
+      ...selectedSlide,
+      elements: selectedSlide.elements.map((element) =>
+        element.id === elementId
+          ? {
+              ...element,
+              ...patch
+            }
+          : element
+      )
+    });
   }
 
   async function saveCurrentSlide() {
@@ -983,15 +1282,42 @@ export function DeckPreview({
         slideId,
         index: nextIndex,
         title: "新增页面",
+        pageType: "content",
         subtitle: "",
         bodyPoints: ["输入本页要点"],
+        contentBlocks: [
+          {
+            blockType: "title",
+            content: "新增页面",
+            priority: 1,
+            sourceIds: [],
+            text: "新增页面",
+            type: "heading"
+          },
+          {
+            blockType: "conclusion",
+            content: "补充本页核心表达句",
+            priority: 1,
+            sourceIds: [],
+            text: "补充本页核心表达句",
+            type: "conclusion"
+          },
+          {
+            blockType: "body",
+            content: "输入本页要点",
+            priority: 2,
+            sourceIds: [],
+            text: "输入本页要点",
+            type: "text"
+          }
+        ],
         speakerGoal: "补充本页演讲目标",
         visualIntent: "补充本页视觉意图",
         coreStatement: "补充本页核心表达句",
         narrativeRole: "argument",
         contentLayers: {
-          primary: ["补充本页核心表达句"],
-          supporting: ["输入本页要点"],
+          primary: [0, 1],
+          supporting: [2],
           supplementary: []
         },
         slideTransition: {
@@ -1120,37 +1446,94 @@ function OutlinePreviewNote({
 }
 
 function OutlinePreviewColorText({
+  compact = false,
   label,
   value
 }: {
+  compact?: boolean;
   label: string;
   value: string;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-background/80 p-3">
+    <div className={cn(
+      "rounded-lg border border-border bg-background/80",
+      compact ? "p-2.5" : "p-3"
+    )}>
       <div className="mb-1 text-xs font-medium text-muted">{label}</div>
-      <ColorizedText value={value} />
+      <ColorizedText compact={compact} value={value} />
     </div>
   );
 }
 
 function OutlinePreviewList({
+  compact = false,
   label,
   value
 }: {
+  compact?: boolean;
   label: string;
   value: string[];
 }) {
   return (
     <div>
-      <div className="mb-2 text-xs font-medium text-muted">{label}</div>
-      <div className="flex flex-wrap gap-2">
-        {value.map((item) => (
-          <ColorToken key={item} value={item} />
+      <div className={cn("text-xs font-medium text-muted", compact ? "mb-1" : "mb-2")}>
+        {label}
+      </div>
+      <div className={cn("flex flex-wrap", compact ? "gap-1.5" : "gap-2")}>
+        {value.map((item, index) => (
+          <ColorToken
+            key={`${item}-${index}`}
+            value={item}
+            variant={compact ? "compact" : "inline"}
+          />
         ))}
       </div>
     </div>
   );
+}
+
+function OutlinePreviewContentBlocks({ slide }: { slide: SlideContent }) {
+  const t = useTranslations("workbench");
+
+  return (
+    <div className="rounded-lg border border-border bg-background/70 p-3">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <div className="text-xs font-medium text-muted">
+          {t("outline.fields.contentBlocks")}
+        </div>
+        <span className="rounded-md bg-surface-muted px-2 py-1 text-[11px] font-medium text-muted">
+          JSON
+        </span>
+      </div>
+      <div className="grid gap-2 md:grid-cols-2">
+        {slide.contentBlocks.map((block, index) => (
+          <div
+            className="rounded-md border border-border bg-surface px-3 py-2 text-xs leading-5 text-muted"
+            key={`${slide.slideId}-block-${index}`}
+          >
+            <div className="mb-1 flex min-w-0 items-center gap-2 font-medium text-foreground">
+              <span className="rounded bg-accent-soft px-1.5 py-0.5 text-[11px] text-accent-strong">
+                {contentBlockTypeLabel(block)}
+              </span>
+              <span className="text-muted">P{block.priority}</span>
+            </div>
+            <div>{contentBlockText(block)}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function resolveContentLayerTexts(
+  slide: SlideContent,
+  group: keyof SlideContent["contentLayers"]
+) {
+  return slide.contentLayers[group].flatMap((index) => {
+    const block = slide.contentBlocks[index];
+
+    return block ? [contentBlockText(block)] : [];
+  });
 }
 
 function SlideAdvancedPreview({ slide }: { slide: SlideContent }) {
@@ -1179,15 +1562,15 @@ function SlideAdvancedPreview({ slide }: { slide: SlideContent }) {
       <div className="grid gap-3 md:grid-cols-3">
         <OutlinePreviewList
           label={t("outline.fields.contentLayersPrimary")}
-          value={slide.contentLayers.primary}
+          value={resolveContentLayerTexts(slide, "primary")}
         />
         <OutlinePreviewList
           label={t("outline.fields.contentLayersSupporting")}
-          value={slide.contentLayers.supporting}
+          value={resolveContentLayerTexts(slide, "supporting")}
         />
         <OutlinePreviewList
           label={t("outline.fields.contentLayersSupplementary")}
-          value={slide.contentLayers.supplementary}
+          value={resolveContentLayerTexts(slide, "supplementary")}
         />
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -1220,81 +1603,135 @@ function SlideAdvancedPreview({ slide }: { slide: SlideContent }) {
   );
 }
 
-function VisualSpecPreview({
+export function VisualSpecPreview({
   visualSpec
 }: {
   visualSpec: DeckOutlineDraft["unifiedVisualSpec"];
 }) {
   const t = useTranslations("workbench");
+  const mergedForbiddenRules = buildMergedForbiddenRules(visualSpec);
+  const imageRuleItems = [
+    createRulePreviewItem(
+      t("outline.fields.imageType"),
+      visualSpec.imageRules.imageType
+    ),
+    createRulePreviewItem(
+      t("outline.fields.aspectRatio"),
+      visualSpec.imageRules.aspectRatio
+    ),
+    createRulePreviewItem(
+      t("outline.fields.imageStyle"),
+      visualSpec.imageStyle
+    ),
+    createRulePreviewItem(
+      t("outline.fields.imagePromptStyle"),
+      visualSpec.imageRules.imagePromptStyle
+    ),
+    createRulePreviewItem(
+      t("outline.fields.backgroundAvoidsHighContrastTextArea"),
+      visualSpec.imageRules.backgroundAvoidsHighContrastTextArea
+        ? t("outline.values.yes")
+        : t("outline.values.no")
+    ),
+    createRulePreviewItem(
+      t("outline.fields.subjectAvoidsTitleArea"),
+      visualSpec.imageRules.subjectAvoidsTitleArea
+        ? t("outline.values.yes")
+        : t("outline.values.no")
+    ),
+    createRulePreviewItem(
+      t("outline.fields.usageNotes"),
+      dedupeVisualRuleTexts(visualSpec.imageRules.usageNotes).join(" / ")
+    ),
+    createRulePreviewItem(
+      t("outline.fields.imageForbiddenItems"),
+      dedupeVisualRuleTexts(visualSpec.imageRules.forbiddenItems).join(" / ")
+    ),
+    ...imageIllustrationRuleFields.map((field) =>
+      createRulePreviewItem(
+        t(`outline.fields.${field}`),
+        visualSpec.imageIllustrationRules[field]
+      )
+    )
+  ];
+  const consistencyRuleItems = dedupeVisualRuleTexts(
+    visualSpec.consistencyRules
+  ).map((item, index) =>
+    createRulePreviewItem(
+      t("outline.fields.ruleNumber", {
+        number: index + 1
+      }),
+      item
+    )
+  );
+  const typographySummary = [
+    `${t("outline.fields.defaultFontSize")}: ${visualSpec.typographyRules.defaultFontSize}`,
+    `${t("outline.fields.minFontSize")}: ${visualSpec.typographyRules.minFontSize}`,
+    `${t("outline.fields.maxLines")}: ${visualSpec.typographyRules.maxLines}`,
+    `${t("outline.fields.lineHeight")}: ${visualSpec.typographyRules.lineHeight}`
+  ].join(" / ");
 
   return (
-    <div className="mt-4 grid gap-4">
+    <div className="mt-3 grid gap-3">
       <VisualSpecSection title={t("outline.fields.basicInfo")}>
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-2 md:grid-cols-2">
           <OutlinePreviewColorText
+            compact
             label={t("outline.fields.themeName")}
             value={visualSpec.themeName}
           />
           <OutlinePreviewColorText
+            compact
             label={t("outline.fields.visualStyle")}
             value={visualSpec.visualStyle}
+          />
+          <OutlinePreviewColorText
+            compact
+            label={t("outline.fields.designIntent")}
+            value={visualSpec.designIntent}
+          />
+          <OutlinePreviewColorText
+            compact
+            label={t("outline.fields.usageConvenience")}
+            value={visualSpec.usageConvenience}
           />
         </div>
       </VisualSpecSection>
 
+      <PptTypeVisualTonePreview visualSpec={visualSpec} />
+
       <VisualSpecSection title={t("outline.fields.colorSystem")}>
-        <ColorPalettePreview colors={visualSpec.colorPalette} />
-        <div className="grid gap-3 md:grid-cols-2">
-          {(
-            [
-              "background",
-              "surface",
-              "titleText",
-              "bodyText",
-              "accent",
-              "highlight",
-              "chart",
-              "decorative",
-              "contrastRequirement"
-            ] as const
-          ).map((field) => (
-            <OutlinePreviewColorText
-              key={field}
-              label={t(`outline.fields.${field}`)}
-              value={visualSpec.colorRoles[field]}
-            />
-          ))}
-        </div>
+        <ColorSystemPreview visualSpec={visualSpec} />
       </VisualSpecSection>
 
       <VisualSpecSection title={t("outline.fields.layoutTypography")}>
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-2 md:grid-cols-2">
           <OutlinePreviewColorText
+            compact
             label={t("outline.fields.typography")}
             value={visualSpec.typography}
           />
           <OutlinePreviewColorText
+            compact
             label={t("outline.fields.pageSpec")}
             value={visualSpec.pageSpec.layoutInstruction}
           />
           <OutlinePreviewColorText
+            compact
             label={t("outline.fields.typographyRules")}
-            value={[
-              `${t("outline.fields.defaultFontSize")}: ${visualSpec.typographyRules.defaultFontSize}`,
-              `${t("outline.fields.minFontSize")}: ${visualSpec.typographyRules.minFontSize}`,
-              `${t("outline.fields.maxLines")}: ${visualSpec.typographyRules.maxLines}`,
-              `${t("outline.fields.lineHeight")}: ${visualSpec.typographyRules.lineHeight}`
-            ].join(" / ")}
+            value={typographySummary}
           />
           <OutlinePreviewList
+            compact
             label={t("outline.fields.fontFallback")}
             value={visualSpec.typographyRules.fontFallback}
           />
-          {(["coverTitle", "pageTitle", "body", "annotation", "chartLabel"] as const).map((field) => {
+          {compactTypographyScaleFields.map((field) => {
             const item = visualSpec.typographyRules.scale[field];
 
             return (
               <OutlinePreviewColorText
+                compact
                 key={field}
                 label={t(`outline.fields.${field}`)}
                 value={`${item.fontSize}px / ${item.fontWeight} / ${item.lineHeight} · ${item.usage}`}
@@ -1302,56 +1739,46 @@ function VisualSpecPreview({
             );
           })}
         </div>
+        <details className="rounded-lg border border-border bg-background/70 p-2.5">
+          <summary className="cursor-pointer text-xs font-semibold text-foreground">
+            {t("outline.fields.fullTypographyScale", {
+              count: typographyScaleFields.length
+            })}
+          </summary>
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            {typographyScaleFields.map((field) => {
+              const item = visualSpec.typographyRules.scale[field];
+
+              return (
+                <OutlinePreviewColorText
+                  compact
+                  key={field}
+                  label={t(`outline.fields.${field}`)}
+                  value={`${item.fontSize}px / ${item.fontWeight} / ${item.lineHeight} · ${item.usage}`}
+                />
+              );
+            })}
+          </div>
+        </details>
       </VisualSpecSection>
 
       <VisualSpecSection title={t("outline.fields.imageRules")}>
-        <div className="grid gap-3 md:grid-cols-2">
-          <OutlinePreviewColorText
-            label={t("outline.fields.imageStyle")}
-            value={visualSpec.imageStyle}
-          />
-          <OutlinePreviewList
-            label={t("outline.fields.usageNotes")}
-            value={[
-              `${t("outline.fields.backgroundAvoidsHighContrastTextArea")}: ${
-                visualSpec.imageRules.backgroundAvoidsHighContrastTextArea
-                  ? t("outline.values.yes")
-                  : t("outline.values.no")
-              }`,
-              `${t("outline.fields.subjectAvoidsTitleArea")}: ${
-                visualSpec.imageRules.subjectAvoidsTitleArea
-                  ? t("outline.values.yes")
-                  : t("outline.values.no")
-              }`,
-              ...visualSpec.imageRules.usageNotes
-            ]}
-          />
-        </div>
+        <RulePreviewCards items={imageRuleItems} />
       </VisualSpecSection>
 
       <VisualSpecSection title={t("outline.fields.rulesList")}>
-        <div className="grid gap-3 md:grid-cols-3">
-          <OutlinePreviewList
-            label={t("outline.fields.layoutRules")}
-            value={visualSpec.layoutRules}
-          />
-          <OutlinePreviewList
-            label={t("outline.fields.consistencyRules")}
-            value={visualSpec.consistencyRules}
-          />
-          <OutlinePreviewList
-            label={t("outline.fields.forbiddenRules")}
-            value={visualSpec.forbiddenRules}
-          />
-        </div>
+        <RulePreviewCards items={consistencyRuleItems} />
       </VisualSpecSection>
 
-      <AdvancedVisualSpecPreview visualSpec={visualSpec} />
+      <AdvancedVisualSpecPreview
+        forbiddenRules={mergedForbiddenRules}
+        visualSpec={visualSpec}
+      />
     </div>
   );
 }
 
-function AdvancedVisualSpecPreview({
+function PptTypeVisualTonePreview({
   visualSpec
 }: {
   visualSpec: UnifiedVisualSpec;
@@ -1359,63 +1786,104 @@ function AdvancedVisualSpecPreview({
   const t = useTranslations("workbench");
 
   return (
-    <>
-      <VisualSpecSection title={t("outline.fields.pptTypeVisualTone")}>
-        <div className="grid gap-3 md:grid-cols-2">
-          <OutlinePreviewColorText
-            label={t("outline.fields.deckType")}
-            value={visualSpec.pptTypeVisualTone.deckTypeName}
-          />
-          <OutlinePreviewColorText
-            label={t("outline.fields.recommendedTone")}
-            value={visualSpec.pptTypeVisualTone.recommendedTone}
-          />
-          <OutlinePreviewList
-            label={t("outline.fields.visualKeywords")}
-            value={visualSpec.pptTypeVisualTone.visualKeywords}
-          />
-        </div>
-      </VisualSpecSection>
-
-      <VisualSpecSection title={t("outline.fields.advancedRules")}>
-        <div className="grid gap-3 md:grid-cols-2">
-          <OutlinePreviewColorText
-            label={t("outline.fields.informationDensityRules")}
-            value={[
-              `${t("outline.fields.defaultLevel")}: ${visualSpec.informationDensityRules.defaultLevel}`,
-              visualSpec.informationDensityRules.businessReport,
-              visualSpec.informationDensityRules.trainingCourse,
-              visualSpec.informationDensityRules.brandMarketing,
-              visualSpec.informationDensityRules.researchReport
-            ].join(" / ")}
-          />
-          <OutlinePreviewColorText
-            label={t("outline.fields.spacingRules")}
-            value={Object.values(visualSpec.spacingRules).join(" / ")}
-          />
-          <OutlinePreviewColorText
-            label={t("outline.fields.chartVisualRules")}
-            value={Object.values(visualSpec.chartVisualRules).join(" / ")}
-          />
-          <OutlinePreviewColorText
-            label={t("outline.fields.imageIllustrationRules")}
-            value={Object.values(visualSpec.imageIllustrationRules).join(" / ")}
-          />
-          <OutlinePreviewColorText
-            label={t("outline.fields.iconStyleRules")}
-            value={`${visualSpec.iconStyleRules.style} / ${visualSpec.iconStyleRules.stroke} / ${visualSpec.iconStyleRules.usage} / ${visualSpec.iconStyleRules.consistency}`}
-          />
-          <OutlinePreviewColorText
-            label={t("outline.fields.emphasisRules")}
-            value={Object.values(visualSpec.emphasisRules).join(" / ")}
-          />
-        </div>
-        <OutlinePreviewList
-          label={t("outline.fields.forbiddenVisualRules")}
-          value={visualSpec.forbiddenVisualRules}
+    <VisualSpecSection title={t("outline.fields.pptTypeVisualTone")}>
+      <div className="grid gap-2 md:grid-cols-3">
+        <OutlinePreviewColorText
+          compact
+          label={t("outline.fields.deckType")}
+          value={visualSpec.pptTypeVisualTone.deckTypeName}
         />
-      </VisualSpecSection>
-    </>
+        <OutlinePreviewColorText
+          compact
+          label={t("outline.fields.recommendedTone")}
+          value={visualSpec.pptTypeVisualTone.recommendedTone}
+        />
+        <OutlinePreviewList
+          compact
+          label={t("outline.fields.visualKeywords")}
+          value={visualSpec.pptTypeVisualTone.visualKeywords}
+        />
+      </div>
+    </VisualSpecSection>
+  );
+}
+
+function AdvancedVisualSpecPreview({
+  forbiddenRules,
+  visualSpec
+}: {
+  forbiddenRules: string[];
+  visualSpec: UnifiedVisualSpec;
+}) {
+  const t = useTranslations("workbench");
+  const advancedRuleGroups = [
+    {
+      label: t("outline.fields.informationDensityRules"),
+      values: [
+        `${t("outline.fields.defaultLevel")}: ${visualSpec.informationDensityRules.defaultLevel}`,
+        visualSpec.informationDensityRules.businessReport,
+        visualSpec.informationDensityRules.trainingCourse,
+        visualSpec.informationDensityRules.brandMarketing,
+        visualSpec.informationDensityRules.researchReport
+      ]
+    },
+    {
+      label: t("outline.fields.layoutRules"),
+      values: Object.values(visualSpec.layoutRules)
+    },
+    {
+      label: t("outline.fields.chartVisualRules"),
+      values: Object.values(visualSpec.chartVisualRules)
+    },
+    {
+      label: t("outline.fields.iconStyleRules"),
+      values: [
+        visualSpec.iconStyleRules.style,
+        visualSpec.iconStyleRules.stroke,
+        visualSpec.iconStyleRules.usage,
+        visualSpec.iconStyleRules.consistency
+      ]
+    },
+    {
+      label: t("outline.fields.componentRules"),
+      values: Object.values(visualSpec.componentRules)
+    },
+    {
+      label: t("outline.fields.transparencyRules"),
+      values: visualSpec.transparencyRules.map(
+        (rule) => `${rule.baseHex} / ${rule.opacity} · ${rule.usage}`
+      )
+    },
+    {
+      label: t("outline.fields.emphasisRules"),
+      values: Object.values(visualSpec.emphasisRules)
+    },
+    {
+      label: t("outline.fields.forbiddenRulePreview"),
+      values: forbiddenRules
+    }
+  ];
+  const advancedRuleCount = advancedRuleGroups.reduce(
+    (total, group) => total + group.values.length,
+    0
+  );
+
+  return (
+    <details className="rounded-lg border border-border bg-surface p-3">
+      <summary className="cursor-pointer text-sm font-semibold text-foreground">
+        {t("outline.fields.advancedRulesSummary", {
+          count: advancedRuleCount,
+          groups: advancedRuleGroups.length
+        })}
+      </summary>
+      <div className="mt-3 grid gap-3">
+        <RulePreviewCards
+          items={advancedRuleGroups.map((group) =>
+            createRulePreviewItem(group.label, group.values.join(" / "))
+          )}
+        />
+      </div>
+    </details>
   );
 }
 
@@ -1434,37 +1902,420 @@ function VisualSpecSection({
   );
 }
 
-function ColorPalettePreview({ colors }: { colors: string[] }) {
+function PptTypeVisualToneEditor({
+  disabled = false,
+  onChange,
+  visualSpec
+}: {
+  disabled?: boolean;
+  onChange: (visualSpec: DeckOutlineDraft["unifiedVisualSpec"]) => void;
+  visualSpec: DeckOutlineDraft["unifiedVisualSpec"];
+}) {
   const t = useTranslations("workbench");
 
   return (
-    <div>
-      <div className="mb-2 text-xs font-medium text-muted">
-        {t("outline.fields.colorPalette")}
+    <VisualSpecSection title={t("outline.fields.pptTypeVisualTone")}>
+      <div className="grid gap-3 md:grid-cols-2">
+        <EditableField
+          disabled
+          label={t("outline.fields.deckType")}
+          onChange={() => undefined}
+          value={visualSpec.pptTypeVisualTone.deckTypeName}
+        />
+        <EditableField
+          disabled={disabled}
+          label={t("outline.fields.recommendedTone")}
+          onChange={(value) =>
+            onChange({
+              ...visualSpec,
+              pptTypeVisualTone: {
+                ...visualSpec.pptTypeVisualTone,
+                recommendedTone: value
+              }
+            })
+          }
+          value={visualSpec.pptTypeVisualTone.recommendedTone}
+        />
+        <ListEditor
+          disabled={disabled}
+          label={t("outline.fields.visualKeywords")}
+          onChange={(value) =>
+            onChange({
+              ...visualSpec,
+              pptTypeVisualTone: {
+                ...visualSpec.pptTypeVisualTone,
+                visualKeywords: value
+              }
+            })
+          }
+          value={visualSpec.pptTypeVisualTone.visualKeywords}
+        />
       </div>
-      <div className="flex flex-wrap gap-2">
-        {colors.map((color) => (
-          <ColorToken key={color} value={color} variant="palette" />
-        ))}
+    </VisualSpecSection>
+  );
+}
+
+function ColorSystemPreview({
+  visualSpec
+}: {
+  visualSpec: Pick<UnifiedVisualSpec, "colorPalette" | "colorRoles">;
+}) {
+  const t = useTranslations("workbench");
+  const groups = buildColorSystemPreviewGroups(visualSpec, t);
+
+  return (
+    <div className="grid gap-3">
+      <div>
+        <div className="mb-1.5 text-xs font-medium text-muted">
+          {t("outline.fields.colorPaletteWithRoles")}
+        </div>
+        <div className="grid gap-2">
+          {groups.map((group) => (
+            <div className="grid gap-1.5" key={group.key}>
+              <div className="text-xs font-medium text-muted">
+                {group.label}
+              </div>
+              <div className="grid gap-1.5 md:grid-cols-2 lg:grid-cols-3">
+                {group.colors.map((color) => (
+                  <ColorSystemColorCard
+                    color={color}
+                    key={`${group.key}-${color.hex}`}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="rounded-lg border border-border bg-background/80 p-2.5">
+        <div className="mb-1 text-xs font-medium text-muted">
+          {t("outline.fields.contrastRequirement")}
+        </div>
+        <ColorizedText compact value={visualSpec.colorRoles.contrastRequirement} />
       </div>
     </div>
   );
 }
 
-function ColorizedText({ value }: { value: string }) {
-  const colors = extractHexColors(value);
+function ColorSystemColorCard({
+  color
+}: {
+  color: ColorSystemPreviewColor;
+}) {
+  const t = useTranslations("workbench");
 
   return (
-    <div className="grid gap-2">
-      {colors.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {colors.map((color) => (
-            <ColorToken key={color} value={color} />
+    <div
+      className="grid gap-1.5 rounded-lg border border-border bg-background/80 p-2.5"
+      data-color-system-card={color.hex}
+    >
+      <div className="flex min-w-0 items-center gap-2">
+        <span
+          aria-hidden="true"
+          className="size-3 shrink-0 rounded-full border border-border"
+          data-color-token={color.hex}
+          style={{ backgroundColor: color.hex }}
+        />
+        <span className="min-w-0 truncate text-xs font-semibold text-foreground">
+          {color.name}
+        </span>
+        <span className="shrink-0 rounded-md border border-border bg-surface px-1.5 py-0.5 text-xs font-medium leading-4 text-foreground">
+          {color.hex}
+        </span>
+      </div>
+      <p className="line-clamp-2 text-xs leading-5 text-foreground">
+        {color.usage}
+      </p>
+      {color.roles.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs font-medium text-muted">
+            {t("outline.fields.relatedRoles")}
+          </span>
+          {color.roles.map((role) => (
+            <span
+              className="rounded-md border border-border bg-surface px-1.5 py-0.5 text-xs font-medium leading-4 text-foreground"
+              key={role}
+            >
+              {role}
+            </span>
           ))}
         </div>
       ) : null}
-      <p className="text-sm leading-6 text-foreground">{value}</p>
     </div>
+  );
+}
+
+function buildColorSystemPreviewGroups(
+  visualSpec: Pick<UnifiedVisualSpec, "colorPalette" | "colorRoles">,
+  t: ReturnType<typeof useTranslations<"workbench">>
+): ColorSystemPreviewGroup[] {
+  const roleLabelsByHex = buildColorRoleLabelsByHex(visualSpec, t);
+  const paletteHexes = new Set<string>();
+  const groups: ColorSystemPreviewGroup[] = getPaletteGroups(
+    visualSpec.colorPalette,
+    t
+  ).map((group) => ({
+    ...group,
+    colors: group.colors.map((color) => {
+      const hex = normalizeHexColor(color.hex);
+
+      paletteHexes.add(hex);
+
+      return {
+        hex,
+        name: color.name,
+        roles: roleLabelsByHex.get(hex) ?? [],
+        usage: color.usage
+      };
+    })
+  }));
+  const baseColors = baseColorHexes
+    .filter((hex) => !paletteHexes.has(hex) && roleLabelsByHex.has(hex))
+    .map((hex) => ({
+      hex,
+      name: hex,
+      roles: roleLabelsByHex.get(hex) ?? [],
+      usage: t("outline.values.baseColorUsage")
+    }));
+
+  if (baseColors.length > 0) {
+    groups.push({
+      colors: baseColors,
+      key: "base",
+      label: t("outline.paletteGroups.base")
+    });
+  }
+
+  return groups;
+}
+
+function buildColorRoleLabelsByHex(
+  visualSpec: Pick<UnifiedVisualSpec, "colorPalette" | "colorRoles">,
+  t: ReturnType<typeof useTranslations<"workbench">>
+) {
+  const roleLabelsByHex = new Map<string, string[]>();
+
+  colorRolePreviewFields.forEach((field) => {
+    extractPaletteRoleHexColors(
+      visualSpec.colorRoles[field],
+      visualSpec.colorPalette
+    ).forEach((hex) => {
+      const normalizedHex = normalizeHexColor(hex);
+      const labels = roleLabelsByHex.get(normalizedHex) ?? [];
+      const label = t(`outline.fields.${field}`);
+
+      if (!labels.includes(label)) {
+        roleLabelsByHex.set(normalizedHex, [...labels, label]);
+      }
+    });
+  });
+
+  return roleLabelsByHex;
+}
+
+function ColorPaletteEditor({
+  disabled = false,
+  onChange,
+  value
+}: {
+  disabled?: boolean;
+  onChange: (value: UnifiedVisualSpec["colorPalette"]) => void;
+  value: UnifiedVisualSpec["colorPalette"];
+}) {
+  const t = useTranslations("workbench");
+  const groups = getPaletteGroups(value, t);
+
+  return (
+    <div className="grid gap-3">
+      {groups.map((group) => (
+        <label className="grid gap-2" key={group.key}>
+          <span className="text-xs font-medium text-muted">{group.label}</span>
+          <textarea
+            className="min-h-24 w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-sm leading-6 text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
+            disabled={disabled}
+            onChange={(event) =>
+              onChange({
+                ...value,
+                [group.key]: parsePaletteGroupLines(
+                  event.target.value,
+                  value[group.key]
+                )
+              })
+            }
+            value={value[group.key]
+              .map((color) => `${color.name} | ${color.hex} | ${color.usage}`)
+              .join("\n")}
+          />
+        </label>
+      ))}
+    </div>
+  );
+}
+
+function getPaletteGroups(
+  colors: UnifiedVisualSpec["colorPalette"],
+  t: ReturnType<typeof useTranslations<"workbench">>
+) {
+  return ([
+    ["primary", "outline.paletteGroups.primary"],
+    ["secondary", "outline.paletteGroups.secondary"],
+    ["chart", "outline.paletteGroups.chart"],
+    ["neutral", "outline.paletteGroups.neutral"],
+    ["accent", "outline.paletteGroups.accent"]
+  ] as const).map(([key, labelKey]) => ({
+    colors: colors[key],
+    key,
+    label: t(labelKey)
+  }));
+}
+
+function parsePaletteGroupLines(
+  value: string,
+  fallback: UnifiedVisualSpec["colorPalette"]["primary"]
+) {
+  const parsed = parseLines(value).flatMap((line, index) => {
+    const [namePart, hexPart, usagePart] = line
+      .split("|")
+      .map((item) => item.trim());
+    const hex = normalizePaletteInputHex(hexPart ?? namePart);
+    const fallbackItem = fallback[index] ?? fallback[0];
+
+    if (!hex) {
+      return [];
+    }
+
+    return [
+      {
+        hex,
+        name: namePart && namePart !== hexPart ? namePart : fallbackItem.name,
+        usage: usagePart || fallbackItem.usage
+      }
+    ];
+  });
+
+  return parsed.length > 0 ? parsed : fallback;
+}
+
+function normalizePaletteInputHex(value: string | undefined) {
+  const match = value?.match(/#?(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/)?.[0];
+
+  return match ? normalizeHexColor(match.startsWith("#") ? match : `#${match}`) : "";
+}
+
+function sanitizeVisualSpecColorRoles(
+  visualSpec: UnifiedVisualSpec
+): UnifiedVisualSpec {
+  return {
+    ...visualSpec,
+    colorRoles: {
+      ...visualSpec.colorRoles,
+      accent: sanitizeVisualSpecColorRole(visualSpec, "accent"),
+      background: sanitizeVisualSpecColorRole(visualSpec, "background"),
+      bodyText: sanitizeVisualSpecColorRole(visualSpec, "bodyText"),
+      borderDivider: sanitizeVisualSpecColorRole(visualSpec, "borderDivider"),
+      chart: sanitizeVisualSpecColorRole(visualSpec, "chart"),
+      decorative: sanitizeVisualSpecColorRole(visualSpec, "decorative"),
+      highlight: sanitizeVisualSpecColorRole(visualSpec, "highlight"),
+      surface: sanitizeVisualSpecColorRole(visualSpec, "surface"),
+      titleText: sanitizeVisualSpecColorRole(visualSpec, "titleText")
+    }
+  };
+}
+
+function updateVisualSpecColorRole(
+  visualSpec: UnifiedVisualSpec,
+  field: keyof UnifiedVisualSpec["colorRoles"],
+  value: string
+): UnifiedVisualSpec {
+  if (field === "contrastRequirement") {
+    return {
+      ...visualSpec,
+      colorRoles: {
+        ...visualSpec.colorRoles,
+        contrastRequirement: value
+      }
+    };
+  }
+
+  return {
+    ...visualSpec,
+    colorRoles: {
+      ...visualSpec.colorRoles,
+      [field]: sanitizeVisualSpecColorRole(
+        {
+          ...visualSpec,
+          colorRoles: {
+            ...visualSpec.colorRoles,
+            [field]: value
+          }
+        },
+        field
+      )
+    }
+  };
+}
+
+function sanitizeVisualSpecColorRole(
+  visualSpec: UnifiedVisualSpec,
+  field: keyof UnifiedVisualSpec["colorRoles"]
+) {
+  return sanitizeColorRoleText({
+    fallback: visualSpec.colorRoles[field],
+    palette: visualSpec.colorPalette,
+    role: field,
+    value: visualSpec.colorRoles[field]
+  });
+}
+
+function ColorizedText({
+  compact = false,
+  value
+}: {
+  compact?: boolean;
+  value: string;
+}) {
+  const colors = extractHexColors(value);
+
+  return (
+    <div className={cn("grid", compact ? "gap-1.5" : "gap-2")}>
+      {colors.length > 0 ? (
+        <div className={cn("flex flex-wrap", compact ? "gap-1.5" : "gap-2")}>
+          {colors.map((color) => (
+            <ColorToken
+              key={color}
+              value={color}
+              variant={compact ? "compact" : "inline"}
+            />
+          ))}
+        </div>
+      ) : null}
+      <p className={cn(
+        "text-foreground",
+        compact ? "text-xs leading-5" : "text-sm leading-6"
+      )}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function ColorRoleText({
+  palette,
+  value
+}: {
+  palette: UnifiedVisualSpec["colorPalette"];
+  value: string;
+}) {
+  const colors = extractPaletteRoleHexColors(value, palette);
+  const text = stripHexColorsFromText(value) || value;
+
+  return (
+    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-7 text-foreground">
+      <span>{text}</span>
+      {colors.map((color) => (
+        <ColorToken key={color} value={color} />
+      ))}
+    </p>
   );
 }
 
@@ -1473,7 +2324,7 @@ function ColorToken({
   variant = "inline"
 }: {
   value: string;
-  variant?: "inline" | "palette";
+  variant?: "compact" | "inline" | "palette";
 }) {
   const color = extractHexColors(value)[0];
 
@@ -1481,6 +2332,7 @@ function ColorToken({
     <span
       className={cn(
         "inline-flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium leading-5 text-foreground",
+        variant === "compact" && "gap-1.5 px-1.5 py-0.5 leading-4",
         variant === "palette" && "px-2.5 py-1.5"
       )}
       data-color-token={color ?? undefined}
@@ -1488,7 +2340,10 @@ function ColorToken({
       {color ? (
         <span
           aria-hidden="true"
-          className="size-3.5 rounded-full border border-border"
+          className={cn(
+            "rounded-full border border-border",
+            variant === "compact" ? "size-3" : "size-3.5"
+          )}
           style={{ backgroundColor: color }}
         />
       ) : null}
@@ -1685,6 +2540,518 @@ function ListEditor({
   );
 }
 
+function ContentBlocksEditor({
+  disabled = false,
+  label,
+  onChange,
+  value
+}: {
+  disabled?: boolean;
+  label: string;
+  onChange: (value: SlideContent["contentBlocks"]) => void;
+  value: SlideContent["contentBlocks"];
+}) {
+  return (
+    <label className="grid gap-2">
+      <span className="text-xs font-medium text-muted">{label}</span>
+      <textarea
+        className="min-h-32 w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 font-mono text-xs leading-6 text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
+        disabled={disabled}
+        onChange={(event) => onChange(parseContentBlockLines(event.target.value, value))}
+        value={formatContentBlockLines(value)}
+      />
+    </label>
+  );
+}
+
+function ContentLayerEditor({
+  disabled = false,
+  group,
+  label,
+  onChange,
+  slide
+}: {
+  disabled?: boolean;
+  group: keyof SlideContent["contentLayers"];
+  label: string;
+  onChange: (slide: SlideContent) => void;
+  slide: SlideContent;
+}) {
+  return (
+    <label className="grid gap-2">
+      <span className="text-xs font-medium text-muted">{label}</span>
+      <textarea
+        className="min-h-24 w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-sm leading-6 text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
+        disabled={disabled}
+        onChange={(event) =>
+          onChange(updateSlideContentLayerFromText(slide, group, event.target.value))
+        }
+        value={formatContentLayerLines(slide, group)}
+      />
+    </label>
+  );
+}
+
+function formatContentBlockLines(value: SlideContent["contentBlocks"]) {
+  return value
+    .map((block) => {
+      const sourceIds = block.sourceIds?.length
+        ? ` | ${block.sourceIds.join(",")}`
+        : "";
+
+      return `${contentBlockTypeLabel(block)} | ${block.priority} | ${contentBlockText(block)}${sourceIds}`;
+    })
+    .join("\n");
+}
+
+function parseContentBlockLines(
+  value: string,
+  fallback: SlideContent["contentBlocks"]
+): SlideContent["contentBlocks"] {
+  const parsed = value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .flatMap((line, index) => {
+      const [rawType, rawPriority, rawText = "", rawSourceIds = ""] = line
+        .split("|")
+        .map((item) => item.trim());
+      const type = isSemanticContentBlockType(rawType)
+        ? rawType
+        : fallback[index]?.type ?? "text";
+      const blockType = legacyContentBlockTypeForSemanticType(type);
+      const priority = Number(rawPriority);
+      const text = rawText.trim();
+
+      if (text.length < 2) {
+        return [];
+      }
+
+      return [
+        {
+          blockType,
+          content: text.slice(0, 500),
+          priority:
+            Number.isFinite(priority) && priority >= 1 && priority <= 5
+              ? Math.trunc(priority)
+              : fallback[index]?.priority ?? Math.min(5, index + 1),
+          sourceIds: rawSourceIds
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean)
+            .slice(0, 24),
+          text: text.slice(0, 500),
+          type
+        }
+      ];
+    });
+
+  return parsed.length >= 3 ? parsed.slice(0, 12) : fallback;
+}
+
+function formatContentLayerLines(
+  slide: SlideContent,
+  group: keyof SlideContent["contentLayers"]
+) {
+  return slide.contentLayers[group]
+    .flatMap((index) => {
+      const block = slide.contentBlocks[index];
+
+      return block ? [contentBlockText(block)] : [];
+    })
+    .join("\n");
+}
+
+function updateSlideContentLayerFromText(
+  slide: SlideContent,
+  group: keyof SlideContent["contentLayers"],
+  value: string
+): SlideContent {
+  const lines = parseLines(value);
+  let contentBlocks = [...slide.contentBlocks];
+  const indexes: number[] = [];
+
+  for (const line of lines) {
+    const existingIndex = findContentBlockIndex(contentBlocks, line);
+
+    if (existingIndex >= 0) {
+      if (!indexes.includes(existingIndex)) {
+        indexes.push(existingIndex);
+      }
+      continue;
+    }
+
+    if (contentBlocks.length >= 12) {
+      continue;
+    }
+
+    contentBlocks = [
+      ...contentBlocks,
+      {
+        blockType: "body",
+        content: line.slice(0, 500),
+        priority: group === "primary" ? 1 : group === "supporting" ? 3 : 5,
+        sourceIds: [],
+        text: line.slice(0, 500),
+        type: "text"
+      }
+    ];
+    indexes.push(contentBlocks.length - 1);
+  }
+
+  const contentLayers = normalizeSlideContentLayers({
+    ...slide.contentLayers,
+    [group]: indexes
+  }, contentBlocks);
+
+  return {
+    ...slide,
+    contentBlocks,
+    contentLayers
+  };
+}
+
+function findContentBlockIndex(
+  blocks: SlideContent["contentBlocks"],
+  text: string
+) {
+  const key = normalizeContentText(text);
+
+  return blocks.findIndex((block) => normalizeContentText(contentBlockText(block)) === key);
+}
+
+function normalizeContentText(value: string) {
+  return value
+    .normalize("NFKC")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s'"“”‘’《》<>「」『』【】()[\]{}.,，。:：;；!！?？、/_\-—–|｜]+/g, "");
+}
+
+function normalizeSlideContentLayers(
+  layers: SlideContent["contentLayers"],
+  contentBlocks: SlideContent["contentBlocks"]
+): SlideContent["contentLayers"] {
+  const used = new Set<number>();
+  const normalized: SlideContent["contentLayers"] = {
+    primary: [],
+    supporting: [],
+    supplementary: []
+  };
+
+  for (const group of ["primary", "supporting", "supplementary"] as const) {
+    const maxItems = group === "primary" ? 4 : group === "supporting" ? 6 : 5;
+
+    for (const index of layers[group]) {
+      if (
+        Number.isInteger(index) &&
+        index >= 0 &&
+        index < contentBlocks.length &&
+        !used.has(index) &&
+        normalized[group].length < maxItems
+      ) {
+        used.add(index);
+        normalized[group].push(index);
+      }
+    }
+  }
+
+  const orderedIndexes = contentBlocks
+    .map((block, index) => ({ index, priority: block.priority }))
+    .sort((left, right) => left.priority - right.priority || left.index - right.index);
+  const add = (group: keyof SlideContent["contentLayers"], index: number) => {
+    const maxItems = group === "primary" ? 4 : group === "supporting" ? 6 : 5;
+
+    if (used.has(index) || normalized[group].length >= maxItems) {
+      return false;
+    }
+
+    used.add(index);
+    normalized[group].push(index);
+    return true;
+  };
+
+  if (normalized.primary.length === 0) {
+    for (const { index } of orderedIndexes) {
+      if (add("primary", index)) {
+        break;
+      }
+    }
+  }
+
+  if (normalized.supporting.length === 0) {
+    for (const { index } of orderedIndexes) {
+      if (add("supporting", index)) {
+        break;
+      }
+    }
+  }
+
+  for (const { index, priority } of orderedIndexes) {
+    if (used.has(index)) {
+      continue;
+    }
+
+    if (priority <= 1 && add("primary", index)) {
+      continue;
+    }
+
+    if (priority <= 3 && add("supporting", index)) {
+      continue;
+    }
+
+    if (add("supplementary", index)) {
+      continue;
+    }
+
+    if (add("supporting", index)) {
+      continue;
+    }
+
+    add("primary", index);
+  }
+
+  return normalized;
+}
+
+const semanticContentBlockTypes = [
+  "heading",
+  "text",
+  "list",
+  "image",
+  "table",
+  "chart",
+  "quote",
+  "callout",
+  "metric",
+  "comparison",
+  "timeline",
+  "steps",
+  "summary",
+  "conclusion",
+  "source"
+] as const;
+
+function isSemanticContentBlockType(
+  value: string
+): value is NonNullable<SlideContent["contentBlocks"][number]["type"]> {
+  return (semanticContentBlockTypes as readonly string[]).includes(value);
+}
+
+function contentBlockText(block: SlideContent["contentBlocks"][number]) {
+  return block.content ?? block.text;
+}
+
+function contentBlockTypeLabel(block: SlideContent["contentBlocks"][number]) {
+  return block.type ?? semanticContentBlockTypeForLegacy(block.blockType);
+}
+
+function semanticContentBlockTypeForLegacy(
+  blockType: SlideContent["contentBlocks"][number]["blockType"]
+): NonNullable<SlideContent["contentBlocks"][number]["type"]> {
+  const map: Record<
+    SlideContent["contentBlocks"][number]["blockType"],
+    NonNullable<SlideContent["contentBlocks"][number]["type"]>
+  > = {
+    body: "text",
+    chart: "chart",
+    comparison: "comparison",
+    conclusion: "conclusion",
+    metric: "metric",
+    note: "source",
+    quote: "quote",
+    step: "steps",
+    tag: "callout",
+    title: "heading"
+  };
+
+  return map[blockType];
+}
+
+function legacyContentBlockTypeForSemanticType(
+  type: NonNullable<SlideContent["contentBlocks"][number]["type"]>
+): SlideContent["contentBlocks"][number]["blockType"] {
+  const map: Record<
+    NonNullable<SlideContent["contentBlocks"][number]["type"]>,
+    SlideContent["contentBlocks"][number]["blockType"]
+  > = {
+    callout: "tag",
+    chart: "chart",
+    comparison: "comparison",
+    conclusion: "conclusion",
+    heading: "title",
+    image: "note",
+    list: "body",
+    metric: "metric",
+    quote: "quote",
+    source: "note",
+    steps: "step",
+    summary: "conclusion",
+    table: "chart",
+    text: "body",
+    timeline: "step"
+  };
+
+  return map[type];
+}
+
+function ObjectRuleTagEditor<
+  T extends Record<string, string>,
+  K extends readonly (Extract<keyof T, string>)[]
+>({
+  addPlaceholder,
+  disabled = false,
+  fields,
+  label,
+  labelForField,
+  onChange,
+  value
+}: {
+  addPlaceholder: string;
+  disabled?: boolean;
+  fields: K;
+  label: string;
+  labelForField: (field: K[number]) => string;
+  onChange: (value: T) => void;
+  value: T;
+}) {
+  const [selectedField, setSelectedField] = useState<K[number]>(fields[0]);
+  const [draftValue, setDraftValue] = useState("");
+
+  const commitDraft = () => {
+    const nextValue = draftValue.trim();
+
+    if (!nextValue) {
+      setDraftValue("");
+      return;
+    }
+
+    onChange({
+      ...value,
+      [selectedField]: nextValue
+    });
+    setDraftValue("");
+  };
+
+  const items = buildLabeledRuleTagItems(fields, labelForField, value);
+
+  return (
+    <label className="grid gap-2">
+      <span className="text-xs font-medium text-muted">{label}</span>
+      <div className="grid gap-2 rounded-lg border border-border bg-background p-3">
+        <div className="flex flex-wrap gap-2">
+          {items.map((item) => (
+            <button
+              className={cn(
+                "inline-flex items-center gap-2 rounded-md border border-border bg-surface px-2 py-1 text-xs font-medium leading-5 text-foreground transition hover:border-accent focus-visible:ring-2 focus-visible:ring-accent-soft",
+                disabled && "cursor-not-allowed opacity-70"
+              )}
+              disabled={disabled}
+              key={item.key}
+              onClick={() =>
+                onChange({
+                  ...value,
+                  [item.key]: ""
+                })
+              }
+              type="button"
+            >
+              <span>{item.text}</span>
+              <X className="size-3.5" aria-hidden="true" />
+            </button>
+          ))}
+        </div>
+        <div className="grid gap-2 md:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
+          <select
+            className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
+            disabled={disabled}
+            onChange={(event) => setSelectedField(event.target.value as K[number])}
+            value={selectedField}
+          >
+            {fields.map((field) => (
+              <option key={String(field)} value={String(field)}>
+                {labelForField(field)}
+              </option>
+            ))}
+          </select>
+          <input
+            className="h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent-soft"
+            disabled={disabled}
+            onBlur={commitDraft}
+            onChange={(event) => setDraftValue(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter") {
+                return;
+              }
+
+              event.preventDefault();
+              commitDraft();
+            }}
+            placeholder={addPlaceholder}
+            value={draftValue}
+          />
+        </div>
+      </div>
+    </label>
+  );
+}
+
+function TransparencyRulesEditor({
+  disabled = false,
+  onChange,
+  value
+}: {
+  disabled?: boolean;
+  onChange: (value: UnifiedVisualSpec["transparencyRules"]) => void;
+  value: UnifiedVisualSpec["transparencyRules"];
+}) {
+  const t = useTranslations("workbench");
+
+  return (
+    <label className="grid gap-2">
+      <span className="text-xs font-medium text-muted">
+        {t("outline.fields.transparencyRules")}
+      </span>
+      <textarea
+        className="min-h-24 w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-sm leading-6 text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
+        disabled={disabled}
+        onChange={(event) => onChange(parseTransparencyRuleLines(event.target.value, value))}
+        value={value
+          .map((rule) => `${rule.baseHex} | ${rule.opacity} | ${rule.usage}`)
+          .join("\n")}
+      />
+    </label>
+  );
+}
+
+function parseTransparencyRuleLines(
+  value: string,
+  fallback: UnifiedVisualSpec["transparencyRules"]
+) {
+  const parsed = parseLines(value).flatMap((line, index) => {
+    const [hexPart, opacityPart, usagePart] = line
+      .split("|")
+      .map((item) => item.trim());
+    const baseHex = normalizePaletteInputHex(hexPart);
+    const fallbackItem = fallback[index] ?? fallback[0];
+    const opacity = Number(opacityPart);
+
+    if (!baseHex || !Number.isFinite(opacity)) {
+      return [];
+    }
+
+    return [
+      {
+        baseHex,
+        opacity: Math.min(0.95, Math.max(0.04, opacity)),
+        usage: usagePart || fallbackItem.usage
+      }
+    ];
+  });
+
+  return parsed.length >= 2 ? parsed.slice(0, 8) : fallback;
+}
+
 function SelectField<T extends string>({
   disabled = false,
   label,
@@ -1772,44 +3139,26 @@ function SlideAdvancedFieldsEditor({
           />
         </div>
         <div className="grid gap-3 md:grid-cols-3">
-          <ListEditor
+          <ContentLayerEditor
             disabled={disabled}
+            group="primary"
             label={t("outline.fields.contentLayersPrimary")}
-            onChange={(value) =>
-              update({
-                contentLayers: {
-                  ...slide.contentLayers,
-                  primary: value
-                }
-              })
-            }
-            value={slide.contentLayers.primary}
+            onChange={onChange}
+            slide={slide}
           />
-          <ListEditor
+          <ContentLayerEditor
             disabled={disabled}
+            group="supporting"
             label={t("outline.fields.contentLayersSupporting")}
-            onChange={(value) =>
-              update({
-                contentLayers: {
-                  ...slide.contentLayers,
-                  supporting: value
-                }
-              })
-            }
-            value={slide.contentLayers.supporting}
+            onChange={onChange}
+            slide={slide}
           />
-          <ListEditor
+          <ContentLayerEditor
             disabled={disabled}
+            group="supplementary"
             label={t("outline.fields.contentLayersSupplementary")}
-            onChange={(value) =>
-              update({
-                contentLayers: {
-                  ...slide.contentLayers,
-                  supplementary: value
-                }
-              })
-            }
-            value={slide.contentLayers.supplementary}
+            onChange={onChange}
+            slide={slide}
           />
         </div>
         <div className="grid gap-3 md:grid-cols-2">
@@ -2066,17 +3415,43 @@ function VisualSpecEditor({
             onChange={(value) => onChange({ ...visualSpec, visualStyle: value })}
             value={visualSpec.visualStyle}
           />
+          <EditableField
+            disabled={disabled}
+            label={t("outline.fields.designIntent")}
+            multiline
+            onChange={(value) => onChange({ ...visualSpec, designIntent: value })}
+            value={visualSpec.designIntent}
+          />
+          <EditableField
+            disabled={disabled}
+            label={t("outline.fields.usageConvenience")}
+            multiline
+            onChange={(value) =>
+              onChange({ ...visualSpec, usageConvenience: value })
+            }
+            value={visualSpec.usageConvenience}
+          />
         </div>
       </VisualSpecSection>
 
+      <PptTypeVisualToneEditor
+        disabled={disabled}
+        onChange={onChange}
+        visualSpec={visualSpec}
+      />
+
       <VisualSpecSection title={t("outline.fields.colorSystem")}>
-        <ColorPalettePreview colors={visualSpec.colorPalette} />
-        <ListEditor
+        <ColorSystemPreview visualSpec={visualSpec} />
+        <ColorPaletteEditor
           disabled={disabled}
-          label={t("outline.fields.colorPalette")}
-          onChange={(value) => onChange({ ...visualSpec, colorPalette: value })}
+          onChange={(value) =>
+            onChange(sanitizeVisualSpecColorRoles({ ...visualSpec, colorPalette: value }))
+          }
           value={visualSpec.colorPalette}
         />
+        <div className="text-xs font-medium text-muted">
+          {t("outline.fields.colorRoleTuning")}
+        </div>
         <div className="grid gap-3 md:grid-cols-2">
           {(
             [
@@ -2088,6 +3463,7 @@ function VisualSpecEditor({
               "highlight",
               "chart",
               "decorative",
+              "borderDivider",
               "contrastRequirement"
             ] as const
           ).map((field) => (
@@ -2097,17 +3473,16 @@ function VisualSpecEditor({
                 label={t(`outline.fields.${field}`)}
                 multiline={field === "contrastRequirement"}
                 onChange={(value) =>
-                  onChange({
-                    ...visualSpec,
-                    colorRoles: {
-                      ...visualSpec.colorRoles,
-                      [field]: value
-                    }
-                  })
+                  onChange(
+                    updateVisualSpecColorRole(visualSpec, field, value)
+                  )
                 }
                 value={visualSpec.colorRoles[field]}
               />
-              <ColorizedText value={visualSpec.colorRoles[field]} />
+              <ColorRoleText
+                palette={visualSpec.colorPalette}
+                value={visualSpec.colorRoles[field]}
+              />
             </div>
           ))}
         </div>
@@ -2198,7 +3573,7 @@ function VisualSpecEditor({
           <NumberField
             disabled={disabled}
             label={t("outline.fields.minFontSize")}
-            max={18}
+            max={deckPageCountMax}
             min={8}
             onChange={(value) =>
               onChange({
@@ -2260,7 +3635,7 @@ function VisualSpecEditor({
           value={visualSpec.typographyRules.fontFallback}
         />
         <div className="grid gap-3">
-          {(["coverTitle", "pageTitle", "body", "annotation", "chartLabel"] as const).map((field) => (
+          {(["coverTitle", "coverSubtitle", "pageTitle", "sectionTitle", "body", "annotation", "chartLabel", "iconLabel"] as const).map((field) => (
             <div
               className="grid gap-3 rounded-lg border border-border bg-background p-3 md:grid-cols-[1fr_1fr_1fr_2fr]"
               key={field}
@@ -2312,14 +3687,53 @@ function VisualSpecEditor({
       </VisualSpecSection>
 
       <VisualSpecSection title={t("outline.fields.imageRules")}>
-        <EditableField
+        <RuleTagGroupEditor
+          addPlaceholder={t("outline.ruleTagEditor.addPlaceholder")}
           disabled={disabled}
-          label={t("outline.fields.imageStyle")}
-          multiline
-          onChange={(value) => onChange({ ...visualSpec, imageStyle: value })}
-          value={visualSpec.imageStyle}
+          items={[
+            createRuleTagItem("image-style", `${t("outline.fields.imageStyle")}: ${visualSpec.imageStyle}`)
+          ]}
+          label={t("outline.fields.imageRules")}
+          onAdd={(value) => onChange({ ...visualSpec, imageStyle: value })}
+          onRemove={() => onChange({ ...visualSpec, imageStyle: "" })}
         />
         <div className="grid gap-2 md:grid-cols-2">
+          <SelectField
+            disabled={disabled}
+            label={t("outline.fields.imageType")}
+            onChange={(value) =>
+              onChange({
+                ...visualSpec,
+                imageRules: {
+                  ...visualSpec.imageRules,
+                  imageType: value
+                }
+              })
+            }
+            options={(["photo", "illustration", "icon", "diagram", "texture", "background", "cutout"] as const).map((value) => ({
+              label: value,
+              value
+            }))}
+            value={visualSpec.imageRules.imageType}
+          />
+          <SelectField
+            disabled={disabled}
+            label={t("outline.fields.aspectRatio")}
+            onChange={(value) =>
+              onChange({
+                ...visualSpec,
+                imageRules: {
+                  ...visualSpec.imageRules,
+                  aspectRatio: value
+                }
+              })
+            }
+            options={(["16:9", "4:3", "1:1", "3:4", "9:16"] as const).map((value) => ({
+              label: value,
+              value
+            }))}
+            value={visualSpec.imageRules.aspectRatio}
+          />
           <CheckboxField
             disabled={disabled}
             label={t("outline.fields.backgroundAvoidsHighContrastTextArea")}
@@ -2349,30 +3763,84 @@ function VisualSpecEditor({
             value={visualSpec.imageRules.subjectAvoidsTitleArea}
           />
         </div>
-        <ListEditor
+        <EditableField
           disabled={disabled}
-          label={t("outline.fields.usageNotes")}
+          label={t("outline.fields.imagePromptStyle")}
+          multiline
           onChange={(value) =>
             onChange({
               ...visualSpec,
               imageRules: {
                 ...visualSpec.imageRules,
-                usageNotes: value
+                imagePromptStyle: value
               }
             })
           }
-          value={visualSpec.imageRules.usageNotes}
+          value={visualSpec.imageRules.imagePromptStyle}
+        />
+        <ListEditor
+          disabled={disabled}
+          label={t("outline.fields.forbiddenItems")}
+          onChange={(value) =>
+            onChange({
+              ...visualSpec,
+              imageRules: {
+                ...visualSpec.imageRules,
+                forbiddenItems: value
+              }
+            })
+          }
+          value={visualSpec.imageRules.forbiddenItems}
+        />
+        <RuleTagGroupEditor
+          addPlaceholder={t("outline.ruleTagEditor.addPlaceholder")}
+          disabled={disabled}
+          items={visualSpec.imageRules.usageNotes.map((item, index) =>
+            createRuleTagItem(`usage-note-${index}`, item)
+          )}
+          label={t("outline.fields.usageNotes")}
+          onAdd={(value) =>
+            onChange({
+              ...visualSpec,
+              imageRules: {
+                ...visualSpec.imageRules,
+                usageNotes: dedupeVisualRuleTexts([
+                  ...visualSpec.imageRules.usageNotes,
+                  value
+                ])
+              }
+            })
+          }
+          onRemove={(key) =>
+            onChange({
+              ...visualSpec,
+              imageRules: {
+                ...visualSpec.imageRules,
+                usageNotes: visualSpec.imageRules.usageNotes.filter(
+                  (_, index) => `usage-note-${index}` !== key
+                )
+              }
+            })
+          }
+        />
+        <ObjectRuleTagEditor
+          addPlaceholder={t("outline.ruleTagEditor.addPlaceholder")}
+          disabled={disabled}
+          fields={imageIllustrationRuleFields}
+          label={t("outline.fields.imageIllustrationRules")}
+          labelForField={(field) => t(`outline.fields.${field}`)}
+          onChange={(value) =>
+            onChange({
+              ...visualSpec,
+              imageIllustrationRules: value
+            })
+          }
+          value={visualSpec.imageIllustrationRules}
         />
       </VisualSpecSection>
 
       <VisualSpecSection title={t("outline.fields.rulesList")}>
-        <div className="grid gap-3 lg:grid-cols-3">
-          <ListEditor
-            disabled={disabled}
-            label={t("outline.fields.layoutRules")}
-            onChange={(value) => onChange({ ...visualSpec, layoutRules: value })}
-            value={visualSpec.layoutRules}
-          />
+        <div className="grid gap-3">
           <ListEditor
             disabled={disabled}
             label={t("outline.fields.consistencyRules")}
@@ -2380,14 +3848,6 @@ function VisualSpecEditor({
               onChange({ ...visualSpec, consistencyRules: value })
             }
             value={visualSpec.consistencyRules}
-          />
-          <ListEditor
-            disabled={disabled}
-            label={t("outline.fields.forbiddenRules")}
-            onChange={(value) =>
-              onChange({ ...visualSpec, forbiddenRules: value })
-            }
-            value={visualSpec.forbiddenRules}
           />
         </div>
       </VisualSpecSection>
@@ -2437,213 +3897,175 @@ function AdvancedVisualSpecEditor({
         {t("outline.fields.advancedVisualSpec")}
       </summary>
       <div className="mt-4 grid gap-4">
-      <VisualSpecSection title={t("outline.fields.pptTypeVisualTone")}>
-        <div className="grid gap-3 md:grid-cols-2">
-            <EditableField
-              disabled
-              label={t("outline.fields.deckType")}
-              value={visualSpec.pptTypeVisualTone.deckTypeName}
-              onChange={() => undefined}
-            />
-            <EditableField
-              disabled={disabled}
-              label={t("outline.fields.recommendedTone")}
-              multiline
-              onChange={(value) =>
-                onChange({
-                  ...visualSpec,
-                  pptTypeVisualTone: {
-                    ...visualSpec.pptTypeVisualTone,
-                    recommendedTone: value
-                  }
-                })
-              }
-              value={visualSpec.pptTypeVisualTone.recommendedTone}
-            />
-            <ListEditor
-              disabled={disabled}
-              label={t("outline.fields.visualKeywords")}
-              onChange={(value) =>
-                onChange({
-                  ...visualSpec,
-                  pptTypeVisualTone: {
-                    ...visualSpec.pptTypeVisualTone,
-                    visualKeywords: value
-                  }
-                })
-              }
-              value={visualSpec.pptTypeVisualTone.visualKeywords}
-            />
-          </div>
-        </VisualSpecSection>
-
         <VisualSpecSection title={t("outline.fields.advancedRules")}>
           <div className="grid gap-3 md:grid-cols-2">
-            <SelectField
-              disabled={disabled}
-              label={t("outline.fields.defaultLevel")}
-              onChange={(value) =>
-                onChange({
-                  ...visualSpec,
-                  informationDensityRules: {
-                    ...visualSpec.informationDensityRules,
-                    defaultLevel: value
-                  }
-                })
-              }
-              options={(["low", "medium", "high"] as const).map((value) => ({
-                label: t(`outline.values.density.${value}`),
-                value
-              }))}
-              value={visualSpec.informationDensityRules.defaultLevel}
-            />
-            {(["businessReport", "trainingCourse", "brandMarketing", "researchReport"] as const).map((field) => (
-              <EditableField
+            <div className="grid gap-3">
+              <SelectField
                 disabled={disabled}
-                key={field}
-                label={`${t("outline.fields.informationDensityRules")} · ${t(`outline.fields.${field}`)}`}
-                multiline
+                label={t("outline.fields.defaultLevel")}
                 onChange={(value) =>
                   onChange({
                     ...visualSpec,
                     informationDensityRules: {
                       ...visualSpec.informationDensityRules,
-                      [field]: value
+                      defaultLevel: value
                     }
                   })
                 }
-                value={visualSpec.informationDensityRules[field]}
+                options={(["low", "medium", "high"] as const).map((value) => ({
+                  label: t(`outline.values.density.${value}`),
+                  value
+                }))}
+                value={visualSpec.informationDensityRules.defaultLevel}
               />
-            ))}
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            {(["pageMargin", "sectionGap", "elementGap", "whitespace"] as const).map((field) => (
-              <EditableField
+              <ObjectRuleTagEditor
+                addPlaceholder={t("outline.ruleTagEditor.addPlaceholder")}
                 disabled={disabled}
-                key={field}
-                label={t(`outline.fields.${field}`)}
-                multiline
+                fields={["businessReport", "trainingCourse", "brandMarketing", "researchReport"] as const}
+                label={t("outline.fields.informationDensityRules")}
+                labelForField={(field) => t(`outline.fields.${field}`)}
                 onChange={(value) =>
                   onChange({
                     ...visualSpec,
-                    spacingRules: {
-                      ...visualSpec.spacingRules,
-                      [field]: value
+                    informationDensityRules: {
+                      ...visualSpec.informationDensityRules,
+                      ...value
                     }
                   })
                 }
-                value={visualSpec.spacingRules[field]}
+                value={visualSpec.informationDensityRules}
               />
-            ))}
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            {(["chartTypes", "axisAndGrid", "labelRules", "colorUsage", "sourceNotes"] as const).map((field) => (
-              <EditableField
-                disabled={disabled}
-                key={field}
-                label={t(`outline.fields.${field}`)}
-                multiline
-                onChange={(value) =>
-                  onChange({
-                    ...visualSpec,
-                    chartVisualRules: {
-                      ...visualSpec.chartVisualRules,
-                      [field]: value
-                    }
-                  })
-                }
-                value={visualSpec.chartVisualRules[field]}
-              />
-            ))}
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            {(["style", "composition", "background", "consistency"] as const).map((field) => (
-              <EditableField
-                disabled={disabled}
-                key={`image-${field}`}
-                label={`${t("outline.fields.imageIllustrationRules")} · ${t(`outline.fields.${field}`)}`}
-                multiline={field !== "style"}
-                onChange={(value) =>
-                  onChange({
-                    ...visualSpec,
-                    imageIllustrationRules: {
-                      ...visualSpec.imageIllustrationRules,
-                      [field]: value
-                    }
-                  })
-                }
-                value={visualSpec.imageIllustrationRules[field]}
-              />
-            ))}
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            <SelectField
+            </div>
+            <ObjectRuleTagEditor
+              addPlaceholder={t("outline.ruleTagEditor.addPlaceholder")}
               disabled={disabled}
-              label={t("outline.fields.iconStyle")}
+              fields={["pageMargin", "sectionGap", "elementGap", "whitespace"] as const}
+              label={t("outline.fields.layoutRules")}
+              labelForField={(field) => t(`outline.fields.${field}`)}
               onChange={(value) =>
                 onChange({
                   ...visualSpec,
-                  iconStyleRules: {
-                    ...visualSpec.iconStyleRules,
-                    style: value
-                  }
+                  layoutRules: value
                 })
               }
-              options={(["line", "filled", "duotone", "monochrome"] as const).map((value) => ({
-                label: t(`outline.values.iconStyle.${value}`),
-                value
-              }))}
-              value={visualSpec.iconStyleRules.style}
+              value={visualSpec.layoutRules}
             />
-            {(["stroke", "usage", "consistency"] as const).map((field) => (
-              <EditableField
+            <ObjectRuleTagEditor
+              addPlaceholder={t("outline.ruleTagEditor.addPlaceholder")}
+              disabled={disabled}
+              fields={["chartTypes", "axisAndGrid", "labelRules", "colorUsage", "sourceNotes"] as const}
+              label={t("outline.fields.chartVisualRules")}
+              labelForField={(field) => t(`outline.fields.${field}`)}
+              onChange={(value) =>
+                onChange({
+                  ...visualSpec,
+                  chartVisualRules: value
+                })
+              }
+              value={visualSpec.chartVisualRules}
+            />
+            <div className="grid gap-3">
+              <SelectField
                 disabled={disabled}
-                key={`icon-${field}`}
-                label={`${t("outline.fields.iconStyleRules")} · ${t(`outline.fields.${field}`)}`}
-                multiline
+                label={t("outline.fields.iconStyle")}
                 onChange={(value) =>
                   onChange({
                     ...visualSpec,
                     iconStyleRules: {
                       ...visualSpec.iconStyleRules,
-                      [field]: value
+                      style: value
                     }
                   })
                 }
-                value={visualSpec.iconStyleRules[field]}
+                options={(["line", "filled", "duotone", "monochrome"] as const).map((value) => ({
+                  label: t(`outline.values.iconStyle.${value}`),
+                  value
+                }))}
+                value={visualSpec.iconStyleRules.style}
               />
-            ))}
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            {(["highlight", "keyNumbers", "keywords", "conclusion"] as const).map((field) => (
-              <EditableField
+              <ObjectRuleTagEditor
+                addPlaceholder={t("outline.ruleTagEditor.addPlaceholder")}
                 disabled={disabled}
-                key={`emphasis-${field}`}
-                label={`${t("outline.fields.emphasisRules")} · ${t(`outline.fields.${field}`)}`}
-                multiline
+                fields={["stroke", "usage", "consistency"] as const}
+                label={t("outline.fields.iconStyleRules")}
+                labelForField={(field) => t(`outline.fields.${field}`)}
                 onChange={(value) =>
                   onChange({
                     ...visualSpec,
-                    emphasisRules: {
-                      ...visualSpec.emphasisRules,
-                      [field]: value
+                    iconStyleRules: {
+                      ...visualSpec.iconStyleRules,
+                      ...value
                     }
                   })
                 }
-                value={visualSpec.emphasisRules[field]}
+                value={visualSpec.iconStyleRules}
               />
-            ))}
+            </div>
+            <ObjectRuleTagEditor
+              addPlaceholder={t("outline.ruleTagEditor.addPlaceholder")}
+              disabled={disabled}
+              fields={["highlight", "keyNumbers", "keywords", "conclusion"] as const}
+              label={t("outline.fields.emphasisRules")}
+              labelForField={(field) => t(`outline.fields.${field}`)}
+              onChange={(value) =>
+                onChange({
+                  ...visualSpec,
+                  emphasisRules: value
+                })
+              }
+              value={visualSpec.emphasisRules}
+            />
+            <ObjectRuleTagEditor
+              addPlaceholder={t("outline.ruleTagEditor.addPlaceholder")}
+              disabled={disabled}
+              fields={["card", "tag", "metric", "table", "chart", "icon"] as const}
+              label={t("outline.fields.componentRules")}
+              labelForField={(field) => t(`outline.fields.${field}`)}
+              onChange={(value) =>
+                onChange({
+                  ...visualSpec,
+                  componentRules: value
+                })
+              }
+              value={visualSpec.componentRules}
+            />
+            <TransparencyRulesEditor
+              disabled={disabled}
+              onChange={(value) =>
+                onChange({
+                  ...visualSpec,
+                  transparencyRules: value
+                })
+              }
+              value={visualSpec.transparencyRules}
+            />
           </div>
-          <ListEditor
+          <RuleTagGroupEditor
+            addPlaceholder={t("outline.ruleTagEditor.addPlaceholder")}
             disabled={disabled}
+            items={buildMergedForbiddenRules(visualSpec).map((item, index) =>
+              createRuleTagItem(`forbidden-${index}`, item)
+            )}
             label={t("outline.fields.forbiddenVisualRules")}
-            onChange={(value) =>
+            onAdd={(value) =>
               onChange({
                 ...visualSpec,
-                forbiddenVisualRules: value
+                ...buildForbiddenRulePatch([
+                  ...buildMergedForbiddenRules(visualSpec),
+                  value
+                ])
               })
             }
-            value={visualSpec.forbiddenVisualRules}
+            onRemove={(key) => {
+              const mergedRules = buildMergedForbiddenRules(visualSpec).filter(
+                (_, index) => `forbidden-${index}` !== key
+              );
+
+              onChange({
+                ...visualSpec,
+                ...buildForbiddenRulePatch(mergedRules)
+              });
+            }}
           />
         </VisualSpecSection>
       </div>
@@ -2655,20 +4077,24 @@ function AdvancedVisualSpecEditor({
 function SlideCanvasPreview({
   compact = false,
   motionEnabled,
-  slide
+  slide,
+  unifiedVisualSpec
 }: {
   compact?: boolean;
   motionEnabled: boolean;
   slide: GeneratedSlideResult;
+  unifiedVisualSpec: UnifiedVisualSpec;
 }) {
-  const t = useTranslations("workbench.elementTypes");
+  const visualColors = resolveSlideVisualColors(unifiedVisualSpec);
 
   return (
     <div
       className={cn(
-        "relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-surface-muted",
+        "relative aspect-video w-full overflow-hidden rounded-lg border border-border",
         compact ? "min-h-24" : "min-h-[320px]"
       )}
+      data-slide-visual-background={visualColors.background}
+      style={{ backgroundColor: visualColors.background }}
     >
       {slide.elements.map((element) => {
         const layer = slide.generatedImageLayers.find(
@@ -2683,18 +4109,9 @@ function SlideCanvasPreview({
           <div
             key={element.id}
             className={cn(
-              "absolute flex items-center justify-center overflow-hidden rounded-md border px-2 text-center font-medium",
-              compact ? "text-[7px] leading-3" : "text-xs leading-5",
-              element.type === "generatedImage" &&
-                "border-accent/50 bg-accent-soft text-accent-strong",
-              element.type === "text" &&
-                "border-border bg-surface text-foreground shadow-sm",
-              element.type === "shape" &&
-                "border-transparent bg-accent/20 text-accent-strong",
-              element.type === "icon" &&
-                "border-signal/40 bg-signal/15 text-signal",
-              element.type === "chartPlaceholder" &&
-                "border-warning/40 bg-warning/15 text-warning",
+              "absolute overflow-hidden",
+              renderableElementClassName(element),
+              compact && element.type !== "text" && "text-[7px] leading-3",
               motionEnabled && motion && `ppt-motion ppt-motion-${motion.preset}`
             )}
             style={{
@@ -2703,22 +4120,12 @@ function SlideCanvasPreview({
               width: `${toCanvasPercent(element.bounds.width, "x")}%`,
               height: `${toCanvasPercent(element.bounds.height, "y")}%`,
               zIndex: element.zIndex,
+              ...renderableElementStyle(element, visualColors),
               ...motionStyle
             }}
             title={element.role}
           >
-            {element.type === "generatedImage" && layer ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                alt={element.role}
-                className="size-full object-cover"
-                src={layer.url}
-              />
-            ) : element.type === "text" ? (
-              element.content
-            ) : (
-              `${t(element.type)} · ${element.role}`
-            )}
+            {renderRenderableElementContent(element, layer, visualColors)}
           </div>
         );
       })}
@@ -2732,7 +4139,8 @@ function EditableSlideCanvas({
   onChange,
   onSelectElement,
   selectedElementId,
-  slide
+  slide,
+  unifiedVisualSpec
 }: {
   disabled?: boolean;
   motionEnabled: boolean;
@@ -2740,8 +4148,9 @@ function EditableSlideCanvas({
   onSelectElement: (id: string) => void;
   selectedElementId: string | null;
   slide: GeneratedSlideResult;
+  unifiedVisualSpec: UnifiedVisualSpec;
 }) {
-  const t = useTranslations("workbench.elementTypes");
+  const visualColors = resolveSlideVisualColors(unifiedVisualSpec);
   const [dragState, setDragState] = useState<{
     elementId: string;
     mode: "move" | "resize";
@@ -2752,7 +4161,8 @@ function EditableSlideCanvas({
 
   return (
     <div
-      className="relative mx-auto aspect-video w-full max-w-5xl overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
+      className="relative mx-auto aspect-video w-full max-w-5xl overflow-hidden rounded-lg border border-border shadow-lg"
+      data-slide-visual-background={visualColors.background}
       onPointerMove={(event) => {
         if (!dragState) {
           return;
@@ -2779,6 +4189,7 @@ function EditableSlideCanvas({
         });
       }}
       onPointerUp={() => setDragState(null)}
+      style={{ backgroundColor: visualColors.background }}
     >
       {slide.elements.map((element) => {
         const layer = slide.generatedImageLayers.find(
@@ -2794,13 +4205,8 @@ function EditableSlideCanvas({
           <button
             aria-pressed={selected}
             className={cn(
-              "absolute flex items-center justify-center overflow-hidden rounded-md border px-2 text-center text-xs font-medium leading-5 transition",
-              element.type === "generatedImage" &&
-                "border-accent/50 bg-accent-soft text-accent-strong",
-              element.type === "text" &&
-                "border-border bg-surface text-foreground shadow-sm",
-              element.type === "shape" &&
-                "border-transparent bg-accent/20 text-accent-strong",
+              "absolute overflow-hidden transition",
+              renderableElementClassName(element),
               selected &&
                 "border-accent shadow-lg outline outline-2 outline-offset-2 outline-accent ring-4 ring-accent-soft",
               motionEnabled && motion && `ppt-motion ppt-motion-${motion.preset}`
@@ -2829,23 +4235,13 @@ function EditableSlideCanvas({
               width: `${toCanvasPercent(element.bounds.width, "x")}%`,
               height: `${toCanvasPercent(element.bounds.height, "y")}%`,
               zIndex: element.zIndex,
+              ...renderableElementStyle(element, visualColors),
               ...motionStyle
             }}
             title={`${element.role} · Alt 拖拽缩放`}
             type="button"
           >
-            {element.type === "generatedImage" && layer ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                alt={element.role}
-                className="size-full object-cover"
-                src={layer.url}
-              />
-            ) : element.type === "text" ? (
-              element.content
-            ) : (
-              `${t(element.type)} · ${element.role}`
-            )}
+            {renderRenderableElementContent(element, layer, visualColors)}
             {selected ? (
               <span
                 aria-hidden="true"
@@ -2882,22 +4278,314 @@ function EditableSlideCanvas({
   }
 }
 
+function renderRenderableElementContent(
+  element: SlideElement,
+  layer: GeneratedSlideResult["generatedImageLayers"][number] | undefined,
+  visualColors: SlideVisualColors
+) {
+  if (element.type === "generatedImage") {
+    if (layer) {
+      return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img alt={element.role} className="size-full object-cover" src={layer.url} />
+      );
+    }
+
+    return null;
+  }
+
+  if (element.type === "text") {
+    return element.content;
+  }
+
+  if (element.type === "chartPlaceholder") {
+    return (
+      <span className="flex size-full items-end justify-center gap-[6%] px-[8%] pb-[9%]">
+        {[44, 68, 52, 82].map((height, index) => (
+          <span
+            aria-hidden="true"
+            className="block flex-1 rounded-t-sm"
+            key={height}
+            style={{
+              backgroundColor: getChartSeriesColor(visualColors, index),
+              height: `${height}%`
+            }}
+          />
+        ))}
+      </span>
+    );
+  }
+
+  return null;
+}
+
+function getChartSeriesColor(visualColors: SlideVisualColors, index: number) {
+  const series =
+    visualColors.chartSeries.length > 0
+      ? visualColors.chartSeries
+      : [visualColors.chart, visualColors.highlight];
+
+  return series[index % series.length] ?? visualColors.chart;
+}
+
+function renderableElementClassName(element: SlideElement) {
+  if (element.type === "text") {
+    return "flex items-center whitespace-pre-line px-1";
+  }
+
+  if (element.type === "chartPlaceholder") {
+    return "rounded-md border border-accent/20 bg-accent-soft/45";
+  }
+
+  if (element.type === "icon") {
+    return "rounded-md bg-signal/15";
+  }
+
+  return "rounded-md";
+}
+
+function renderableElementStyle(
+  element: SlideElement,
+  visualColors: SlideVisualColors
+): CSSProperties {
+  if (element.type === "text") {
+    return {
+      ...elementTextStyle(element, visualColors),
+      justifyContent: toFlexJustify(element.textStyle?.align ?? "left"),
+      textAlign: element.textStyle?.align ?? "left"
+    };
+  }
+
+  if (element.type === "shape") {
+    const isLine = isLineLikeCanvasShape(element);
+
+    return {
+      backgroundColor: isLine ? visualColors.accent : visualColors.surface,
+      opacity: isLine ? 0.8 : 0.62
+    };
+  }
+
+  if (element.type === "chartPlaceholder") {
+    return {
+      backgroundColor: canvasColorAlpha(visualColors.surface, 0.45),
+      borderColor: canvasColorAlpha(visualColors.chart, 0.2)
+    };
+  }
+
+  if (element.type === "icon") {
+    return {
+      backgroundColor: canvasColorAlpha(visualColors.decorative, 0.15),
+      color: visualColors.decorative
+    };
+  }
+
+  return {};
+}
+
+function isLineLikeCanvasShape(element: SlideElement) {
+  return (
+    element.bounds.height <= 0.18 ||
+    element.bounds.width <= 0.18 ||
+    /line|underline|emphasis|强调线|分隔线|线/i.test(
+      `${element.id} ${element.role} ${element.styleNotes}`
+    )
+  );
+}
+
+function elementTextStyle(
+  element: SlideElement,
+  visualColors: SlideVisualColors
+): CSSProperties {
+  const textStyle = element.textStyle;
+
+  if (!textStyle) {
+    return {
+      color: defaultCanvasTextColor(element, visualColors),
+      fontSize: element.semanticType === "title" ? "28px" : "14px",
+      fontWeight: element.semanticType === "title" ? 700 : 400,
+      lineHeight: 1.25,
+      whiteSpace: "pre-line"
+    };
+  }
+
+  return {
+    color: textStyle.color ?? defaultCanvasTextColor(element, visualColors),
+    fontSize: `${textStyle.fontSize}px`,
+    fontWeight: toCssFontWeight(textStyle.fontWeight),
+    lineHeight: textStyle.lineHeight,
+    textAlign: textStyle.align,
+    whiteSpace: "pre-line"
+  };
+}
+
+function defaultCanvasTextColor(
+  element: SlideElement,
+  visualColors: SlideVisualColors
+) {
+  if (element.semanticType === "title") {
+    return visualColors.titleText;
+  }
+
+  if (element.semanticType === "footer") {
+    return visualColors.mutedText;
+  }
+
+  if (element.semanticType === "badge") {
+    return visualColors.accent;
+  }
+
+  return visualColors.bodyText;
+}
+
+function canvasColorAlpha(color: string, alpha: number) {
+  const match = color.match(/^#([0-9A-F]{6})$/i);
+
+  if (!match) {
+    return color;
+  }
+
+  const value = match[1];
+  const red = Number.parseInt(value.slice(0, 2), 16);
+  const green = Number.parseInt(value.slice(2, 4), 16);
+  const blue = Number.parseInt(value.slice(4, 6), 16);
+
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
+function toCssFontWeight(
+  weight: NonNullable<SlideElement["textStyle"]>["fontWeight"]
+) {
+  if (weight === "bold") {
+    return 700;
+  }
+
+  if (weight === "semibold") {
+    return 600;
+  }
+
+  if (weight === "medium") {
+    return 500;
+  }
+
+  return 400;
+}
+
+function toFlexJustify(align: "left" | "center" | "right") {
+  if (align === "center") {
+    return "center";
+  }
+
+  if (align === "right") {
+    return "flex-end";
+  }
+
+  return "flex-start";
+}
+
 function SlideEditingPanel({
+  disabled = false,
+  onSelectElement,
+  onRegenerate,
+  onSlideChange,
+  selectedElementId,
+  selectedSlide
+}: {
+  disabled?: boolean;
+  onSelectElement: (elementId: string) => void;
+  onRegenerate: () => void;
+  onSlideChange: (slide: GeneratedSlideResult) => void;
+  selectedElementId: string | null;
+  selectedSlide: GeneratedSlideResult;
+}) {
+  return (
+    <SlideDisplayContentPanel
+      disabled={disabled}
+      onContentChange={updateContent}
+      onRegenerate={onRegenerate}
+      onSelectElement={onSelectElement}
+      selectedElementId={selectedElementId}
+      slide={selectedSlide}
+    />
+  );
+
+  function updateContent(patch: Partial<GeneratedSlideResult["content"]>) {
+    const content = {
+      ...selectedSlide.content,
+      ...patch
+    };
+    const shouldSyncTitle = Object.prototype.hasOwnProperty.call(patch, "title");
+    const shouldSyncSubtitle = Object.prototype.hasOwnProperty.call(
+      patch,
+      "subtitle"
+    );
+    const shouldSyncBodyPoints = Object.prototype.hasOwnProperty.call(
+      patch,
+      "bodyPoints"
+    );
+    const bodyTextElements = selectedSlide.elements.filter(
+      (element) =>
+        element.type === "text" &&
+        (element.semanticType === "body" || element.semanticType === "card")
+    );
+
+    onSlideChange({
+      ...selectedSlide,
+      content,
+      elements: selectedSlide.elements.map((element) => {
+        if (shouldSyncTitle && element.semanticType === "title") {
+          return {
+            ...element,
+            content: content.title
+          };
+        }
+
+        if (shouldSyncSubtitle && element.semanticType === "subtitle") {
+          return {
+            ...element,
+            content: content.subtitle ?? ""
+          };
+        }
+
+        if (
+          shouldSyncBodyPoints &&
+          element.type === "text" &&
+          (element.semanticType === "body" || element.semanticType === "card")
+        ) {
+          const bodyElementIndex = bodyTextElements.findIndex(
+            (item) => item.id === element.id
+          );
+          const nextContent =
+            bodyTextElements.length === 1
+              ? content.bodyPoints.join("\n")
+              : content.bodyPoints[bodyElementIndex];
+
+          return {
+            ...element,
+            content: nextContent ?? element.content
+          };
+        }
+
+        return element;
+      })
+    });
+  }
+
+}
+
+function SlideSelectedElementEditor({
   deck,
   disabled = false,
   onDeleteElement,
-  onRegenerate,
+  onElementChange,
   onSlideChange,
-  onVisualSpecChange,
   selectedElement,
   selectedSlide
 }: {
   deck: GeneratedDeckResult;
   disabled?: boolean;
   onDeleteElement: (elementId: string) => void;
-  onRegenerate: () => void;
+  onElementChange: (elementId: string, patch: Partial<SlideElement>) => void;
   onSlideChange: (slide: GeneratedSlideResult) => void;
-  onVisualSpecChange: (visualSpec: GeneratedDeckResult["unifiedVisualSpec"]) => void;
   selectedElement?: SlideElement;
   selectedSlide: GeneratedSlideResult;
 }) {
@@ -2908,216 +4596,100 @@ function SlideEditingPanel({
     : false;
 
   return (
-    <>
-      <section className="grid min-w-0 gap-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-foreground">本页内容</h2>
-          <Button
-            disabled={disabled}
-            onClick={onRegenerate}
-            size="sm"
-            type="button"
-            variant="secondary"
-          >
-            <RefreshCw className="size-4" aria-hidden="true" />
-            重新生成当前页
-          </Button>
-        </div>
-        <EditableField
-          label="标题"
-          disabled={disabled}
-          onChange={(value) =>
-            updateContent({
-              title: value
-            })
-          }
-          value={selectedSlide.content.title}
-        />
-        <EditableField
-          label="副标题"
-          disabled={disabled}
-          onChange={(value) =>
-            updateContent({
-              subtitle: value
-            })
-          }
-          value={selectedSlide.content.subtitle ?? ""}
-        />
-        <ListEditor
-          label="本页条目"
-          disabled={disabled}
-          onChange={(value) =>
-            updateContent({
-              bodyPoints: value
-            })
-          }
-          value={selectedSlide.content.bodyPoints}
-        />
-      </section>
-
-      <section
-        className={cn(
-          "grid min-w-0 gap-3 rounded-lg border bg-surface p-3 transition",
-          selectedElement
-            ? "border-accent bg-accent-soft/45 shadow-sm ring-2 ring-accent/25"
-            : "border-border"
-        )}
-        data-selected={selectedElement ? "true" : undefined}
-        data-testid="slide-selected-element-editor"
-      >
-        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <SlidersHorizontal className="size-4 text-accent" aria-hidden="true" />
-          选中元素
-        </div>
-        {selectedElement ? (
-          isFileElement ? (
-            <div className="grid gap-3">
-              <div className="rounded-lg border border-border bg-background px-3 py-2">
-                <div className="flex min-w-0 items-center gap-2 text-sm font-medium text-foreground">
-                  <ElementIcon type={selectedElement.type} />
-                  <span className="truncate">{selectedElement.role}</span>
-                </div>
-                <p className="mt-1 text-xs leading-5 text-muted">
-                  {t(`elementTypes.${selectedElement.type}`)}
-                </p>
+    <section
+      className={cn(
+        "grid min-w-0 content-start gap-3 rounded-lg border bg-background p-3 transition",
+        selectedElement
+          ? "border-accent bg-accent-soft/45 shadow-sm ring-2 ring-accent/25"
+          : "border-border"
+      )}
+      data-selected={selectedElement ? "true" : undefined}
+      data-testid="slide-selected-element-editor"
+    >
+      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+        <SlidersHorizontal className="size-4 text-accent" aria-hidden="true" />
+        {t("selectedElement.title")}
+      </div>
+      {selectedElement ? (
+        isFileElement ? (
+          <div className="grid gap-3">
+            <div className="rounded-lg border border-border bg-surface px-3 py-2">
+              <div className="flex min-w-0 items-center gap-2 text-sm font-medium text-foreground">
+                <ElementIcon type={selectedElement.type} />
+                <span className="truncate">{selectedElement.role}</span>
               </div>
-              <input
-                accept="image/*"
-                className="sr-only"
-                disabled={disabled}
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-
-                  if (file) {
-                    void replaceElementFile(selectedElement, file);
-                  }
-
-                  event.target.value = "";
-                }}
-                ref={fileInputRef}
-                type="file"
-              />
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  disabled={disabled}
-                  onClick={() => fileInputRef.current?.click()}
-                  type="button"
-                  variant="secondary"
-                >
-                  <Upload className="size-4" aria-hidden="true" />
-                  {t("actions.uploadNewFile")}
-                </Button>
-                <Button
-                  disabled={disabled}
-                  onClick={() => onDeleteElement(selectedElement.id)}
-                  type="button"
-                  variant="destructive"
-                >
-                  <Trash2 className="size-4" aria-hidden="true" />
-                  {t("actions.delete")}
-                </Button>
-              </div>
-              <BoundsEditor
-                disabled={disabled}
-                onChange={(bounds) =>
-                  updateElement(selectedElement.id, { bounds })
-                }
-                value={selectedElement.bounds}
-              />
+              <p className="mt-1 text-xs leading-5 text-muted">
+                {t(`elementTypes.${selectedElement.type}`)}
+              </p>
             </div>
-          ) : (
-            <>
-              <EditableField
-                label="内容"
-                multiline
-                onChange={(value) =>
-                  updateElement(selectedElement.id, { content: value })
+            <input
+              accept="image/*"
+              className="sr-only"
+              disabled={disabled}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+
+                if (file) {
+                  void replaceElementFile(selectedElement, file);
                 }
-                value={selectedElement.content ?? ""}
-              />
-              <BoundsEditor
+
+                event.target.value = "";
+              }}
+              ref={fileInputRef}
+              type="file"
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <Button
                 disabled={disabled}
-                onChange={(bounds) =>
-                  updateElement(selectedElement.id, { bounds })
-                }
-                value={selectedElement.bounds}
-              />
-            </>
-          )
+                onClick={() => fileInputRef.current?.click()}
+                type="button"
+                variant="secondary"
+              >
+                <Upload className="size-4" aria-hidden="true" />
+                {t("actions.uploadNewFile")}
+              </Button>
+              <Button
+                disabled={disabled}
+                onClick={() => onDeleteElement(selectedElement.id)}
+                type="button"
+                variant="destructive"
+              >
+                <Trash2 className="size-4" aria-hidden="true" />
+                {t("actions.delete")}
+              </Button>
+            </div>
+            <BoundsEditor
+              disabled={disabled}
+              onChange={(bounds) =>
+                onElementChange(selectedElement.id, { bounds })
+              }
+              value={selectedElement.bounds}
+            />
+          </div>
         ) : (
-          <p className="text-sm text-muted">点击画布中的元素后可编辑内容与位置。</p>
-        )}
-      </section>
-
-      <section className="grid gap-3 rounded-lg border border-border bg-surface p-3">
-        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <FileJson className="size-4 text-accent" aria-hidden="true" />
-          {t("visualSpec.title")}
-        </div>
-        <EditableField
-          label={t("outline.fields.visualStyle")}
-          disabled={disabled}
-          multiline
-          onChange={(value) =>
-            onVisualSpecChange({
-              ...deck.unifiedVisualSpec,
-              visualStyle: value
-            })
-          }
-          value={deck.unifiedVisualSpec.visualStyle}
-        />
-        <ColorPalettePreview colors={deck.unifiedVisualSpec.colorPalette} />
-      </section>
-
-      <SlideCopyPanel slide={selectedSlide} />
-    </>
+          <>
+            <EditableField
+              label={t("selectedElement.content")}
+              multiline
+              onChange={(value) =>
+                onElementChange(selectedElement.id, { content: value })
+              }
+              value={selectedElement.content ?? ""}
+            />
+            <BoundsEditor
+              disabled={disabled}
+              onChange={(bounds) =>
+                onElementChange(selectedElement.id, { bounds })
+              }
+              value={selectedElement.bounds}
+            />
+          </>
+        )
+      ) : (
+        <p className="text-sm text-muted">{t("selectedElement.empty")}</p>
+      )}
+    </section>
   );
-
-  function updateContent(patch: Partial<GeneratedSlideResult["content"]>) {
-    const content = {
-      ...selectedSlide.content,
-      ...patch
-    };
-
-    onSlideChange({
-      ...selectedSlide,
-      content,
-      elements: selectedSlide.elements.map((element) => {
-        if (element.semanticType === "title") {
-          return {
-            ...element,
-            content: content.title
-          };
-        }
-
-        if (element.semanticType === "body") {
-          return {
-            ...element,
-            content: content.bodyPoints.join("\n")
-          };
-        }
-
-        return element;
-      })
-    });
-  }
-
-  function updateElement(
-    elementId: string,
-    patch: Partial<SlideElement>
-  ) {
-    onSlideChange({
-      ...selectedSlide,
-      elements: selectedSlide.elements.map((element) =>
-        element.id === elementId
-          ? {
-              ...element,
-              ...patch
-            }
-          : element
-      )
-    });
-  }
 
   async function replaceElementFile(element: SlideElement, file: File) {
     const formData = new FormData();
@@ -3192,20 +4764,210 @@ function roundCanvasValue(value: number) {
   return Math.round(value * 100) / 100;
 }
 
-function SlideCopyPanel({ slide }: { slide: GeneratedSlideResult }) {
+function SlideDisplayContentPanel({
+  disabled = false,
+  onContentChange,
+  onSelectElement,
+  onRegenerate,
+  selectedElementId,
+  slide
+}: {
+  disabled?: boolean;
+  onContentChange: (patch: Partial<GeneratedSlideResult["content"]>) => void;
+  onSelectElement: (elementId: string) => void;
+  onRegenerate: () => void;
+  selectedElementId: string | null;
+  slide: GeneratedSlideResult;
+}) {
+  const t = useTranslations("workbench");
+  const [isEditing, setIsEditing] = useState(false);
+  const selectedDisplayItemRef = useRef<HTMLButtonElement | null>(null);
+  const separator = t("preview.displayContentSeparator");
+  const selectedElement = slide.elements.find(
+    (element) => element.id === selectedElementId
+  );
+  const contentBlockBindings = resolveSlideContentBlockBindings(slide);
+  const selectedContentBlockIndex =
+    selectedElementId && selectedElement
+      ? contentBlockBindings.contentBlockIndexByElementId.get(selectedElementId) ?? null
+      : null;
+  type DisplayContentItem = {
+    disabled: boolean;
+    elementId?: string;
+    elementType?: SlideElement["type"];
+    key: string;
+    kind: "contentBlock" | "layer";
+    label: string;
+    layer?: number;
+    priority?: number;
+    selected: boolean;
+    testId: string;
+    text: string;
+  };
+  const contentBlockItems: DisplayContentItem[] = slide.content.contentBlocks.map(
+    (block, index) => {
+      const elementId = contentBlockBindings.elementIdByContentBlockIndex.get(index);
+      const element = slide.elements.find((item) => item.id === elementId);
+
+      return {
+        disabled: !elementId,
+        elementId,
+        elementType: element?.type,
+        key: `block-${index}`,
+        kind: "contentBlock",
+        label: contentBlockTypeLabel(block),
+        layer: element?.zIndex,
+        priority: block.priority,
+        selected: selectedContentBlockIndex === index,
+        testId: `slide-display-content-item-${index}`,
+        text: contentBlockText(block)
+      };
+    }
+  );
+  const boundElementIds = new Set(
+    contentBlockBindings.contentBlockIndexByElementId.keys()
+  );
+  const layerItems: DisplayContentItem[] = slide.elements
+    .filter((element) => !boundElementIds.has(element.id))
+    .sort((a, b) => a.zIndex - b.zIndex)
+    .map((element) => ({
+      disabled: false,
+      elementId: element.id,
+      elementType: element.type,
+      key: `layer-${element.id}`,
+      kind: "layer",
+      label: t("preview.layerItem"),
+      layer: element.zIndex,
+      selected: selectedElementId === element.id,
+      testId: `slide-display-layer-item-${element.id}`,
+      text: element.content?.trim() || element.role || t("preview.emptyLayerContent")
+    }));
+  const displayItems = [...contentBlockItems, ...layerItems];
+
+  useEffect(() => {
+    selectedDisplayItemRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest"
+    });
+  }, [selectedContentBlockIndex, selectedElementId]);
+
   return (
-    <section className="rounded-lg border border-border bg-background p-3">
-      <h4 className="text-sm font-semibold text-foreground">
-        {slide.content.title}
-      </h4>
-      {slide.content.subtitle ? (
-        <p className="mt-1 text-sm text-muted">{slide.content.subtitle}</p>
-      ) : null}
-      <ul className="mt-2 space-y-1 text-sm leading-6 text-muted">
-        {slide.content.bodyPoints.map((point) => (
-          <li key={point}>{point}</li>
-        ))}
-      </ul>
+    <section
+      className="grid h-full min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)] gap-2 rounded-lg border border-border bg-background p-3"
+      data-testid="slide-display-content-panel"
+    >
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+        <h4 className="min-w-0 text-sm font-semibold text-foreground">
+          {t("preview.displayContent")}
+        </h4>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            disabled={disabled}
+            onClick={onRegenerate}
+            size="sm"
+            type="button"
+            variant="secondary"
+          >
+            <RefreshCw className="size-4" aria-hidden="true" />
+            {t("actions.regenerateCurrentSlide")}
+          </Button>
+          <Button
+            disabled={disabled}
+            onClick={() => setIsEditing((value) => !value)}
+            size="sm"
+            type="button"
+            variant="secondary"
+          >
+            {isEditing ? t("actions.done") : t("actions.editBodyPoints")}
+          </Button>
+        </div>
+      </div>
+      {isEditing ? (
+        <div
+          className="grid min-h-0 min-w-0 gap-3 overflow-y-auto rounded-md border border-border bg-surface p-3"
+          data-testid="slide-display-content-editor"
+        >
+          <ListEditor
+            disabled={disabled}
+            label={t("preview.displayContentTypes.body")}
+            onChange={(value) =>
+              onContentChange({
+                bodyPoints: value
+              })
+            }
+            value={slide.content.bodyPoints}
+          />
+        </div>
+      ) : (
+        <div
+          className="grid min-h-0 min-w-0 content-start gap-2 overflow-y-auto rounded-md border border-border bg-surface p-3"
+          data-testid="slide-display-content-list"
+        >
+          {displayItems.map((item) => (
+            <button
+              aria-pressed={item.selected}
+              className={cn(
+                "min-w-0 rounded-md border border-border bg-background px-3 py-2 text-left transition hover:border-accent disabled:cursor-default disabled:hover:border-border",
+                item.selected &&
+                  "border-accent bg-accent-soft ring-1 ring-accent/30"
+              )}
+              data-selected={item.selected ? "true" : undefined}
+              data-testid={item.testId}
+              disabled={item.disabled}
+              key={item.key}
+              onClick={() => {
+                if (item.elementId) {
+                  onSelectElement(item.elementId);
+                }
+              }}
+              ref={item.selected ? selectedDisplayItemRef : undefined}
+              type="button"
+            >
+              <div className="grid min-w-0 gap-1.5">
+                <div className="flex min-w-0 items-center gap-2">
+                  {item.elementType ? (
+                    <span
+                      aria-label={t(`elementTypes.${item.elementType}`)}
+                      className="inline-flex size-5 shrink-0 items-center justify-center rounded bg-accent-soft"
+                      title={t(`elementTypes.${item.elementType}`)}
+                    >
+                      <ElementIcon type={item.elementType} />
+                    </span>
+                  ) : (
+                    <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 text-[11px] font-medium text-muted">
+                      {t("preview.notPlaced")}
+                    </span>
+                  )}
+                  <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 text-[11px] font-medium text-muted">
+                    {item.kind === "contentBlock"
+                      ? t("preview.contentBlockItem")
+                      : t(`elementTypes.${item.elementType}`)}
+                  </span>
+                  {item.layer !== undefined ? (
+                    <span className="shrink-0 text-xs leading-5 text-muted">
+                      {t("elements.layer", { zIndex: item.layer })}
+                    </span>
+                  ) : null}
+                  {item.priority !== undefined ? (
+                    <span className="ml-auto shrink-0 rounded bg-accent-soft px-1.5 py-0.5 text-[11px] font-medium text-accent-strong">
+                      P{item.priority}
+                    </span>
+                  ) : null}
+                </div>
+                <div className="flex min-w-0 items-start gap-2">
+                  <span className="shrink-0 text-[13px] font-semibold leading-5 text-foreground">
+                    {item.label}
+                    {separator}
+                  </span>
+                  <span className="min-w-0 flex-1 whitespace-pre-wrap break-words text-[13px] leading-5 text-muted">
+                    {item.text}
+                  </span>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -3218,7 +4980,6 @@ function SlideMetaPanel({
   slide: GeneratedSlideResult;
 }) {
   const t = useTranslations("workbench");
-  const selectedElementRef = useRef<HTMLDivElement | null>(null);
   const selectedImageLayerRef = useRef<HTMLDivElement | null>(null);
   const selectedElement = slide.elements.find(
     (element) => element.id === selectedElementId
@@ -3247,10 +5008,6 @@ function SlideMetaPanel({
   ];
 
   useEffect(() => {
-    selectedElementRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest"
-    });
     selectedImageLayerRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "nearest"
@@ -3259,144 +5016,41 @@ function SlideMetaPanel({
 
   return (
     <section className="rounded-lg border border-border bg-background p-2.5">
-      <div className="grid gap-3">
-        <SlideDesignQualityPanel slide={slide} />
-
-        <div>
-          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-            <FileJson className="size-4 text-accent" aria-hidden="true" />
-            {t("elements.title")}
-          </div>
-
-          <div className="grid gap-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-            <div className="min-h-0 overflow-y-auto pr-1 lg:max-h-48">
-              <div className="grid gap-1.5">
-                {slide.elements.map((element) => {
-                  const selected = selectedElementId === element.id;
-
-                  return (
-                    <div
-                      key={element.id}
-                      className={cn(
-                        "grid gap-0.5 rounded-md border border-transparent bg-surface px-2 py-1.5 text-xs leading-5 text-muted transition",
-                        selected &&
-                          "border-accent bg-accent-soft ring-1 ring-accent/30"
-                      )}
-                      data-selected={selected ? "true" : undefined}
-                      data-testid={`slide-element-meta-${element.id}`}
-                      ref={selected ? selectedElementRef : undefined}
-                    >
-                      <div className="flex min-w-0 items-center gap-2 font-medium text-foreground">
-                        <ElementIcon type={element.type} />
-                        <span className="truncate">{element.role}</span>
-                      </div>
-                      <div className="truncate text-xs text-muted">
-                        {t("elements.layer", { zIndex: element.zIndex })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="min-h-0 border-t border-border pt-2 lg:max-h-48 lg:overflow-y-auto lg:border-l lg:border-t-0 lg:pl-2 lg:pt-0">
-              <div className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-foreground">
-                <ImageIcon className="size-4 text-accent" aria-hidden="true" />
-                {t("imageLayers.title")}
-              </div>
-              {imageLayerItems.length > 0 ? (
-                <div className="grid gap-1.5">
-                  {imageLayerItems.map((item) => {
-                    const selected = selectedImageRequestId === item.requestId;
-
-                    return (
-                      <div
-                        key={item.id}
-                        className={cn(
-                          "rounded-md border border-transparent bg-surface px-2 py-1.5 text-xs leading-5 text-muted transition",
-                          selected &&
-                            "border-accent bg-accent-soft ring-1 ring-accent/30"
-                        )}
-                        data-selected={selected ? "true" : undefined}
-                        data-testid={`slide-image-layer-meta-${item.requestId}`}
-                        ref={selected ? selectedImageLayerRef : undefined}
-                      >
-                        <div className="truncate font-medium text-foreground">
-                          {item.title}
-                        </div>
-                        <div className="line-clamp-2">{item.visualNotes}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-sm text-muted">{t("imageLayers.empty")}</p>
-              )}
-            </div>
-          </div>
+      <div>
+        <div className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-foreground">
+          <ImageIcon className="size-4 text-accent" aria-hidden="true" />
+          {t("imageLayers.title")}
         </div>
+        {imageLayerItems.length > 0 ? (
+          <div className="grid max-h-48 gap-1.5 overflow-y-auto pr-1">
+            {imageLayerItems.map((item) => {
+              const selected = selectedImageRequestId === item.requestId;
+
+              return (
+                <div
+                  key={item.id}
+                  className={cn(
+                    "rounded-md border border-transparent bg-surface px-2 py-1.5 text-xs leading-5 text-muted transition",
+                    selected &&
+                      "border-accent bg-accent-soft ring-1 ring-accent/30"
+                  )}
+                  data-selected={selected ? "true" : undefined}
+                  data-testid={`slide-image-layer-meta-${item.requestId}`}
+                  ref={selected ? selectedImageLayerRef : undefined}
+                >
+                  <div className="truncate font-medium text-foreground">
+                    {item.title}
+                  </div>
+                  <div className="line-clamp-2">{item.visualNotes}</div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-muted">{t("imageLayers.empty")}</p>
+        )}
       </div>
     </section>
-  );
-}
-
-function SlideDesignQualityPanel({ slide }: { slide: GeneratedSlideResult }) {
-  const t = useTranslations("workbench");
-  const dimensions = [
-    ["informationHierarchy", slide.designQualityScore.dimensions.informationHierarchy],
-    ["visualConsistency", slide.designQualityScore.dimensions.visualConsistency],
-    ["contentDensity", slide.designQualityScore.dimensions.contentDensity],
-    ["renderability", slide.designQualityScore.dimensions.renderability],
-    ["expressionCompleteness", slide.designQualityScore.dimensions.expressionCompleteness]
-  ] as const;
-
-  return (
-    <div className="grid gap-2 rounded-md border border-border bg-surface p-2">
-      <div className="flex min-w-0 items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2 text-sm font-semibold text-foreground">
-          <LayoutTemplate className="size-4 text-accent" aria-hidden="true" />
-          <span className="truncate">{t("designQuality.title")}</span>
-        </div>
-        <div className="flex shrink-0 items-center gap-2 text-xs font-medium text-muted">
-          <span>{slide.layoutSelection.selectedLayoutType}</span>
-          <span className="rounded-md bg-accent-soft px-2 py-1 font-semibold text-accent-strong">
-            {slide.designQualityScore.totalScore}
-          </span>
-        </div>
-      </div>
-      <div className="grid gap-1.5 sm:grid-cols-5">
-        {dimensions.map(([key, dimension]) => (
-          <div
-            className="rounded-md bg-background px-2 py-1.5 text-xs leading-5 text-muted"
-            key={key}
-          >
-            <div className="flex items-center justify-between gap-2 font-medium text-foreground">
-              <span className="truncate">{t(`designQuality.dimensions.${key}`)}</span>
-              <span>{dimension.score}</span>
-            </div>
-            <div className="mt-0.5 line-clamp-2">{dimension.summary}</div>
-          </div>
-        ))}
-      </div>
-      <div className="grid gap-1.5 text-xs leading-5 text-muted sm:grid-cols-2">
-        <div className="rounded-md bg-background px-2 py-1.5">
-          <div className="font-medium text-foreground">
-            {t("designQuality.repairStatus")}
-          </div>
-          <div>{t(`designQuality.repair.${slide.designQualityScore.repairStatus}`)}</div>
-        </div>
-        <div className="rounded-md bg-background px-2 py-1.5">
-          <div className="font-medium text-foreground">
-            {t("designQuality.layoutCandidates")}
-          </div>
-          <div className="truncate">
-            {slide.layoutSelection.candidates
-              .map((candidate) => candidate.layoutType)
-              .join(" / ")}
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -3404,23 +5058,40 @@ function CompactScorePanel({
   icon,
   label,
   score,
-  summary
+  summary,
+  testId
 }: DeckPreviewScoreItem) {
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+
   return (
-    <section className="rounded-lg border border-border bg-background px-3 py-2 shadow-sm">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <span className="text-accent">{icon}</span>
-            <span className="truncate">{label}</span>
+    <Tooltip onOpenChange={setTooltipOpen} open={tooltipOpen}>
+      <TooltipTrigger asChild>
+        <section
+          className="rounded-lg border border-border bg-background px-3 py-2 shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-accent"
+          data-testid={testId}
+          onBlur={() => setTooltipOpen(false)}
+          onFocus={() => setTooltipOpen(true)}
+          onMouseEnter={() => setTooltipOpen(true)}
+          onMouseLeave={() => setTooltipOpen(false)}
+          tabIndex={0}
+        >
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <span className="text-accent">{icon}</span>
+                <span className="truncate">{label}</span>
+              </div>
+            </div>
+            <span className="rounded-md bg-accent-soft px-2 py-1 text-xs font-semibold text-accent-strong">
+              {score}
+            </span>
           </div>
-          <p className="mt-1 truncate text-xs leading-5 text-muted">{summary}</p>
-        </div>
-        <span className="rounded-md bg-accent-soft px-2 py-1 text-xs font-semibold text-accent-strong">
-          {score}
-        </span>
-      </div>
-    </section>
+        </section>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs text-xs leading-5" side="bottom">
+        {summary}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 

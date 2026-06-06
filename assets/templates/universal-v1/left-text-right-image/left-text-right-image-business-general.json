@@ -29,15 +29,16 @@
       "narrativeRole": "argument",
       "contentLayers": {
         "primary": [
-          "左侧先给业务判断"
+          0,
+          1
         ],
         "supporting": [
-          "右侧图片强化理解",
-          "底部收束行动建议"
+          2,
+          4,
+          5
         ],
         "supplementary": [
-          "适用场景：项目汇报",
-          "浅底蓝绿商务风，强调清晰、稳定和可复用。"
+          3
         ]
       },
       "slideTransition": {
@@ -77,7 +78,57 @@
           "不引入外部数据",
           "不使用第三方模板资产"
         ]
-      }
+      },
+      "contentBlocks": [
+        {
+          "blockType": "title",
+          "content": "观点先行右图",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "观点先行右图",
+          "type": "heading"
+        },
+        {
+          "blockType": "conclusion",
+          "content": "左侧先给业务判断",
+          "priority": 1,
+          "sourceIds": [],
+          "text": "左侧先给业务判断",
+          "type": "conclusion"
+        },
+        {
+          "blockType": "body",
+          "content": "右侧图片强化理解",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "右侧图片强化理解",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "底部收束行动建议",
+          "priority": 4,
+          "sourceIds": [],
+          "text": "底部收束行动建议",
+          "type": "text"
+        },
+        {
+          "blockType": "body",
+          "content": "左文右图 / 中国商务通用",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "左文右图 / 中国商务通用",
+          "type": "text"
+        },
+        {
+          "blockType": "note",
+          "content": "先表达观点，再用右侧图像强化场景理解。",
+          "priority": 3,
+          "sourceIds": [],
+          "text": "先表达观点，再用右侧图像强化场景理解。",
+          "type": "image"
+        }
+      ]
     },
     "pageIntent": {
       "audienceTakeaway": "左侧先给业务判断",

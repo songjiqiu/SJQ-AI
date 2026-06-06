@@ -79,13 +79,65 @@
         "body": "Review accounts, roles, active status, and account-scoped data, then adjust user access when needed."
       },
       "templates": {
-        "title": "Template Workspace",
-        "body": "Manage the PPT template library, page categories, and reusable page JSON assets for future generation workflows."
+        "title": "PPT Template Library Management",
+        "body": "Manage PPT templates, page categories, and reusable page JSON assets, then open the designer to adjust layout assets."
       },
       "workbench": {
         "title": "Creation Workbench",
         "body": "Enter the regular creation flow for PPT slide splitting, visual specs, and page element planning."
+      },
+      "pptToSlot": {
+        "title": "PPT--To--Slot",
+        "body": "Upload PPTX files, extract slide coordinates, regions, and styles, then generate reviewable Slot template JSON."
       }
+    }
+  },
+  "adminPptToSlot": {
+    "title": "PPT--To--Slot",
+    "subtitle": "Extract real coordinates, layers, styles, and region structure from uploaded PPTX files, generate standalone Slot template drafts, and approve them into the Slot library.",
+    "actions": {
+      "back": "Back to Admin Console"
+    },
+    "upload": {
+      "label": "Upload PPTX file",
+      "help": "The MVP supports .pptx files up to 10MB. Complex animations, full master inheritance, and approval-free imports are out of scope.",
+      "submit": "Extract Slot Templates"
+    },
+    "list": {
+      "aria": "PPT Slot template list",
+      "empty": "No Slot templates yet. Upload a .pptx file to generate one review draft per slide.",
+      "slide": "Slide {index}"
+    },
+    "detail": {
+      "empty": "Select a template to inspect the overlay and JSON.",
+      "overlayAlt": "PPT Slot overlay preview"
+    },
+    "artifacts": {
+      "template": "template.json",
+      "rawLayers": "raw_layers.json",
+      "layoutCandidates": "layout_candidates.json",
+      "reviewReport": "review_report.md"
+    },
+    "review": {
+      "notes": "Review notes",
+      "approve": "Approve",
+      "changesRequested": "Request Changes",
+      "reject": "Reject"
+    },
+    "statuses": {
+      "DRAFT": "Draft",
+      "PENDING_REVIEW": "Pending Review",
+      "APPROVED": "Approved",
+      "CHANGES_REQUESTED": "Changes Requested",
+      "REJECTED": "Rejected"
+    },
+    "toast": {
+      "uploaded": "Slot templates generated",
+      "updated": "Review status updated"
+    },
+    "errors": {
+      "uploadFailed": "PPTX extraction failed. Check the file and try again.",
+      "updateFailed": "Review status update failed. Try again later."
     }
   },
   "adminTemplateWorkspace": {
@@ -412,6 +464,8 @@
   "adminTemplates": {
     "title": "PPT Template Library Management",
     "subtitle": "Manage reusable PPT templates by page type. Each template stores a complete page JSON and can be adjusted in the visual designer.",
+    "compatibilityWarning": "Some legacy template JSON no longer matches the current schema and has been loaded with the category default pattern. Re-save those templates or re-import the universal template package.",
+    "compatibilityCardWarning": "Legacy template JSON loaded from the default pattern",
     "categoriesAria": "PPT template categories",
     "listAria": "PPT template list",
     "searchPlaceholder": "Search template names, descriptions, or tags",
@@ -627,7 +681,13 @@
       "star-map": "Star Map",
       "matrix": "Matrix",
       "deep-space": "Deep Space",
-      "morning-mist": "Morning Mist"
+      "morning-mist": "Morning Mist",
+      "moon-white": "Moon White",
+      "bamboo-green": "Bamboo Green",
+      "dai-blue": "Dai Blue",
+      "rouge": "Rouge",
+      "gilded-gold": "Gilded Gold",
+      "ink-black": "Ink Black"
     }
   },
   "adminTemplateAssets": {
@@ -825,9 +885,9 @@
         "placeholder": "Paste long-form source text, or enter a complete idea. Example: Prepare an investor pitch for a clean energy startup covering market opportunity, product advantage, and partnership path."
       },
       "textFiles": {
-        "label": "Text Files",
+        "label": "Source Files",
         "action": "Add files",
-        "formats": "Supports txt / md / csv / json / docx files",
+        "formats": "Supports txt / md / csv / json / docx / pptx / xlsx / pdf / images",
         "limit": "Each file up to 10 MB",
         "tooLarge": "Files larger than 10 MB were ignored"
       },
@@ -844,7 +904,7 @@
     },
     "validation": {
       "idea": "Enter source text or an idea with at least 10 characters.",
-      "pageCount": "Slide count must be an integer from 3 to 18."
+      "pageCount": "Slide count must be an integer from 6 to 40."
     },
     "actions": {
       "reset": "Reset",
@@ -860,11 +920,22 @@
       "delete": "Delete",
       "deleting": "Deleting",
       "cancel": "Cancel",
+      "close": "Close",
       "download": "Download PPTX",
+      "done": "Done",
+      "editBodyPoints": "Edit Body Points",
+      "editContent": "Edit Content",
       "playMotion": "Play Motion",
       "pauseMotion": "Pause Motion",
+      "regenerateCurrentSlide": "Regenerate Slide",
       "backToInput": "Back to Input",
-      "uploadNewFile": "Upload New File"
+      "editStructure": "Edit Structure",
+      "generateNow": "Generate Draft Now",
+      "uploadNewFile": "Upload New File",
+      "addSlide": "Add Slide",
+      "changeTemplate": "Change Template",
+      "saveCurrentSlide": "Save Current Slide",
+      "backToAdmin": "Back to Admin Console"
     },
     "confirm": {
       "deleteTitle": "Confirm Deletion"
@@ -886,7 +957,7 @@
       "loadFailed": "Failed to load the historical PPT. Please try again later."
     },
     "errors": {
-      "aiJsonGenerationFailed": "The AI response did not pass structured validation. The app tried compatibility repair automatically but it still failed. Try again later, or check whether the current LLM model reliably supports JSON output in Experience Settings.",
+      "aiJsonGenerationFailed": "The AI response did not pass structured or consistency validation. Try again later, or check whether the current LLM model reliably supports JSON output in Experience Settings.",
       "databaseMigrationRequired": "Database migrations are not complete. Run pnpm db:migrate and try again.",
       "debugDetails": "Debug details",
       "failureDetails": "Failure details",
@@ -908,6 +979,17 @@
       "downloadPending": "Download after ready",
       "progressAria": "PPT generation progress",
       "progressCount": "{current}/{total} slides",
+      "displayContent": "Current Slide Content",
+      "displayContentSeparator": ":",
+      "contentBlockItem": "Content Block",
+      "layerItem": "Layer",
+      "emptyLayerContent": "No content",
+      "displayContentTypes": {
+        "title": "Title",
+        "subtitle": "Subtitle",
+        "body": "Body"
+      },
+      "notPlaced": "Not placed",
       "statuses": {
         "GENERATING": "Generating",
         "READY": "Ready",
@@ -944,14 +1026,17 @@
       "title": "Consistency"
     },
     "visualSpec": {
-      "title": "Unified Visual Spec"
+      "title": "Unified Visual Spec",
+      "open": "Unified Visual Spec"
     },
     "loading": {
       "intentTitle": "Analyzing Input",
-      "intentDescription": "AI is identifying the audience, goal, core message, and recommended slide count.",
+      "intentDescription": "AI is generating the overall PPT structure, hidden intent context, and recommended slide count.",
+      "intentInterceptTitle": "Structure outline generated",
+      "intentInterceptDescription": "Continuing in {seconds} seconds to generate the unified visual spec, detailed per-slide outline, and display content JSON. Edit the structure first if needed.",
       "intentFailed": "Input analysis failed",
       "outlineTitle": "Generating outline draft",
-      "outlineDescription": "AI is expanding the confirmed structure outline into per-slide copy JSON and a unified global visual spec.",
+      "outlineDescription": "AI is generating the unified visual spec, detailed per-slide outline, and display content JSON in stages.",
       "outlineFailed": "Outline generation failed",
       "generateTitle": "Generating preview PPT",
       "generateDescription": "AI is composing page layers, image requests, review notes, consistency checks, and the PPTX from the confirmed outline.",
@@ -961,53 +1046,72 @@
       "missingOutlinePayload": "No confirmed outline input was found. Return to the input page and submit again.",
       "missingGeneratePayload": "No draft information was found. Return to the input page and choose an outline again.",
       "backToInput": "Back to Input",
-      "intentProgress": "Generating audience, goal, core message, and recommended slide count.",
-      "outlineProgress": "Generating the structure outline, per-slide copy JSON, and unified global visual spec.",
+      "intentProgress": "Generating the overall structure, hidden intent context, and recommended slide count.",
+      "intentInterceptProgress": "Continuing to outline draft generation in {seconds} seconds.",
+      "outlineProgress": "Generating the unified visual spec, detailed per-slide outline, and display content JSON.",
       "generateProgress": "Composing layers, generating images, reviewing content, and building the PPTX.",
       "generateBackgroundProgress": "This task is taking longer than usual, but it has not failed. Stay here to open the preview automatically, or return to input and find it in history after it completes."
     },
     "intent": {
-      "title": "Confirm Input Analysis",
-      "subtitle": "Review the AI analysis of audience, goal, core message, and slide count. PPT type remains the scene structure reference for later generation.",
+      "title": "Confirm Overall Structure",
+      "subtitle": "Review the slide count, PPT type, and overall directory. Audience, goal, and core message remain hidden context for later generation.",
       "loading": "Loading input analysis...",
-      "analysisTitle": "Input Analysis",
+      "analysisTitle": "Hidden Input Analysis",
       "structureTitle": "Structure Outline",
       "sourceTitle": "Source Input Summary",
+      "chaptersTitle": "Chapter Structure",
       "filesTitle": "Added Files",
       "fileMeta": "{characters} chars · {size} B",
+      "noSources": "No cited sources",
       "pageCountBadge": "{count} slides recommended",
-      "footerMeta": "After confirmation, this structure outline will be expanded into per-slide copy JSON and a unified global visual spec.",
+      "footerMeta": "After confirmation, this structure outline will be expanded into a unified visual spec, detailed per-slide outline, and display content JSON.",
       "fields": {
         "audience": "Audience",
         "goal": "Goal",
         "coreMessage": "Core Message",
+        "globalObjective": "Overall Objective",
+        "globalTheme": "Global Theme",
+        "narrativeStyle": "Narrative Style",
         "recommendedPageCount": "Recommended Slides",
+        "sourceIds": "Source IDs",
         "structureTitle": "Slide Title",
         "purpose": "Purpose",
-        "keyMessage": "Key Message",
-        "visualDirection": "Visual Direction"
+        "keyMessage": "Key Message"
       }
     },
     "outline": {
       "title": "Outline Draft",
       "reviewTitle": "Review and Edit Outline",
-      "reviewSubtitle": "Review the AI outline first. Use Edit when changes are needed; the preview PPT will strictly use the saved outline.",
+      "reviewSubtitle": "Review the AI directory, unified visual spec, detailed per-slide outline, and display content JSON. The preview PPT will strictly use the saved content.",
       "slideCount": "{count} slides",
       "slides": "Slide Outline",
       "slideEditor": "Slide Copy Editor",
       "previewAria": "Read-only outline preview",
       "previewMode": "Preview Mode",
       "editMode": "Edit Mode",
-      "readonlyHint": "The saved outline is shown read-only by default. Use Edit to adjust titles, directory, slide copy, and the unified visual spec.",
+      "readonlyHint": "The saved outline is shown read-only by default. Use Edit to adjust titles, directory, detailed per-slide outline, display content JSON, and the unified visual spec.",
+      "ruleTagEditor": {
+        "addPlaceholder": "Enter one rule and press Enter to add"
+      },
+      "paletteGroups": {
+        "primary": "Primary (1)",
+        "secondary": "Secondary (2-3)",
+        "chart": "Chart Colors (4-8)",
+        "neutral": "Neutral/Surface (2-4)",
+        "accent": "Accent/Highlight (1-2)",
+        "base": "Base Colors"
+      },
       "fields": {
         "deckTitle": "Deck Title",
         "deckSummary": "Deck Summary",
         "themeName": "Theme Name",
         "visualStyle": "Visual Style",
-        "colorPalette": "Palette (one color per line)",
+        "designIntent": "Design Intent",
+        "usageConvenience": "Usage Convenience",
+        "colorPalette": "Grouped Palette (name | HEX | usage)",
         "typography": "Typography",
         "imageStyle": "Image Style",
-        "layoutRules": "Layout Rules (one per line)",
+        "layoutRules": "Layout Rules",
         "consistencyRules": "Consistency Rules (one per line)",
         "forbiddenRules": "Forbidden Rules (one per line)",
         "pageSpec": "Page Specification",
@@ -1025,16 +1129,26 @@
         "lineHeight": "Line Height",
         "fontFallback": "Font Fallback (one per line)",
         "colorRoles": "Color Roles",
+        "colorPaletteWithRoles": "Grouped Palette & Roles",
+        "relatedRoles": "Related Roles",
+        "colorRoleTuning": "Color Role Tuning",
         "background": "Background Role",
         "bodyText": "Body Text Role",
         "accent": "Accent Role",
         "decorative": "Decorative Role",
+        "borderDivider": "Border/Divider Role",
         "highlight": "Highlight Role",
         "chart": "Chart Role",
         "contrastRequirement": "Contrast Requirement",
         "imageRules": "Image Generation/Usage Rules",
+        "imageForbiddenItems": "Forbidden Items",
+        "forbiddenRulePreview": "Forbidden Rules",
+        "ruleNumber": "Rule {number}",
         "backgroundAvoidsHighContrastTextArea": "Background avoids high-contrast text areas",
         "subjectAvoidsTitleArea": "Subject avoids the title area",
+        "imageType": "Image Type",
+        "imagePromptStyle": "Image Prompt Style",
+        "forbiddenItems": "Forbidden Items (one per line)",
         "usageNotes": "Usage Notes (one per line)",
         "basicInfo": "Basic Info",
         "colorSystem": "Color System",
@@ -1043,15 +1157,16 @@
         "slideTitle": "Slide Title",
         "subtitle": "Subtitle",
         "bodyPoints": "Body Points (one per line)",
+        "contentBlocks": "Display Content JSON (type | priority | content)",
         "speakerGoal": "Speaker Goal",
         "visualIntent": "Visual Intent",
         "advancedSlideInfo": "Advanced Slide Info",
         "coreStatement": "Core Statement",
         "narrativeRole": "Narrative Role",
         "explanationDepth": "Explanation Depth",
-        "contentLayersPrimary": "Primary Information (one per line)",
-        "contentLayersSupporting": "Supporting Information (one per line)",
-        "contentLayersSupplementary": "Supplementary Information (one per line)",
+        "contentLayersPrimary": "Primary Information (references display content)",
+        "contentLayersSupporting": "Supporting Information (references display content)",
+        "contentLayersSupplementary": "Supplementary Information (references display content)",
         "transitionFromPrevious": "From Previous Slide",
         "transitionToNext": "To Next Slide",
         "sourceRequirement": "Source Requirement",
@@ -1082,17 +1197,21 @@
         "surface": "Surface Role",
         "titleText": "Title Text Role",
         "coverTitle": "Cover Title",
+        "coverSubtitle": "Cover Subtitle",
         "pageTitle": "Page Title",
+        "sectionTitle": "Section Title",
         "body": "Body",
         "annotation": "Annotation",
         "chartLabel": "Chart Label",
+        "iconLabel": "Icon Label",
         "fontSize": "Font Size",
         "fontWeight": "Font Weight",
         "usage": "Usage",
         "advancedRules": "Advanced Rules",
+        "advancedRulesSummary": "Advanced Rules ({groups} groups · {count} items, collapsed by default)",
+        "fullTypographyScale": "Full Type Scale ({count} items)",
         "informationDensityRules": "Information Density Rules",
         "defaultLevel": "Default Density",
-        "spacingRules": "Spacing and Whitespace Rules",
         "pageMargin": "Page Margin",
         "sectionGap": "Section Gap",
         "elementGap": "Element Gap",
@@ -1111,14 +1230,22 @@
         "iconStyle": "Icon Style",
         "stroke": "Stroke",
         "emphasisRules": "Emphasis Rules",
+        "componentRules": "Component & Element Rules",
+        "transparencyRules": "Transparency Rules",
+        "card": "Card",
+        "tag": "Tag",
+        "metric": "Metric",
+        "table": "Table",
+        "icon": "Icon",
         "keyNumbers": "Key Numbers",
         "keywords": "Keywords",
         "conclusion": "Conclusion Sentence",
-        "forbiddenVisualRules": "Forbidden Visual Rules (one per line)"
+        "forbiddenVisualRules": "Forbidden Rules (one per line)"
       },
       "values": {
         "yes": "Yes",
         "no": "No",
+        "baseColorUsage": "Used only as black/white base colors for text, backgrounds, or contrast scenarios that require pure black or white.",
         "required": "Required",
         "notRequired": "Not required",
         "narrativeRole": {
@@ -1183,6 +1310,7 @@
     },
     "elements": {
       "title": "Page Element Plan",
+      "summaryHint": "Text elements show the current content summary; non-text elements show the role name.",
       "layer": "Layer {zIndex}",
       "bounds": "Position x:{x}% y:{y}%, size {width}% × {height}%, layer {zIndex}"
     },
@@ -1192,6 +1320,14 @@
     },
     "designQuality": {
       "title": "Design Quality Score",
+      "open": "Design Quality Score",
+      "pageTitle": "Design Quality Score",
+      "backToPreview": "Back to Preview",
+      "totalScore": "Total Score",
+      "issues": "Issues",
+      "suggestions": "Suggestions",
+      "noIssues": "No issues",
+      "noSuggestions": "No suggestions",
       "repairStatus": "Auto Repair",
       "layoutCandidates": "Layout Candidates",
       "dimensions": {
@@ -1207,6 +1343,11 @@
         "failed": "Repair failed, best version kept",
         "still-low": "Repaired but still needs review"
       }
+    },
+    "selectedElement": {
+      "title": "Selected Element",
+      "content": "Content",
+      "empty": "Click an element on the canvas to edit content and position."
     },
     "elementTypes": {
       "text": "Text",
